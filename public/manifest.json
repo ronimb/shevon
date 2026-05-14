@@ -1,0 +1,17 @@
+{
+  "name": "Casio FX-991ES Emulator Pro",
+  "short_name": "FX-991ES",
+  "description": "Professional Scientific Calculator Emulator",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#121212",
+  "theme_color": "#121212",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/564/564429.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

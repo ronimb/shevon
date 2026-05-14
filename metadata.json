@@ -1,0 +1,6 @@
+{
+  "name": "Casio fx-991ES Emulator",
+  "description": "A high-fidelity hardware emulator of the Casio fx-991ES PLUS scientific calculator with Natural-V.P.A.M. display.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
