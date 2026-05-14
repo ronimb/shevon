@@ -7,7 +7,7 @@ function createWindow() {
     height: 850,
     resizable: true,
     autoHideMenuBar: true,
-    title: "Casio FX-991ES Emulator Pro",
+    title: "Scientific Calculator Emulator",
     icon: path.join(__dirname, 'public/icons/icon.png'), // Will fallback if missing
     webPreferences: {
       nodeIntegration: false,

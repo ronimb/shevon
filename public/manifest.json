@@ -1,6 +1,6 @@
 {
-  "name": "Casio FX-991ES Emulator Pro",
-  "short_name": "FX-991ES",
+  "name": "Scientific Calculator Emulator",
+  "short_name": "Calculator",
   "description": "Professional Scientific Calculator Emulator",
   "start_url": "/",
   "display": "standalone",

@@ -15,8 +15,8 @@
     "build:exe": "npm run build && electron-builder --win --portable"
   },
   "build": {
-    "appId": "com.casio.emulator.pro",
-    "productName": "Casio FX-991ES Emulator Pro",
+    "appId": "com.scientific.emulator.pro",
+    "productName": "Scientific Calculator Emulator",
     "directories": {
       "output": "dist-desktop"
     },

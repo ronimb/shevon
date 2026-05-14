@@ -611,6 +611,49 @@ const Calculator: React.FC = () => {
       "RanInt(", "Ran#", "Ans", "e", "π", "°′″", "×10^", "nCr(", "nPr(", "root(3,", "^(", "10^(", "e^("
     ];
     
+    // Mapping from internal labels or tokens to physical button sequences
+    const sequenceMap: Record<string, string[]> = {
+      'sin⁻¹': ['SHIFT', 'sin'],
+      'cos⁻¹': ['SHIFT', 'cos'],
+      'tan⁻¹': ['SHIFT', 'tan'],
+      'sinh⁻¹': ['HYP', 'SHIFT', 'sin'],
+      'cosh⁻¹': ['HYP', 'SHIFT', 'cos'],
+      'tanh⁻¹': ['HYP', 'SHIFT', 'tan'],
+      'sinh': ['HYP', 'sin'],
+      'cosh': ['HYP', 'cos'],
+      'tanh': ['HYP', 'tan'],
+      'sin': ['sin'],
+      'cos': ['cos'],
+      'tan': ['tan'],
+      'xⁿ': ['xⁿ'],
+      'x²': ['x²'],
+      'x³': ['SHIFT', 'x²'],
+      'frac': ['frac'],
+      'mix': ['SHIFT', 'frac'],
+      'log': ['log'],
+      '10^': ['SHIFT', 'log'],
+      'ln': ['ln'],
+      'e^': ['SHIFT', 'ln'],
+      'Abs': ['SHIFT', 'hyp'],
+      '√': ['√'],
+      'root': ['SHIFT', 'xⁿ'],
+      '∫': ['∫'],
+      'd/dx': ['SHIFT', '∫'],
+      'Σ': ['SHIFT', 'log_box'], 
+      'log_box': ['log_box'], 
+      'Ran#': ['SHIFT', '.'],
+      'RanInt': ['ALPHA', '.'],
+      'Ans': ['Ans'],
+      'EXP': ['EXP'],
+      'π': ['SHIFT', 'EXP'],
+      'e': ['ALPHA', 'EXP'],
+      'nCr': ['SHIFT', '÷'],
+      'nPr': ['SHIFT', '×'],
+      '°′″': ['°′″'],
+      '(-)': ['(-)'],
+      'x-1': ['x-1'],
+    };
+
     // To handle closing parentheses of templates
     let templateParenStack: number[] = [];
 
@@ -628,6 +671,9 @@ const Calculator: React.FC = () => {
           else if (t === 'sinh(') label = 'sinh';
           else if (t === 'cosh(') label = 'cosh';
           else if (t === 'tanh(') label = 'tanh';
+          else if (t === 'sinh⁻¹(') label = 'sinh⁻¹';
+          else if (t === 'cosh⁻¹(') label = 'cosh⁻¹';
+          else if (t === 'tanh⁻¹(') label = 'tanh⁻¹';
           else if (t === 'pwr(' || t === '^(') label = 'xⁿ';
           else if (t === 'sqr(') label = 'x²';
           else if (t === 'cube(') label = 'x³';
@@ -649,13 +695,11 @@ const Calculator: React.FC = () => {
           else if (t === 'nCr(') label = 'nCr';
           else if (t === 'nPr(') label = 'nPr';
           
-          result.push(label);
+          if (sequenceMap[label]) result.push(...sequenceMap[label]);
+          else result.push(label);
+
           s = s.slice(t.length);
-          
-          if (t.endsWith('(') || t.includes('(')) {
-             templateParenStack.push(1);
-          }
-          
+          if (t.endsWith('(') || t.includes('(')) templateParenStack.push(1);
           matched = true;
           break;
         }
@@ -666,21 +710,27 @@ const Calculator: React.FC = () => {
         else if (char === '÷') { result.push('÷'); s = s.slice(1); matched = true; }
         else if (char === '²') { result.push('x²'); s = s.slice(1); matched = true; }
         else if (char === 'ⁿ') { result.push('xⁿ'); s = s.slice(1); matched = true; }
-        else if (char === '³') { result.push('x³'); s = s.slice(1); matched = true; }
+        else if (char === '³') { result.push(...(sequenceMap['x³'] || ['x³'])); s = s.slice(1); matched = true; }
         else if (char === '⁻') {
-           if (s.startsWith('⁻¹')) { result.push('x-1'); s = s.slice(2); matched = true; }
-           else { result.push('(-)'); s = s.slice(1); matched = true; }
-        } else if (char.match(/[0-9.]/)) { result.push(char); s = s.slice(1); matched = true;}
-        else if (char === '(') {
+           if (s.startsWith('⁻¹')) { result.push(...(sequenceMap['x-1'] || ['x-1'])); s = s.slice(2); matched = true; }
+           else { result.push(...(sequenceMap['(-)'] || ['(-)'])); s = s.slice(1); matched = true; }
+        } else if (char.match(/[0-9.]/)) {
+           let num = "";
+           while (s.length > 0 && s[0].match(/[0-9.]/)) {
+              num += s[0];
+              s = s.slice(1);
+           }
+           result.push(num);
+           matched = true;
+        } else if (char === '(') {
            result.push('('); s = s.slice(1); matched = true;
            if (templateParenStack.length > 0) templateParenStack[templateParenStack.length-1]++;
-        }
-        else if (char === ')') {
+        } else if (char === ')') {
            if (templateParenStack.length > 0) {
               templateParenStack[templateParenStack.length-1]--;
               if (templateParenStack[templateParenStack.length-1] === 0) {
                  templateParenStack.pop();
-                 s = s.slice(1); // Swallow template-closing paren
+                 s = s.slice(1); 
                  matched = true;
               } else {
                  result.push(')');
@@ -692,13 +742,15 @@ const Calculator: React.FC = () => {
               s = s.slice(1);
               matched = true;
            }
-        }
-        else if (char === '+' || char === '-' || char === '*' || char === '/') {
+        } else if (char === '+' || char === '-' || char === '*' || char === '/') {
           result.push(char === '*' ? '×' : char === '/' ? '÷' : char);
           s = s.slice(1);
           matched = true;
-        }
-        else if (char === ',') { s = s.slice(1); matched = true; } // Skip commas in templates
+        } else if (char === 'π') {
+           result.push(...(sequenceMap['π'] || ['π'])); s = s.slice(1); matched = true;
+        } else if (char === 'e') {
+           result.push(...(sequenceMap['e'] || ['e'])); s = s.slice(1); matched = true;
+        } else if (char === ',') { s = s.slice(1); matched = true; }
         else {
           result.push(char);
           s = s.slice(1);
@@ -1578,7 +1630,18 @@ const Calculator: React.FC = () => {
     };
 
     const renderMiniButton = (label: string, id: string | number) => {
-      const cls = `mini-btn ${isDebug ? 'debug-visible' : ''}`;
+      let typeClass = '';
+      if (label.match(/^[0-9.]+$/) || label === 'Ans' || label === 'π' || label === 'e' || label === 'EXP') {
+        typeClass = 'num';
+      } else if (['+', '-', '×', '÷', '=', 'DEL', 'AC', '(', ')'].includes(label)) {
+        typeClass = 'op';
+      } else if (label === 'SHIFT') {
+        typeClass = 'shift';
+      } else if (label === 'ALPHA') {
+        typeClass = 'alpha';
+      }
+      
+      const cls = `mini-btn ${typeClass} ${isDebug ? 'debug-visible' : ''}`;
       
       if (label === 'log_box') {
         return (
@@ -1980,7 +2043,7 @@ const Calculator: React.FC = () => {
           
           <div className="p-4 bg-black/20 border-t border-white/5 space-y-2">
             <div className="text-[10px] text-white/10 uppercase tracking-widest font-black text-center">
-              Casio fx-991ES Emulator Pro
+              Scientific Calculator Emulator
             </div>
           </div>
         </div>
