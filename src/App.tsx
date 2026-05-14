@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import calculatorImg from './calculator.png';
+import calculatorImg from './calculator_new.png';
 
 // --- Types ---
 type CalcMode = 'COMP' | 'MENU' | 'SETUP' | 'EQN_MENU' | 'EQN_QUAD' | 'EQN_RESULT';
@@ -20,7 +20,7 @@ interface KeyStyle {
 
 const INITIAL_KEY_STYLES: Record<string, KeyStyle> = {
   // Sci Row 1 (sr1 top 450)
-  abs: { top: 450, left: 55, width: 57, height: 33 },
+  calc: { top: 450, left: 55, width: 57, height: 33 },
   integral: { top: 450, left: 120, width: 57, height: 33 },
   inv: { top: 450, left: 317, width: 57, height: 33 },
   log: { top: 450, left: 383, width: 57, height: 33 },
@@ -234,7 +234,8 @@ const toLaTeX = (expr: string): string => {
        .replace(/tan⁻¹\(([^)]*)\)/g, '\\arctan($1)');
 
   // Templates
-  s = s.replace(/int\(([^,]*),([^,]*),([^,]*),([^)]*)\)/g, '\\int_{$2}^{$3} $1 \\, d$4')
+  s = s.replace(/=/g, '=')
+       .replace(/int\(([^,]*),([^,]*),([^,]*),([^)]*)\)/g, '\\int_{$2}^{$3} $1 \\, d$4')
        .replace(/diff\(([^,]*),([^,]*),([^)]*)\)/g, '\\frac{d}{d$2}\\left($1\\right)\\bigg|_{$2=$3}')
        .replace(/frac\(([^,]*),([^)]*)\)/g, '\\frac{$1}{$2}')
        .replace(/mix\(([^,]*),([^,]*),([^)]*)\)/g, '$1\\frac{$2}{$3}')
@@ -275,8 +276,12 @@ const formatMath = (input: string): string => {
   });
 
   h = h.replace(/²/g, '<span class="sup">2</span>')
-       .replace(/³/g, '<span class="sup">3</span>')
-       .replace(/mix\(([^,)]*),([^,)]*),([^)]*)\)/g, (m, w, n, d) => `<div class="mix-container"><span class="mix-whole">${w}</span><div class="frac-container"><span class="frac-num">${n}</span><span class="frac-den">${d}</span></div></div>`)
+       .replace(/³/g, '<span class="sup">3</span>');
+
+  // Replace equals while avoiding matching inside existing HTML tags
+  h = h.replace(/=(?![^<]*>)/g, '<span class="equal-symbol mx-1">=</span>');
+
+  h = h.replace(/mix\(([^,)]*),([^,)]*),([^)]*)\)/g, (m, w, n, d) => `<div class="mix-container"><span class="mix-whole">${w}</span><div class="frac-container"><span class="frac-num">${n}</span><span class="frac-den">${d}</span></div></div>`)
        .replace(/mix\(([^,)]*),([^,)]*),([^)]*)$/g, (m, w, n, d) => `<div class="mix-container"><span class="mix-whole">${slot(w)}</span><div class="frac-container"><span class="frac-num">${slot(n)}</span><span class="frac-den">${slot(d)}</span></div></div>`)
        .replace(/mix\(([^,)]*),([^,)]*)$/g, (m, w, n) => `<div class="mix-container"><span class="mix-whole">${slot(w)}</span><div class="frac-container"><span class="frac-num">${slot(n)}</span><span class="frac-den"><span class="empty-slot">⬚</span></span></div></div>`)
        .replace(/mix\(([^,)]*)$/g, (m, w) => `<div class="mix-container"><span class="mix-whole">${slot(w)}</span><div class="frac-container"><span class="frac-num"><span class="empty-slot">⬚</span></span><span class="frac-den"><span class="empty-slot">⬚</span></span></div></div>`);
@@ -455,10 +460,15 @@ const Calculator: React.FC = () => {
   const [isRcl, setIsRcl] = useState<boolean>(false);
   const [displayMode, setDisplayMode] = useState<DisplayMode>('decimal');
   const [calcMode, setCalcMode] = useState<CalcMode>('COMP');
+  const [promptVar, setPromptVar] = useState<string | null>(null);
+  const [promptValue, setPromptValue] = useState<string>("0");
+  const [prevPromptValue, setPrevPromptValue] = useState<string>("0");
+  const [promptVarsQueue, setPromptVarsQueue] = useState<string[]>([]);
   const [eqnCoeffs, setEqnCoeffs] = useState<string[]>(["0", "0", "0"]);
   const [eqnIndex, setEqnIndex] = useState<number>(0);
   const [eqnResults, setEqnResults] = useState<EqnResult[]>([]);
   const [eqnResultIdx, setEqnResultIdx] = useState<number>(0);
+  const solveRef = useRef<() => void>(() => {});
   const [syntaxError, setSyntaxError] = useState<boolean>(false);
   const [currentSequence, setCurrentSequence] = useState<string[]>([]);
   const [showPane, setShowPane] = useState<boolean>(false);
@@ -479,6 +489,16 @@ const Calculator: React.FC = () => {
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
 
   const handleInput = useCallback((val: string) => {
+    if (promptVar) {
+      if (!isNaN(Number(val)) || val === '.' || val === '-') {
+        setPromptValue(prev => {
+          if (prev === "0" && val !== '.') return val === '-' ? '-' : val;
+          if (val === '-' && prev !== "") return prev;
+          return prev + val;
+        });
+      }
+      return;
+    }
     if (calcMode === 'MENU') {
       if (val === '1') setCalcMode('COMP');
       else if (val === '5') setCalcMode('EQN_MENU');
@@ -658,6 +678,12 @@ const Calculator: React.FC = () => {
     if (!currentInput || currentInput.includes('→')) return null;
     try {
       let s = currentInput.replace(/[‸⬚]/g, '');
+      if (s.includes('=') && !s.includes('→')) {
+        let parts = s.split('=');
+        if (parts.length === 2) {
+          s = `(${parts[0]}) - (${parts[1]})`;
+        }
+      }
       let openCount = (s.match(/\(/g) || []).length, closeCount = (s.match(/\)/g) || []).length;
       s += ')'.repeat(Math.max(0, openCount - closeCount));
       
@@ -696,7 +722,87 @@ const Calculator: React.FC = () => {
     }
   }, [currentInput, vars, ans, angleMode]);
 
+  const handleCalc = useCallback(() => {
+    if (isShift) {
+      // SOLVE implementation
+      setIsShift(false);
+      if (!currentInput.includes('X')) {
+        setSyntaxError(true);
+        return;
+      }
+      
+      let x = vars.X || 0;
+      let expr = currentInput.replace(/[‸⬚]/g, '');
+      if (expr.includes('=') && !expr.includes('→')) {
+        let parts = expr.split('=');
+        expr = `(${parts[0]}) - (${parts[1]})`;
+      }
+
+      try {
+        // Simple Newton-Raphson
+        for (let i = 0; i < 40; i++) {
+          let f = evaluateExpression(expr, { ...vars, X: x }, ans, angleMode);
+          if (Math.abs(f) < 1e-12) break;
+          let df = (evaluateExpression(expr, { ...vars, X: x + 1e-7 }, ans, angleMode) - f) / 1e-7;
+          if (Math.abs(df) < 1e-15) break; 
+          let nextX = x - f / df;
+          if (isNaN(nextX)) break;
+          x = nextX;
+        }
+        setVars(prev => ({ ...prev, X: x }));
+        setAns(x);
+        setShowingResult(true);
+        setLastValue(x);
+      } catch (e) {
+        setSyntaxError(true);
+      }
+      return;
+    }
+    if (isAlpha) {
+      handleInput('=');
+      setIsAlpha(false);
+      return;
+    }
+
+    // Normal CALC: Find variables
+    const varsInExpr = Array.from(new Set(currentInput.match(/[A-MYX]/g) || []));
+    if (varsInExpr.length > 0) {
+      setPromptVarsQueue(varsInExpr);
+      const firstVar = varsInExpr[0];
+      setPromptVar(firstVar);
+      setPromptValue("0");
+      setPrevPromptValue(vars[firstVar]?.toString() || "0");
+    } else {
+      solveRef.current();
+    }
+  }, [isShift, isAlpha, currentInput, vars, handleInput, ans, angleMode]);
+
+  const tackleNextPrompt = useCallback(() => {
+    if (!promptVar) return;
+    
+    // Save current prompt value to variable
+    const val = parseFloat(promptValue) || parseFloat(prevPromptValue) || 0;
+    setVars(prev => ({ ...prev, [promptVar]: val }));
+
+    const nextQueue = promptVarsQueue.slice(1);
+    setPromptVarsQueue(nextQueue);
+    
+    if (nextQueue.length > 0) {
+      const nextVar = nextQueue[0];
+      setPromptVar(nextVar);
+      setPromptValue("0");
+      setPrevPromptValue(vars[nextVar]?.toString() || "0");
+    } else {
+      setPromptVar(null);
+      solveRef.current();
+    }
+  }, [promptVar, promptValue, prevPromptValue, promptVarsQueue, vars]);
+
   const solve = useCallback(() => {
+    if (promptVar) {
+      tackleNextPrompt();
+      return;
+    }
     if (calcMode === 'EQN_QUAD') {
       if (eqnIndex < 2) {
         setEqnIndex(prev => prev + 1);
@@ -758,9 +864,17 @@ const Calculator: React.FC = () => {
       setShowingResult(true);
       setDisplayMode(Number.isInteger(val) ? 'decimal' : 'fraction');
     }
-  }, [calcMode, eqnIndex, eqnCoeffs, eqnResultIdx, eqnResults, performEvaluation, toLaTeX, formatMath]);
+  }, [calcMode, eqnIndex, eqnCoeffs, eqnResultIdx, eqnResults, performEvaluation, toLaTeX, formatMath, promptVar, tackleNextPrompt]);
+
+  useEffect(() => {
+    solveRef.current = solve;
+  }, [solve]);
 
   const del = useCallback(() => {
+    if (promptVar) {
+      setPromptValue(prev => prev.length > 1 ? prev.slice(0, -1) : "0");
+      return;
+    }
     if (calcMode === 'EQN_QUAD') {
       setEqnCoeffs(prev => {
         const next = [...prev];
@@ -1279,6 +1393,16 @@ const Calculator: React.FC = () => {
 
   // --- Rendering Helpers ---
   const renderInput = () => {
+    if (promptVar) {
+      return (
+        <div className="flex flex-col">
+          <div className="text-[0.9rem] opacity-70 mb-1" dangerouslySetInnerHTML={{ __html: formatMath(currentInput.replace('‸', '')) }} />
+          <div className="flex items-center">
+            <span className="mr-2">{promptVar}?</span>
+          </div>
+        </div>
+      );
+    }
     if (calcMode === 'MENU') {
       return (
         <div className="mode-menu">
@@ -1342,6 +1466,14 @@ const Calculator: React.FC = () => {
   };
 
   const renderResult = () => {
+    if (promptVar) {
+      return (
+        <div className="decimal-result flex flex-col items-end">
+          <div className="text-[0.7rem] opacity-50 mb-[-4px]">{prevPromptValue}</div>
+          <div>{promptValue}</div>
+        </div>
+      );
+    }
     if (calcMode === 'MENU' || calcMode === 'EQN_MENU' || calcMode === 'EQN_QUAD') return null;
     
     if (syntaxError) {
@@ -1599,7 +1731,7 @@ const Calculator: React.FC = () => {
         </div>
 
         {/* --- Keys --- */}
-        {renderMappingKey('abs', withFlash(() => handleInput('abs(‸)'), 'ABS'), 'sci sr1 sc1')}
+        {renderMappingKey('calc', withFlash(handleCalc, 'CALC'), 'sci sr1 sc1')}
         {renderMappingKey('integral', withFlash(handleIntegralKey, '∫'), 'sci sr1 sc2')}
         {renderMappingKey('inv', withFlash(handleFactorialKey, 'x-1'), 'sci sr1 sc5')}
         {renderMappingKey('log', withFlash(handleLogKey, 'LOG'), 'sci sr1 sc6')}
