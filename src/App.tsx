@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import calculatorImg from './calculator.png';
 
 // --- Types ---
 type CalcMode = 'COMP' | 'MENU' | 'SETUP' | 'EQN_MENU' | 'EQN_QUAD' | 'EQN_RESULT';
@@ -627,11 +628,11 @@ const Calculator: React.FC = () => {
       }
       if (!matched) {
         const char = s[0];
-        if (char === '×') result.push('×');
-        else if (char === '÷') result.push('÷');
-        else if (char === '²') result.push('x²');
-        else if (char === 'ⁿ') result.push('xⁿ');
-        else if (char === '³') result.push('x³');
+        if (char === '×') { result.push('×'); s = s.slice(1); matched = true; }
+        else if (char === '÷') { result.push('÷'); s = s.slice(1); matched = true; }
+        else if (char === '²') { result.push('x²'); s = s.slice(1); matched = true; }
+        else if (char === 'ⁿ') { result.push('xⁿ'); s = s.slice(1); matched = true; }
+        else if (char === '³') { result.push('x³'); s = s.slice(1); matched = true; }
         else if (char === '⁻') {
            if (s.startsWith('⁻¹')) { result.push('x-1'); s = s.slice(2); matched = true; }
            else { result.push('(-)'); s = s.slice(1); matched = true; }
@@ -679,6 +680,9 @@ const Calculator: React.FC = () => {
                  .replace(/(\))(\d+|Ans|[A-Zπe]|[a-z]+[0-9]*\()/g, ')*$2')
                  .replace(/(\d+|Ans|[A-Zπe]|\))(\()/g, '$1*(');
       
+      // Safety: Ensure no weird dangling operators
+      proc = proc.replace(/\*+/g, '*').replace(/\/+/g, '/').replace(/\*\*+/g, '**');
+
       let val = evaluateExpression(proc, vars, ans, angleMode);
       if (isNaN(val) || !isFinite(val)) throw "Error";
       
@@ -1537,8 +1541,13 @@ const Calculator: React.FC = () => {
           }}
         >
           <div 
-            className="calc-container relative w-[504px] h-[1000px] bg-[url('./calculator.png')] rounded-[60px] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.7)] overflow-hidden"
-            style={{ backgroundSize: '100% 100%', backgroundRepeat: 'no-repeat', backgroundPosition: 'center' }}
+            className="calc-container relative w-[504px] h-[1000px] rounded-[60px] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.7)] overflow-hidden"
+            style={{ 
+              backgroundImage: `url(${calculatorImg})`,
+              backgroundSize: '100% 100%', 
+              backgroundRepeat: 'no-repeat', 
+              backgroundPosition: 'center' 
+            }}
           >
         
         <div 
