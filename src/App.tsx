@@ -266,6 +266,11 @@ const formatMath = (input: string): string => {
   };
   
   let h = input;
+
+  // Protect equals signs temporarily to avoid interference with tag replacements
+  h = h.replace(/=/g, '___EQUALS___');
+
+  // Templates that should render before basic characters
   h = h.replace(/(nCr|nPr)\(([^,]*),([^,)]*)\)/g, (m, type, n, r) => {
       let sym = type === 'nCr' ? 'C' : 'P';
       return `<span class="comb-perm">${slot(n)}<span class="comb-perm-sym">${sym}</span>${slot(r)}</span>`;
@@ -277,9 +282,6 @@ const formatMath = (input: string): string => {
 
   h = h.replace(/²/g, '<span class="sup">2</span>')
        .replace(/³/g, '<span class="sup">3</span>');
-
-  // Replace equals while avoiding matching inside existing HTML tags
-  h = h.replace(/=(?![^<]*>)/g, '<span class="equal-symbol mx-1">=</span>');
 
   h = h.replace(/mix\(([^,)]*),([^,)]*),([^)]*)\)/g, (m, w, n, d) => `<div class="mix-container"><span class="mix-whole">${w}</span><div class="frac-container"><span class="frac-num">${n}</span><span class="frac-den">${d}</span></div></div>`)
        .replace(/mix\(([^,)]*),([^,)]*),([^)]*)$/g, (m, w, n, d) => `<div class="mix-container"><span class="mix-whole">${slot(w)}</span><div class="frac-container"><span class="frac-num">${slot(n)}</span><span class="frac-den">${slot(d)}</span></div></div>`)
@@ -327,6 +329,9 @@ const formatMath = (input: string): string => {
        .replace(/Σ\(([^,)]*),([^,)]*),([^,)]*),([^)]*)$/g, (m, f, v, s, e) => `<div class="sum-container"><div class="sum-bounds"><span>${slot(e)}</span><span>${v}=${slot(s)}</span></div><span class="sum-symbol">Σ</span><div class="sum-body">${slot(f)}</div></div>`)
        .replace(/‸/g, '<span class="cursor"></span>');
   
+  // Restore equals signs with proper styling
+  h = h.replace(/___EQUALS___/g, '<span class="equal-symbol mx-1">=</span>');
+
   h = h.replace(/<span class="empty-slot">⬚<\/span><span class="cursor"><\/span>/g, '<span class="cursor"></span>')
        .replace(/<span class="cursor"><\/span><span class="empty-slot">⬚<\/span>/g, '<span class="cursor"></span>');
   
@@ -603,8 +608,12 @@ const Calculator: React.FC = () => {
       "sinh⁻¹(", "cosh⁻¹(", "tanh⁻¹(", "sin⁻¹(", "cos⁻¹(", "tan⁻¹(",
       "sinh(", "cosh(", "tanh(", "sin(", "cos(", "tan(",
       "pwr(", "root(", "sqr(", "cube(", "frac(", "mix(", "diff(", "int(", "abs(", "log_b(", "log10(", "ln(", "Σ(", 
-      "RanInt(", "Ran#", "Ans", "e", "π", "°′″", "×10^", "nCr(", "nPr("
+      "RanInt(", "Ran#", "Ans", "e", "π", "°′″", "×10^", "nCr(", "nPr(", "root(3,", "^(", "10^(", "e^("
     ];
+    
+    // To handle closing parentheses of templates
+    let templateParenStack: number[] = [];
+
     while (s.length > 0) {
       let matched = false;
       for (const t of tokens) {
@@ -619,16 +628,16 @@ const Calculator: React.FC = () => {
           else if (t === 'sinh(') label = 'sinh';
           else if (t === 'cosh(') label = 'cosh';
           else if (t === 'tanh(') label = 'tanh';
-          else if (t === 'pwr(') label = 'xⁿ';
+          else if (t === 'pwr(' || t === '^(') label = 'xⁿ';
           else if (t === 'sqr(') label = 'x²';
           else if (t === 'cube(') label = 'x³';
           else if (t === 'frac(') label = 'frac';
           else if (t === 'mix(') label = 'mix';
-          else if (t === 'log10(') label = 'log';
-          else if (t === 'ln(') label = 'ln';
+          else if (t === 'log10(' || t === '10^(') label = 'log';
+          else if (t === 'ln(' || t === 'e^(') label = 'ln';
           else if (t === 'abs(') label = 'Abs';
           else if (t === 'sqrt(') label = '√';
-          else if (t === 'root(') label = 'root';
+          else if (t === 'root(' || t === 'root(3,') label = 'root';
           else if (t === 'int(') label = '∫';
           else if (t === 'diff(') label = 'd/dx';
           else if (t === 'Σ(') label = 'Σ';
@@ -642,6 +651,11 @@ const Calculator: React.FC = () => {
           
           result.push(label);
           s = s.slice(t.length);
+          
+          if (t.endsWith('(') || t.includes('(')) {
+             templateParenStack.push(1);
+          }
+          
           matched = true;
           break;
         }
@@ -657,7 +671,28 @@ const Calculator: React.FC = () => {
            if (s.startsWith('⁻¹')) { result.push('x-1'); s = s.slice(2); matched = true; }
            else { result.push('(-)'); s = s.slice(1); matched = true; }
         } else if (char.match(/[0-9.]/)) { result.push(char); s = s.slice(1); matched = true;}
-        else if (char === '(' || char === ')') { result.push(char); s = s.slice(1); matched = true;}
+        else if (char === '(') {
+           result.push('('); s = s.slice(1); matched = true;
+           if (templateParenStack.length > 0) templateParenStack[templateParenStack.length-1]++;
+        }
+        else if (char === ')') {
+           if (templateParenStack.length > 0) {
+              templateParenStack[templateParenStack.length-1]--;
+              if (templateParenStack[templateParenStack.length-1] === 0) {
+                 templateParenStack.pop();
+                 s = s.slice(1); // Swallow template-closing paren
+                 matched = true;
+              } else {
+                 result.push(')');
+                 s = s.slice(1);
+                 matched = true;
+              }
+           } else {
+              result.push(')');
+              s = s.slice(1);
+              matched = true;
+           }
+        }
         else if (char === '+' || char === '-' || char === '*' || char === '/') {
           result.push(char === '*' ? '×' : char === '/' ? '÷' : char);
           s = s.slice(1);
@@ -1796,8 +1831,8 @@ const Calculator: React.FC = () => {
 
       {/* Side Pane */}
       {showPane && (
-        <div className="w-full md:w-[350px] mt-8 md:mt-0 h-fit max-h-[900px] bg-[#1a1a1a] rounded-3xl border border-white/5 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-300">
-          <div className="flex border-b border-white/5">
+        <div className="fixed inset-0 z-[100] md:relative md:inset-auto md:w-[350px] md:mt-0 bg-[#1a1a1a] md:rounded-3xl border-l md:border border-white/5 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-300 h-full md:h-fit md:max-h-[900px]">
+          <div className="flex border-b border-white/5 relative">
             <button 
               onClick={() => setPaneView('history')}
               className={`flex-1 py-4 text-sm font-bold tracking-wider uppercase transition-colors ${paneView === 'history' ? 'bg-white/5 text-blue-400' : 'text-white/40 hover:text-white/60'}`}
@@ -1809,6 +1844,13 @@ const Calculator: React.FC = () => {
               className={`flex-1 py-4 text-sm font-bold tracking-wider uppercase transition-colors ${paneView === 'help' ? 'bg-white/5 text-blue-400' : 'text-white/40 hover:text-white/60'}`}
             >
               Keyboard
+            </button>
+            {/* Close button for mobile split view */}
+            <button 
+              onClick={() => setShowPane(false)}
+              className="md:hidden absolute right-4 top-1/2 -translate-y-1/2 p-2 text-white/40 hover:text-white"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
           </div>
 
