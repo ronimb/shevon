@@ -672,12 +672,12 @@ const Calculator: React.FC = () => {
                   .replace(/×10\^/g, '*10**')
                   .replace(/²/g, '**2').replace(/³/g, '**3');
 
-      proc = proc.replace(/(\d+)([a-zA-Zπ]|Ans)/g, '$1*$2')
-                 .replace(/(\))(\d+)/g, ')*$2')
-                 .replace(/(\b\d+)\(/g, '$1*(')
-                 .replace(/(\))(\()/g, ')*(')
-                 .replace(/(\))([a-zA-Zπ]|Ans)/g, ')*$2')
-                 .replace(/(\b[A-Zπe]\b|Ans)(\()/g, '$1*(');
+      // Enhanced implicit multiplication
+      proc = proc.replace(/(\d+)(Ans|[A-Zπe]|[a-z]+[0-9]*\()/g, '$1*$2')
+                 .replace(/(\bAns\b|[A-Zπe])(Ans|[A-Zπe]|[a-z]+[0-9]*\()/g, '$1*$2')
+                 .replace(/(\bAns\b|[A-Zπe])(\d+)/g, '$1*$2')
+                 .replace(/(\))(\d+|Ans|[A-Zπe]|[a-z]+[0-9]*\()/g, ')*$2')
+                 .replace(/(\d+|Ans|[A-Zπe]|\))(\()/g, '$1*(');
       
       let val = evaluateExpression(proc, vars, ans, angleMode);
       if (isNaN(val) || !isFinite(val)) throw "Error";
