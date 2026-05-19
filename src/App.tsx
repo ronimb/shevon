@@ -93,14 +93,16 @@ interface Vars {
 }
 
 // --- Constants ---
-const PATS = ['sin⁻¹(', 'cos⁻¹(', 'tan⁻¹(', 'sin(', 'cos(', 'tan(', '×10^', 'sqrt(', 'sqr(', 'cube(', 'pwr(', 'root(', 'frac(', 'mix(', 'int(', 'diff(', 'e^(', '10^(', 'log_b(', 'log10(', 'ln(', 'abs(', 'Ans', 'nCr(', 'nPr(', 'Σ('];
+const PATS = ['!', 'sin⁻¹(', 'cos⁻¹(', 'tan⁻¹(', 'sin(', 'cos(', 'tan(', '×10^', 'sqrt(', 'sqr(', 'cube(', 'pwr(', 'root(', 'frac(', 'mix(', 'int(', 'diff(', 'e^(', '10^(', 'log_b(', 'log10(', 'ln(', 'abs(', 'Ans', 'nCr(', 'nPr(', 'Σ(', 'pol(', 'rec(', 'RanInt(', 'Ran#'];
 
 // --- Helper Functions ---
 const factorial = (n: number): number => {
-  if (n < 0) return NaN;
-  if (n === 0) return 1;
+  const v = Math.round(n);
+  if (v < 0) return NaN;
+  if (v === 0) return 1;
+  if (v > 170) return Infinity; 
   let r = 1;
-  for (let i = 2; i <= n; i++) r *= i;
+  for (let i = 2; i <= v; i++) r *= i;
   return r;
 };
 
@@ -168,86 +170,391 @@ const evaluateExpression = (expr: string, scope: Vars, ans: number, angleMode: A
 
   const h: any = {
     pi: Math.PI, e: Math.E,
-    sin: (x: number) => Math.sin(toRad(x)),
-    cos: (x: number) => Math.cos(toRad(x)),
-    tan: (x: number) => Math.tan(x === 90 && angleMode === 'DEG' ? Infinity : toRad(x)),
-    asin: (x: number) => fromRad(Math.asin(x)),
-    acos: (x: number) => fromRad(Math.acos(x)),
-    atan: (x: number) => fromRad(Math.atan(x)),
-    sinh: Math.sinh, cosh: Math.cosh, tanh: Math.tanh,
-    asinh: Math.asinh, acosh: Math.acosh, atanh: Math.atanh,
-    sqrt: Math.sqrt, log: Math.log, log10: Math.log10, exp: Math.exp, pow: Math.pow,
-    nthRoot: (n: number, x: number) => Math.pow(x, 1 / n),
-    logB: (b: number, x: number) => Math.log(x) / Math.log(b),
-    nPr: (n: number, r: number) => factorial(n) / factorial(n - r),
-    nCr: (n: number, r: number) => factorial(n) / (factorial(r) * factorial(n - r)),
-    abs: Math.abs,
-    int: (expStr: string, a: number, b: number, v: string) => {
-      let f = (x: number) => evaluateExpression(expStr, { ...scope, [v]: x }, ans, angleMode);
-      let n = 100, step = (b - a) / n, sum = f(a) + f(b);
-      for (let i = 1; i < n; i++) sum += f(a + i * step) * (i % 2 === 0 ? 2 : 4);
-      return (step / 3) * sum;
+    __sin: (x: number) => Math.sin(toRad(x)),
+    __cos: (x: number) => Math.cos(toRad(x)),
+    __tan: (x: number) => Math.tan(x === 90 && angleMode === 'DEG' ? Infinity : toRad(x)),
+    __asin: (x: number) => fromRad(Math.asin(x)),
+    __acos: (x: number) => fromRad(Math.acos(x)),
+    __atan: (x: number) => fromRad(Math.atan(x)),
+    __sinh: Math.sinh, __cosh: Math.cosh, __tanh: Math.tanh,
+    __asinh: Math.asinh, __acosh: Math.acosh, __atanh: Math.atanh,
+    __sqrt: Math.sqrt, __log: Math.log, __log10: Math.log10, __exp: Math.exp, __pow: Math.pow,
+    __abs: Math.abs, Math: Math,
+    __nthroot: (n: number, x: number) => Math.pow(x, 1 / n),
+    __logb: (b: number, x: number) => Math.log(x) / Math.log(b),
+    __factorial: factorial,
+    __ncr: (n: number, r: number) => {
+      const nv = Math.floor(Math.abs(n)), rv = Math.floor(Math.abs(r));
+      if (rv < 0 || rv > nv) return 0;
+      if (nv > 1000000) return Infinity;
+      if (rv === 0 || rv === nv) return 1;
+      let res = 1;
+      const k = Math.min(rv, nv - rv);
+      for (let i = 1; i <= k; i++) {
+        res = res * (nv - i + 1) / i;
+      }
+      return Math.round(res);
     },
-    diff: (expStr: string, v: string, a: number) => {
+    __npr: (n: number, r: number) => {
+      const nv = Math.floor(Math.abs(n)), rv = Math.floor(Math.abs(r));
+      if (rv < 0 || rv > nv) return 0;
+      if (nv > 1000000) return Infinity;
+      let res = 1;
+      for (let i = 0; i < rv; i++) {
+        res *= (nv - i);
+        if (!isFinite(res)) break;
+      }
+      return Math.round(res);
+    },
+    __ranint: (a: number, b: number) => {
+      const min = Math.min(a, b);
+      const max = Math.max(a, b);
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    },
+    '__ranhash': () => Math.random(),
+    __pol: (x: number, y: number) => {
+      const r = Math.sqrt(x*x + y*y);
+      const theta = fromRad(Math.atan2(y, x));
+      scope.X = r; scope.Y = theta;
+      return r;
+    },
+    __rec: (r: number, theta: number) => {
+      const x = r * Math.cos(toRad(theta));
+      const y = r * Math.sin(toRad(theta));
+      scope.X = x; scope.Y = y;
+      return x;
+    },
+    __int: (expStr: string, a: number, b: number, v: string) => {
+      let f = (x: number) => evaluateExpression(expStr, { ...scope, [v]: x }, ans, angleMode);
+      let n = 20, step = (b - a) / n, sumVal = f(a) + f(b);
+      for (let i = 1; i < n; i++) sumVal += f(a + i * step) * (i % 2 === 0 ? 2 : 4);
+      return (step / 3) * sumVal;
+    },
+    __diff: (expStr: string, v: string, a: number) => {
       let hVal = 1e-7;
       let f = (x: number) => evaluateExpression(expStr, { ...scope, [v]: x }, ans, angleMode);
       return (f(a + hVal) - f(a)) / hVal;
     },
-    sum: (expStr: string, v: string, a: number, b: number) => {
+    __sum: (expStr: string, v: string, a: number, b: number) => {
       let t = 0;
-      for (let i = a; i <= b; i++) t += evaluateExpression(expStr, { ...scope, [v]: i }, ans, angleMode);
+      let start = Math.floor(a);
+      let end = Math.floor(b);
+      if (end - start > 5000) end = start + 5000;
+      for (let i = start; i <= end; i++) t += evaluateExpression(expStr, { ...scope, [v]: i }, ans, angleMode);
       return t;
     }
   };
 
-  let proc = expr.replace(/[‸⬚]/g, '')
-    .replace(/×/g, '*')
+  const getBalanced = (s: string, startIdx: number): { content: string, endIdx: number } | null => {
+    let count = 0;
+    for (let i = startIdx; i < s.length; i++) {
+        if (s[i] === '(') count++;
+        else if (s[i] === ')') {
+            count--;
+            if (count === 0) return { content: s.substring(startIdx + 1, i), endIdx: i };
+        }
+    }
+    return null;
+  };
+
+  const splitTopLevelArgs = (s: string) => {
+    const args: string[] = [];
+    let current = '';
+    let pCount = 0;
+    for (let i = 0; i < s.length; i++) {
+        if (s[i] === '(') pCount++;
+        else if (s[i] === ')') pCount--;
+        if (s[i] === ',' && pCount === 0) {
+            args.push(current);
+            current = '';
+        } else {
+            current += s[i];
+        }
+    }
+    args.push(current);
+    return args;
+  };
+
+  let proc = expr.replace(/[‸⬚]/g, '');
+  
+  if (proc.includes('=') && !proc.includes('→')) {
+    let parts = proc.split('=');
+    if (parts.length === 2) {
+      proc = `(${parts[0]}) - (${parts[1]})`;
+    }
+  }
+
+  // Pre-process templates that need transformation (e.g., adding quotes for variables)
+  const templatesToTransform = ['int', 'diff', 'Σ'];
+  for (const t of templatesToTransform) {
+    let idx = 0;
+    while ((idx = proc.indexOf(t + '(', idx)) !== -1) {
+        const bal = getBalanced(proc, idx + t.length);
+        if (!bal) { idx += t.length + 1; continue; }
+        const topArgs = splitTopLevelArgs(bal.content);
+
+        let replaced = '';
+        if (t === 'int' && topArgs.length === 4) replaced = `__int("${topArgs[0]}",${topArgs[1]},${topArgs[2]},"${topArgs[3]}")`;
+        else if (t === 'diff' && topArgs.length === 3) replaced = `__diff("${topArgs[0]}","${topArgs[1]}",${topArgs[2]})`;
+        else if (t === 'Σ' && topArgs.length === 4) replaced = `__sum("${topArgs[0]}","${topArgs[1]}",${topArgs[2]},${topArgs[3]})`;
+        else {
+            idx += t.length + 1;
+            continue; 
+        }
+        
+        proc = proc.substring(0, idx) + replaced + proc.substring(bal.endIdx + 1);
+        idx += replaced.length;
+    }
+  }
+
+  const mathTemplates = [
+    { name: 'pwr', replace: (args: string[]) => `((${args[0]})**(${args[1]}))` },
+    { name: 'root', replace: (args: string[]) => `__nthroot(${args[0]},${args[1]})` },
+    { name: 'mix', replace: (args: string[]) => `((${args[0]})+(${args[1]})/(${args[2]}))` },
+    { name: 'frac', replace: (args: string[]) => `((${args[0]})/(${args[1]}))` },
+    { name: 'log_b', replace: (args: string[]) => `__logb(${args[0]},${args[1]})` },
+    { name: 'ln', replace: (args: string[]) => `__log(${args[0]})` },
+    { name: 'log10', replace: (args: string[]) => `__log10(${args[0]})` },
+    { name: 'sin⁻¹', replace: (args: string[]) => `__asin(${args[0]})` },
+    { name: 'cos⁻¹', replace: (args: string[]) => `__acos(${args[0]})` },
+    { name: 'tan⁻¹', replace: (args: string[]) => `__atan(${args[0]})` },
+    { name: 'asin', replace: (args: string[]) => `__asin(${args[0]})` },
+    { name: 'acos', replace: (args: string[]) => `__acos(${args[0]})` },
+    { name: 'atan', replace: (args: string[]) => `__atan(${args[0]})` },
+    { name: 'sin', replace: (args: string[]) => `__sin(${args[0]})` },
+    { name: 'cos', replace: (args: string[]) => `__cos(${args[0]})` },
+    { name: 'tan', replace: (args: string[]) => `__tan(${args[0]})` },
+    { name: 'sinh', replace: (args: string[]) => `__sinh(${args[0]})` },
+    { name: 'cosh', replace: (args: string[]) => `__cosh(${args[0]})` },
+    { name: 'tanh', replace: (args: string[]) => `__tanh(${args[0]})` },
+    { name: 'asinh', replace: (args: string[]) => `__asinh(${args[0]})` },
+    { name: 'acosh', replace: (args: string[]) => `__acosh(${args[0]})` },
+    { name: 'atanh', replace: (args: string[]) => `__atanh(${args[0]})` },
+    { name: 'nCr', replace: (args: string[]) => `__ncr(${args[0]},${args[1]})` },
+    { name: 'nPr', replace: (args: string[]) => `__npr(${args[0]},${args[1]})` },
+    { name: 'pol', replace: (args: string[]) => `__pol(${args[0]},${args[1]})` },
+    { name: 'rec', replace: (args: string[]) => `__rec(${args[0]},${args[1]})` },
+    { name: 'RanInt', replace: (args: string[]) => `__ranint(${args[0]},${args[1]})` },
+    { name: 'e^', replace: (args: string[]) => `__exp(${args[0]})` },
+    { name: '10^', replace: (args: string[]) => `__pow(10,${args[0]})` },
+    { name: 'sqr', replace: (args: string[]) => `((${args[0]})**2)` },
+    { name: 'cube', replace: (args: string[]) => `((${args[0]})**3)` },
+    { name: 'abs', replace: (args: string[]) => `__abs(${args[0]})` },
+    { name: 'sqrt', replace: (args: string[]) => `__sqrt(${args[0]})` },
+  ];
+
+  const processTemplatesForJS = (s: string): string => {
+    let result = '';
+    let curr = s;
+    while (curr.length > 0) {
+      let earliestIdx = Infinity;
+      let bestT: any = null;
+      
+      // Look for the first template in the string
+      for (const t of mathTemplates) {
+        let idx = curr.indexOf(t.name + '(');
+        if (idx !== -1 && idx < earliestIdx) {
+          earliestIdx = idx;
+          bestT = t;
+        }
+      }
+      
+      if (bestT) {
+        // Add everything before the template to the result
+        result += curr.substring(0, earliestIdx);
+        const bal = getBalanced(curr, earliestIdx + bestT.name.length);
+        if (bal) {
+          // Process the content of the template recursively
+          const inner = processTemplatesForJS(bal.content);
+          const args = splitTopLevelArgs(inner);
+          const replaced = bestT.replace(args);
+          result += replaced;
+          // Continue scanning FROM AFTER the template we just processed
+          curr = curr.substring(bal.endIdx + 1);
+        } else {
+          // Mismatched paren? Just consume the name and continue
+          result += bestT.name + '(';
+          curr = curr.substring(earliestIdx + bestT.name.length + 1);
+        }
+      } else {
+        // No templates found, add the rest of the string
+        result += curr;
+        curr = '';
+      }
+    }
+    return result;
+  };
+
+  proc = processTemplatesForJS(proc);
+
+  // Robust Factorial Replacement
+  let fIdx;
+  while ((fIdx = proc.indexOf('!')) !== -1) {
+      let before = proc.substring(0, fIdx);
+      let after = proc.substring(fIdx + 1);
+      let operand = '';
+      if (before.endsWith(')')) {
+          let parenCount = 0;
+          for (let i = before.length - 1; i >= 0; i--) {
+              if (before[i] === ')') parenCount++;
+              else if (before[i] === '(') parenCount--;
+              if (parenCount === 0) {
+                  operand = before.substring(i);
+                  before = before.substring(0, i);
+                  break;
+              }
+          }
+      } else {
+          let match = before.match(/(\d+\.?\d*|Ans|[A-Zπe])$/);
+          if (match) {
+              operand = match[0];
+              before = before.substring(0, before.length - operand.length);
+          }
+      }
+      if (operand) {
+          proc = before + `__factorial(${operand})` + after;
+      } else {
+          // No valid operand found, handle this ! manually or skip
+          proc = before + '__factorial(NaN)' + after;
+      }
+  }
+
+  proc = proc.replace(/×/g, '*')
     .replace(/÷/g, '/')
-    .replace(/π/g, 'Math.PI')
-    .replace(/e/g, 'Math.E');
+    .replace(/Ran#/g, '__ranhash()')
+    .replace(/%/g, '/100')
+    .replace(/×10\^/g, '*10**')
+    .replace(/²/g, '**2')
+    .replace(/³/g, '**3');
+
+  // Enhanced implicit multiplication
+  const funcOrVar = '(Ans|[A-Zπe]|__[a-z]+[A-Za-z0-9]*\\()';
+  proc = proc.replace(new RegExp(`(\\d+)${funcOrVar}`, 'g'), '$1*$2')
+             .replace(new RegExp(`(\\bAns\\b|[A-Zπe])${funcOrVar}`, 'g'), '$1*$2')
+             .replace(/(\bAns\b|[A-Zπe])(\d+)/g, '$1*$2')
+             .replace(new RegExp(`(\\))(\\d+|${funcOrVar})`, 'g'), ')*$2')
+             .replace(new RegExp(`(\\d+|Ans|[A-Zπe]|\\))(\\()`, 'g'), '$1*(');
+
+  proc = proc.replace(/π/g, 'pi')
+    .replace(/\be\b/g, 'e');
 
   let js = proc.replace(/\^/g, '**');
   try {
-    return new Function('ctx', 'h', `with(ctx) { with(h) { return ${js}; } }`)( { ...scope, Ans: ans }, h);
+    const context = { Ans: ans, ...scope, ...h };
+    const keys = Object.keys(context);
+    const values = Object.values(context);
+    if (process.env.NODE_ENV !== "production") {
+       console.log("Evaluating JS:", js, "Context:", context);
+    }
+    return new Function(...keys, `return ${js};`)(...values);
   } catch (e) {
+    console.error("JS Evaluation Error for code:", js, e);
     throw e;
   }
 };
 
 const toLaTeX = (expr: string): string => {
-  let s = expr.replace(/[‸⬚]/g, '');
+  let proc = expr.replace(/[‸⬚]/g, '');
+
+  const getBalanced = (s: string, startIdx: number): { content: string, endIdx: number } | null => {
+    let count = 0;
+    for (let i = startIdx; i < s.length; i++) {
+        if (s[i] === '(') count++;
+        else if (s[i] === ')') {
+            count--;
+            if (count === 0) return { content: s.substring(startIdx + 1, i), endIdx: i };
+        }
+    }
+    return null;
+  };
+
+  const splitTopLevelArgs = (s: string) => {
+    const args: string[] = [];
+    let current = '';
+    let pCount = 0;
+    for (let i = 0; i < s.length; i++) {
+        if (s[i] === '(') pCount++;
+        else if (s[i] === ')') pCount--;
+        if (s[i] === ',' && pCount === 0) {
+            args.push(current);
+            current = '';
+        } else {
+            current += s[i];
+        }
+    }
+    args.push(current);
+    return args;
+  };
+
+  const renderLaTeX = (s: string): string => {
+    let text = s;
+    const templates = ['int', 'diff', 'frac', 'mix', 'root', 'sqrt', 'sqr', 'cube', 'log_b', 'log10', 'ln', 'abs', 'sin⁻¹', 'cos⁻¹', 'tan⁻¹', 'sin', 'cos', 'tan', 'pwr', 'Σ', 'nCr', 'nPr', 'factorial', 'exp', 'pow'];
+    
+    // Process templates inner-out by always finding the first template with a balanced pair
+    let lastLength = -1;
+    while (text.length !== lastLength) {
+        lastLength = text.length;
+        let earliestIdx = Infinity;
+        let bestT = '';
+        
+        for (const t of templates) {
+            let idx = text.indexOf(t + '(');
+            if (idx !== -1 && idx < earliestIdx) {
+                earliestIdx = idx;
+                bestT = t;
+            }
+        }
+        
+        if (bestT) {
+            const bal = getBalanced(text, earliestIdx + bestT.length);
+            if (bal) {
+                // IMPORTANT: Process the inner content first to handle nested templates
+                const innerProcessed = renderLaTeX(bal.content);
+                const args = splitTopLevelArgs(innerProcessed);
+                let replaced = '';
+                
+                if (bestT === 'int') replaced = `\\int_{${args[1]}}^{${args[2]}} ${args[0]} \\, d${args[3] || 'x'}`;
+                else if (bestT === 'diff') replaced = `\\frac{d}{d${args[1] || 'x'}}\\left(${args[0]}\\right)\\bigg|_{${args[1] || 'x'}=${args[2]}}`;
+                else if (bestT === 'frac') replaced = `\\frac{${args[0]}}{${args[1]}}`;
+                else if (bestT === 'mix') replaced = `${args[0]}\\frac{${args[1]}}{${args[2]}}`;
+                else if (bestT === 'root') replaced = `\\sqrt[${args[0]}]{${args[1]}}`;
+                else if (bestT === 'sqrt') replaced = `\\sqrt{${args[0]}}`;
+                else if (bestT === 'sqr') replaced = `{${args[0]}}^2`;
+                else if (bestT === 'cube') replaced = `{${args[0]}}^3`;
+                else if (bestT === 'pwr') replaced = `{${args[0]}}^{${args[1]}}`;
+                else if (bestT === 'log_b') replaced = `\\log_{${args[0]}}(${args[1]})`;
+                else if (bestT === 'log10') replaced = `\\log_{10}(${args[0]})`;
+                else if (bestT === 'ln') replaced = `\\ln(${args[0]})`;
+                else if (bestT === 'abs') replaced = `|${args[0]}|`;
+                else if (bestT === 'sin') replaced = `\\sin(${args[0]})`;
+                else if (bestT === 'cos') replaced = `\\cos(${args[0]})`;
+                else if (bestT === 'tan') replaced = `\\tan(${args[0]})`;
+                else if (bestT === 'sin⁻¹') replaced = `\\arcsin(${args[0]})`;
+                else if (bestT === 'cos⁻¹') replaced = `\\arccos(${args[0]})`;
+                else if (bestT === 'tan⁻¹') replaced = `\\arctan(${args[0]})`;
+                else if (bestT === 'Σ') replaced = `\\sum_{${args[1] || 'x'}=${args[2]}}^{${args[3]}} ${args[0]}`;
+                else if (bestT === 'nCr') replaced = `{\\textstyle \\binom{${args[0]}}{${args[1]}}}`;
+                else if (bestT === 'nPr') replaced = `{}^{${args[0]}}P_{${args[1]}}`;
+                else if (bestT === 'factorial') replaced = `{${args[0]}}!`;
+                else if (bestT === 'exp') replaced = `e^{${args[0]}}`;
+                else if (bestT === 'pow') replaced = `{${args[0]}}^{${args[1]}}`;
+
+                text = text.substring(0, earliestIdx) + replaced + text.substring(bal.endIdx + 1);
+                // After a replacement, we must break and start again to ensure correct order
+                continue; 
+            }
+        }
+        break; // No more templates with balanced parens found
+    }
+    return text;
+  };
+
+  let s = renderLaTeX(proc);
   
-  // Basic replacements
+  // Basic replacements for symbols outside templates
   s = s.replace(/×/g, '\\times ')
        .replace(/÷/g, '\\div ')
        .replace(/π/g, '\\pi ')
-       .replace(/\^\(([^)]*)\)/g, '^{$1}')
-       .replace(/\^/g, '^')
-       .replace(/log10\(([^)]*)\)/g, '\\log_{10}($1)')
-       .replace(/ln\(([^)]*)\)/g, '\\ln($1)')
-       .replace(/abs\(([^)]*)\)/g, '|$1|')
-       .replace(/sin\(([^)]*)\)/g, '\\sin($1)')
-       .replace(/cos\(([^)]*)\)/g, '\\cos($1)')
-       .replace(/tan\(([^)]*)\)/g, '\\tan($1)')
-       .replace(/sin⁻¹\(([^)]*)\)/g, '\\arcsin($1)')
-       .replace(/cos⁻¹\(([^)]*)\)/g, '\\arccos($1)')
-       .replace(/tan⁻¹\(([^)]*)\)/g, '\\arctan($1)');
-
-  // Templates
-  s = s.replace(/=/g, '=')
-       .replace(/int\(([^,]*),([^,]*),([^,]*),([^)]*)\)/g, '\\int_{$2}^{$3} $1 \\, d$4')
-       .replace(/diff\(([^,]*),([^,]*),([^)]*)\)/g, '\\frac{d}{d$2}\\left($1\\right)\\bigg|_{$2=$3}')
-       .replace(/frac\(([^,]*),([^)]*)\)/g, '\\frac{$1}{$2}')
-       .replace(/mix\(([^,]*),([^,]*),([^)]*)\)/g, '$1\\frac{$2}{$3}')
-       .replace(/root\(([^,]*),([^)]*)\)/g, '\\sqrt[$1]{$2}')
-       .replace(/sqrt\(([^)]*)\)/g, '\\sqrt{$1}')
-       .replace(/sqr\(([^)]*)\)/g, '{$1}^2')
-       .replace(/cube\(([^)]*)\)/g, '{$1}^3')
-       .replace(/pwr\(([^,]*),([^)]*)\)/g, '{$1}^{$2}')
-       .replace(/log_b\(([^,]*),([^)]*)\)/g, '\\log_{$1}($2)')
-       .replace(/Σ\(([^,]*),([^,]*),([^,]*),([^)]*)\)/g, '\\sum_{$2=$3}^{$4} $1')
-       .replace(/nCr\(([^,]*),([^)]*)\)/g, '{\\textstyle \\binom{$1}{$2}}')
-       .replace(/nPr\(([^,]*),([^)]*)\)/g, '{}^{$1}P_{$2}')
        .replace(/×10\^/g, '\\times 10^');
 
   return s;
@@ -267,66 +574,119 @@ const formatMath = (input: string): string => {
   
   let h = input;
 
+  // Replace factorial internal representation back to symbol for display
+  h = h.replace(/factorial\(([^)]*)\)/g, '$1!');
+
   // Protect equals signs temporarily to avoid interference with tag replacements
   h = h.replace(/=/g, '___EQUALS___');
 
-  // Templates that should render before basic characters
-  h = h.replace(/(nCr|nPr)\(([^,]*),([^,)]*)\)/g, (m, type, n, r) => {
-      let sym = type === 'nCr' ? 'C' : 'P';
-      return `<span class="comb-perm">${slot(n)}<span class="comb-perm-sym">${sym}</span>${slot(r)}</span>`;
-  })
-  .replace(/(nCr|nPr)\(([^,)]*)$/g, (m, type, n) => {
-      let sym = type === 'nCr' ? 'C' : 'P';
-      return `<span class="comb-perm">${slot(n)}<span class="comb-perm-sym">${sym}</span><span class="empty-slot">⬚</span></span>`;
-  });
+  const getBalanced = (s: string, startIdx: number): { content: string, endIdx: number } | null => {
+    let count = 0;
+    for (let i = startIdx; i < s.length; i++) {
+        if (s[i] === '(') count++;
+        else if (s[i] === ')') {
+            count--;
+            if (count === 0) return { content: s.substring(startIdx + 1, i), endIdx: i };
+        }
+    }
+    return null;
+  };
 
-  h = h.replace(/²/g, '<span class="sup">2</span>')
-       .replace(/³/g, '<span class="sup">3</span>');
+  const splitTopLevelArgs = (s: string) => {
+    const args: string[] = [];
+    let current = '';
+    let pCount = 0;
+    for (let i = 0; i < s.length; i++) {
+        if (s[i] === '(') pCount++;
+        else if (s[i] === ')') pCount--;
+        if (s[i] === ',' && pCount === 0) {
+            args.push(current);
+            current = '';
+        } else {
+            current += s[i];
+        }
+    }
+    args.push(current);
+    return args;
+  };
 
-  h = h.replace(/mix\(([^,)]*),([^,)]*),([^)]*)\)/g, (m, w, n, d) => `<div class="mix-container"><span class="mix-whole">${w}</span><div class="frac-container"><span class="frac-num">${n}</span><span class="frac-den">${d}</span></div></div>`)
-       .replace(/mix\(([^,)]*),([^,)]*),([^)]*)$/g, (m, w, n, d) => `<div class="mix-container"><span class="mix-whole">${slot(w)}</span><div class="frac-container"><span class="frac-num">${slot(n)}</span><span class="frac-den">${slot(d)}</span></div></div>`)
-       .replace(/mix\(([^,)]*),([^,)]*)$/g, (m, w, n) => `<div class="mix-container"><span class="mix-whole">${slot(w)}</span><div class="frac-container"><span class="frac-num">${slot(n)}</span><span class="frac-den"><span class="empty-slot">⬚</span></span></div></div>`)
-       .replace(/mix\(([^,)]*)$/g, (m, w) => `<div class="mix-container"><span class="mix-whole">${slot(w)}</span><div class="frac-container"><span class="frac-num"><span class="empty-slot">⬚</span></span><span class="frac-den"><span class="empty-slot">⬚</span></span></div></div>`);
+  // Improved recursive template rendering for display
+  const renderTemplates = (s: string): string => {
+    let proc = s;
+    const templates = ['nCr', 'nPr', 'pol', 'rec', 'mix', 'frac', 'int', 'diff', 'root', 'sqrt', 'sqr', 'cube', 'log_b', 'log10', 'e^', '10^', 'pwr', 'Σ'];
+    
+    let lastLength = -1;
+    while (proc.length !== lastLength) {
+        lastLength = proc.length;
+        let earliestIdx = Infinity;
+        let bestT = '';
+        
+        for (const t of templates) {
+            let idx = proc.indexOf(t + '(');
+            if (idx !== -1 && idx < earliestIdx) {
+                earliestIdx = idx;
+                bestT = t;
+            }
+        }
+        
+        if (bestT) {
+            const bal = getBalanced(proc, earliestIdx + bestT.length);
+            if (bal) {
+                const innerProcessed = renderTemplates(bal.content);
+                const args = splitTopLevelArgs(innerProcessed);
+                let replaced = '';
+                
+                if (bestT === 'nCr' || bestT === 'nPr') {
+                   let sym = bestT === 'nCr' ? 'C' : 'P';
+                   replaced = `<span class="comb-perm">${slot(args[0])}<span class="comb-perm-sym">${sym}</span>${slot(args[1] || '')}</span>`;
+                } else if (bestT === 'pol' || bestT === 'rec') {
+                   let sym = bestT === 'pol' ? 'Pol' : 'Rec';
+                   replaced = `<span class="trig-fun">${sym}</span>(${slot(args[0])},${slot(args[1] || '')})`;
+                } else if (bestT === 'frac') {
+                    replaced = `<div class="frac-container"><span class="frac-num">${slot(args[0])}</span><span class="frac-den">${slot(args[1] || '')}</span></div>`;
+                } else if (bestT === 'mix') {
+                    replaced = `<div class="mix-container"><span class="mix-whole">${slot(args[0])}</span><div class="frac-container"><span class="frac-num">${slot(args[1] || '')}</span><span class="frac-den">${slot(args[2] || '')}</span></div></div>`;
+                } else if (bestT === 'int') {
+                    replaced = `<div class="int-container"><div class="int-bounds"><span>${slot(args[2])}</span><span>${slot(args[1])}</span></div><span class="int-symbol">∫</span><div class="int-body">${slot(args[0])} d${slot(args[3] || 'x')}</div></div>`;
+                } else if (bestT === 'diff') {
+                    replaced = `<div class="diff-container"><div class="diff-frac"><span class="diff-top">d</span><span>d${slot(args[1] || 'x')}</span></div>(${slot(args[0])})<div class="diff-at">| ${slot(args[1] || 'x')}=${slot(args[2])}</div></div>`;
+                } else if (bestT === 'root') {
+                    replaced = `<span class="sup">${slot(args[0])}</span><span class="root-symbol">√</span><span class="root-body">${slot(args[1] || '')}</span>`;
+                } else if (bestT === 'sqrt') {
+                    replaced = `<span class="root-symbol">√</span><span class="root-body">${slot(args[0])}</span>`;
+                } else if (bestT === 'sqr') {
+                    replaced = `${slot(args[0])}<span class="sup">2</span>`;
+                } else if (bestT === 'cube') {
+                    replaced = `${slot(args[0])}<span class="sup">3</span>`;
+                } else if (bestT === 'pwr') {
+                    replaced = `${slot(args[0])}<span class="sup">${slot(args[1] || '')}</span>`;
+                } else if (bestT === 'log_b') {
+                    replaced = `log<span class="sub">${slot(args[0])}</span>(${slot(args[1] || '')})`;
+                } else if (bestT === 'log10') {
+                    replaced = `log(${slot(args[0])})`;
+                } else if (bestT === 'e^') {
+                    replaced = `e<span class="sup">${slot(args[0])}</span>`;
+                } else if (bestT === '10^') {
+                    replaced = `10<span class="sup">${slot(args[0])}</span>`;
+                } else if (bestT === 'Σ') {
+                    replaced = `<div class="sum-container"><div class="sum-bounds"><span>${slot(args[3])}</span><span>${slot(args[1] || 'x')}=${slot(args[2])}</span></div><span class="sum-symbol">Σ</span><div class="sum-body">${slot(args[0])}</div></div>`;
+                }
 
-  h = h.replace(/frac\(([^,)]*),([^)]*)\)/g, (m, p1, p2) => `<div class="frac-container"><span class="frac-num">${slot(p1)}</span><span class="frac-den">${slot(p2)}</span></div>`)
-       .replace(/frac\(([^,)]*),([^)]*)$/g, (m, p1, p2) => `<div class="frac-container"><span class="frac-num">${slot(p1)}</span><span class="frac-den">${slot(p2)}</span></div>`)
-       .replace(/frac\(([^,)]*)$/g, (m, p1) => `<div class="frac-container"><span class="frac-num">${slot(p1)}</span><span class="frac-den"><span class="empty-slot">⬚</span></span></div>`);
+                proc = proc.substring(0, earliestIdx) + replaced + proc.substring(bal.endIdx + 1);
+                continue;
+            }
+        }
+        break;
+    }
+    return proc;
+  };
 
-  h = h.replace(/int\(([^,)]*),([^,)]*),([^,)]*),([^)]*)\)/g, (m, f, a, b, v) => `<div class="int-container"><div class="int-bounds"><span>${b}</span><span>${a}</span></div><span class="int-symbol">∫</span><div class="int-body">${f} d${v}</div></div>`)
-       .replace(/int\(([^,)]*),([^,)]*),([^,)]*),([^)]*)$/g, (m, f, a, b, v) => `<div class="int-container"><div class="int-bounds"><span>${slot(b)}</span><span>${slot(a)}</span></div><span class="int-symbol">∫</span><div class="int-body">${slot(f)} d${v}</div></div>`);
+  h = renderTemplates(h);
 
-  h = h.replace(/diff\(([^,)]*),([^,)]*),([^)]*)\)/g, (m, f, v, a) => `<div class="diff-container"><div class="diff-frac"><span class="diff-top">d</span><span>d${v}</span></div>(${f})<div class="diff-at">| ${v}=${a}</div></div>`)
-       .replace(/diff\(([^,)]*),([^,)]*),([^)]*)$/g, (m, f, v, a) => `<div class="diff-container"><div class="diff-frac"><span class="diff-top">d</span><span>d${v}</span></div>(${slot(f)})<div class="diff-at">| ${v}=${slot(a)}</div></div>`)
-       .replace(/root\(([^,)]*),([^)]*)\)/g, (m, p1, p2) => `<span class="sup">${slot(p1)}</span><span class="root-symbol">√</span><span class="root-body">${slot(p2)}</span>`)
-       .replace(/root\(([^,)]*),([^)]*)$/g, (m, p1, p2) => `<span class="sup">${slot(p1)}</span><span class="root-symbol">√</span><span class="root-body">${slot(p2)}</span>`)
-       .replace(/root\(([^)]*)\)/g, (m, p1) => `<span class="sup">${slot(p1)}</span><span class="root-symbol">√</span><span class="root-body"><span class="empty-slot">⬚</span></span>`)
-       .replace(/root\(([^,)]*)$/g, (m, p1) => `<span class="sup">${slot(p1)}</span><span class="root-symbol">√</span><span class="root-body"><span class="empty-slot">⬚</span></span>`)
-       .replace(/sqrt\(([^)]*)\)/g, (m, p1) => `<span class="root-symbol">√</span><span class="root-body">${slot(p1)}</span>`)
-       .replace(/sqrt\(([^)]*)$/g, (m, p1) => `<span class="root-symbol">√</span><span class="root-body">${slot(p1)}</span>`) 
-       .replace(/log_b\(([^,)]*),([^)]*)\)/g, (m, p1, p2) => `log<span class="sub">${slot(p1)}</span>(${slot(p2)})`)
-       .replace(/log_b\(([^,)]*),([^)]*)$/g, (m, p1, p2) => `log<span class="sub">${slot(p1)}</span>(${slot(p2)})`)
-       .replace(/log_b\(([^)]*)\)/g, (m, p1) => `log<span class="sub">${slot(p1)}</span>(<span class="empty-slot">⬚</span>)`)
-       .replace(/log_b\(([^,)]*)$/g, (m, p1) => `log<span class="sub">${slot(p1)}</span>(<span class="empty-slot">⬚</span>)`)
-       .replace(/log10\(([^)]*)\)/g, (m, p1) => `log(${slot(p1)})`)
-       .replace(/log10\(([^)]*)$/g, (m, p1) => `log(${slot(p1)})`)
-       .replace(/e\^\(([^)]*)\)/g, (m, p1) => `e<span class="sup">${slot(p1)}</span>`)
-       .replace(/e\^\(([^)]*)$/g, (m, p1) => `e<span class="sup">${slot(p1)}</span>`)
-       .replace(/10\^\(([^)]*)\)/g, (m, p1) => `10<span class="sup">${slot(p1)}</span>`)
-       .replace(/10\^\(([^)]*)$/g, (m, p1) => `10<span class="sup">${slot(p1)}</span>`)
-       .replace(/pwr\(([^,)]*),([^)]*)\)/g, (m, p1, p2) => (slot(p1)) + '<span class="sup">' + (slot(p2)) + '</span>')
-       .replace(/pwr\(([^,)]*),([^,)]*)$/g, (m, p1, p2) => (slot(p1)) + '<span class="sup">' + (slot(p2)) + '</span>')
-       .replace(/pwr\(([^)]*)\)/g, (m, p1) => (slot(p1)) + '<span class="sup"><span class="empty-slot">⬚</span></span>')
-       .replace(/pwr\(([^,)]*)$/g, (m, p1) => (slot(p1)) + '<span class="sup"><span class="empty-slot">⬚</span></span>')
-       .replace(/sqr\(([^)]*)\)/g, (m, p1) => (slot(p1)) + '<span class="sup">2</span>')
-       .replace(/sqr\(([^)]*)$/g, (m, p1) => (slot(p1)) + '<span class="sup">2</span>')
-       .replace(/cube\(([^)]*)\)/g, (m, p1) => (slot(p1)) + '<span class="sup">3</span>')
-       .replace(/cube\(([^)]*)$/g, (m, p1) => (slot(p1)) + '<span class="sup">3</span>')
-       .replace(/→([A-M X-Y])/g, '<span style="font-size: 0.8em; margin: 0 4px;">→</span>$1')
+  h = h.replace(/→([A-M X-Y])/g, '<span style="font-size: 0.8em; margin: 0 4px;">→</span>$1')
        .replace(/\^\(([^)]*)\)/g, (m, p1) => `<span class="sup">${slot(p1)}</span>`) 
        .replace(/\^\(([^)]*)$/g, (m, p1) => `<span class="sup">${slot(p1)}</span>`) 
        .replace(/\^-1/g, '<span class="sup">-1</span>')
-       .replace(/Σ\(([^,)]*),([^,)]*),([^,)]*),([^)]*)\)/g, (m, f, v, s, e) => `<div class="sum-container"><div class="sum-bounds"><span>${slot(e)}</span><span>${v}=${slot(s)}</span></div><span class="sum-symbol">Σ</span><div class="sum-body">${slot(f)}</div></div>`)
-       .replace(/Σ\(([^,)]*),([^,)]*),([^,)]*),([^)]*)$/g, (m, f, v, s, e) => `<div class="sum-container"><div class="sum-bounds"><span>${slot(e)}</span><span>${v}=${slot(s)}</span></div><span class="sum-symbol">Σ</span><div class="sum-body">${slot(f)}</div></div>`)
        .replace(/‸/g, '<span class="cursor"></span>');
   
   // Restore equals signs with proper styling
@@ -575,9 +935,14 @@ const Calculator: React.FC = () => {
     setTimeout(() => target.classList.remove('key-flash'), 300);
   };
 
-  const toggleShift = useCallback(() => {
-    setIsShift(prev => !prev);
-    setIsAlpha(false);
+  const setShiftMomentary = useCallback((val: boolean) => {
+    setIsShift(val);
+    if (val) setIsAlpha(false);
+  }, []);
+
+  const setAlphaMomentary = useCallback((val: boolean) => {
+    setIsAlpha(val);
+    if (val) setIsShift(false);
   }, []);
 
   // Wrap button clicks with flash
@@ -586,11 +951,6 @@ const Calculator: React.FC = () => {
     if (label) setCurrentSequence(prev => [...prev, label]);
     fn(e);
   };
-
-  const toggleAlpha = useCallback(() => {
-    setIsAlpha(prev => !prev);
-    setIsShift(false);
-  }, []);
 
   const handleModeSwitch = useCallback(() => {
     if (isShift) {
@@ -608,7 +968,8 @@ const Calculator: React.FC = () => {
       "sinh⁻¹(", "cosh⁻¹(", "tanh⁻¹(", "sin⁻¹(", "cos⁻¹(", "tan⁻¹(",
       "sinh(", "cosh(", "tanh(", "sin(", "cos(", "tan(",
       "pwr(", "root(", "sqr(", "cube(", "frac(", "mix(", "diff(", "int(", "abs(", "log_b(", "log10(", "ln(", "Σ(", 
-      "RanInt(", "Ran#", "Ans", "e", "π", "°′″", "×10^", "nCr(", "nPr(", "root(3,", "^(", "10^(", "e^("
+      "RanInt(", "Ran#", "Ans", "e", "π", "°″", "×10^(", "×10^", "nCr(", "nPr(", "root(3,", "^(", "10^(", "e^(",
+      "pol(", "rec(", "diff(", "int(", "!", "%", ",", "→", "Abs", "hyp", "°"
     ];
     
     // Mapping from internal labels or tokens to physical button sequences
@@ -637,6 +998,7 @@ const Calculator: React.FC = () => {
       'Abs': ['SHIFT', 'hyp'],
       '√': ['√'],
       'root': ['SHIFT', 'xⁿ'],
+      'root3': ['SHIFT', '√'],
       '∫': ['∫'],
       'd/dx': ['SHIFT', '∫'],
       'Σ': ['SHIFT', 'log_box'], 
@@ -644,20 +1006,39 @@ const Calculator: React.FC = () => {
       'Ran#': ['SHIFT', '.'],
       'RanInt': ['ALPHA', '.'],
       'Ans': ['Ans'],
-      'EXP': ['EXP'],
-      'π': ['SHIFT', 'EXP'],
-      'e': ['ALPHA', 'EXP'],
+      '×10ˣ': ['×10ˣ'],
+      'π': ['SHIFT', '×10ˣ'],
+      'e': ['ALPHA', '×10ˣ'],
       'nCr': ['SHIFT', '÷'],
       'nPr': ['SHIFT', '×'],
       '°′″': ['°′″'],
       '(-)': ['(-)'],
       'x-1': ['x-1'],
+      'pol': ['SHIFT', '+'],
+      'rec': ['SHIFT', '-'],
+      '!': ['SHIFT', 'x-1'],
+      '→': ['SHIFT', 'RCL'],
+      '%': ['SHIFT', '('],
+      ',': ['SHIFT', ')'],
+      '°': ['°\'"'],
+      'hyp': ['hyp'],
+      'A': ['ALPHA', '(-)'],
+      'B': ['ALPHA', '°\'"'],
+      'C': ['ALPHA', 'hyp'],
+      'D': ['ALPHA', 'sin'],
+      'E': ['ALPHA', 'cos'],
+      'F': ['ALPHA', 'tan'],
+      'X': ['ALPHA', ')'],
+      'Y': ['ALPHA', 'S⇔D'],
+      'M': ['ALPHA', 'M+'],
     };
 
     // To handle closing parentheses of templates
     let templateParenStack: number[] = [];
+    let iter = 0;
 
-    while (s.length > 0) {
+    while (s.length > 0 && iter < 5000) {
+      iter++;
       let matched = false;
       for (const t of tokens) {
         if (s.startsWith(t)) {
@@ -679,11 +1060,12 @@ const Calculator: React.FC = () => {
           else if (t === 'cube(') label = 'x³';
           else if (t === 'frac(') label = 'frac';
           else if (t === 'mix(') label = 'mix';
-          else if (t === 'log10(' || t === '10^(') label = 'log';
-          else if (t === 'ln(' || t === 'e^(') label = 'ln';
+          else if (t === 'log10(' || t === '10^(') label = '10^';
+          else if (t === 'ln(' || t === 'e^(') label = 'e^';
           else if (t === 'abs(') label = 'Abs';
           else if (t === 'sqrt(') label = '√';
-          else if (t === 'root(' || t === 'root(3,') label = 'root';
+          else if (t === 'root(3,') label = 'root3';
+          else if (t === 'root(') label = 'root';
           else if (t === 'int(') label = '∫';
           else if (t === 'diff(') label = 'd/dx';
           else if (t === 'Σ(') label = 'Σ';
@@ -691,9 +1073,18 @@ const Calculator: React.FC = () => {
           else if (t === 'Ran#') label = 'Ran#';
           else if (t === 'RanInt(') label = 'RanInt';
           else if (t === 'Ans') label = 'Ans';
-          else if (t === '×10^') label = 'EXP';
+          else if (t === '×10^(' || t === '×10^') label = '×10ˣ';
           else if (t === 'nCr(') label = 'nCr';
           else if (t === 'nPr(') label = 'nPr';
+          else if (t === 'pol(') label = 'pol';
+          else if (t === 'rec(') label = 'rec';
+          else if (t === '!') label = '!';
+          else if (t === '%') label = '%';
+          else if (t === ',') label = ',';
+          else if (t === '→') label = '→';
+          else if (t === 'Abs') label = 'Abs';
+          else if (t === 'hyp') label = 'hyp';
+          else if (t === '°') label = '°';
           
           if (sequenceMap[label]) result.push(...sequenceMap[label]);
           else result.push(label);
@@ -750,8 +1141,17 @@ const Calculator: React.FC = () => {
            result.push(...(sequenceMap['π'] || ['π'])); s = s.slice(1); matched = true;
         } else if (char === 'e') {
            result.push(...(sequenceMap['e'] || ['e'])); s = s.slice(1); matched = true;
-        } else if (char === ',') { s = s.slice(1); matched = true; }
-        else {
+        } else if ('ABCDEFXYM'.includes(char)) {
+           result.push(...(sequenceMap[char] || [char])); s = s.slice(1); matched = true;
+        } else if (char === ',') { 
+           result.push(...(sequenceMap[','] || [','])); s = s.slice(1); matched = true; 
+        } else if (char === '°') {
+           result.push(...(sequenceMap['°'] || ['°'])); s = s.slice(1); matched = true;
+        } else if (char === '%') {
+           result.push(...(sequenceMap['%'] || ['%'])); s = s.slice(1); matched = true;
+        } else if (char === '→') {
+           result.push(...(sequenceMap['→'] || ['→'])); s = s.slice(1); matched = true;
+        } else {
           result.push(char);
           s = s.slice(1);
           matched = true;
@@ -764,46 +1164,22 @@ const Calculator: React.FC = () => {
   const performEvaluation = useCallback(() => {
     if (!currentInput || currentInput.includes('→')) return null;
     try {
-      let s = currentInput.replace(/[‸⬚]/g, '');
-      if (s.includes('=') && !s.includes('→')) {
-        let parts = s.split('=');
-        if (parts.length === 2) {
-          s = `(${parts[0]}) - (${parts[1]})`;
-        }
-      }
+      let s = currentInput;
       let openCount = (s.match(/\(/g) || []).length, closeCount = (s.match(/\)/g) || []).length;
       s += ')'.repeat(Math.max(0, openCount - closeCount));
       
-      let proc = s.replace(/×/g, '*').replace(/÷/g, '/').replace(/ln\(/g, 'log(').replace(/sin⁻¹\(/g, 'asin(').replace(/cos⁻¹\(/g, 'acos(').replace(/tan⁻¹\(/g, 'atan(')
-                  .replace(/log10\(([^)]*)\)/g, 'log10($1)').replace(/e\^\(([^)]*)\)/g, 'exp($1)').replace(/10\^\(([^)]*)\)/g, 'pow(10,$1)')
-                  .replace(/sqr\(([^)]*)\)/g, '(($1)**2)').replace(/cube\(([^)]*)\)/g, '(($1)**3)')
-                  .replace(/pwr\(([^,]*),([^)]*)\)/g, '(($1)**($2))')
-                  .replace(/mix\(([^,]+),([^,]+),([^)]+)\)/g, '(($1)+($2)/($3))')
-                  .replace(/frac\(([^,]*),([^)]*)\)/g, '(($1)/($2))').replace(/root\(([^,]+),([^)]+)\)/g, 'nthRoot($1, $2)').replace(/log_b\(([^,]+),([^)]+)\)/g, 'logB($1, $2)')
-                  .replace(/int\(([^,]+),([^,]+),([^,]+),([^)]+)\)/g, (m, e, a, b, v) => `int("${e}",${a},${b},"${v}")`)
-                  .replace(/diff\(([^,]+),([^,]+),([^)]+)\)/g, (m, e, v, a) => `diff("${e}","${v}",${a})`)
-                  .replace(/Σ\(([^,]+),([^,]+),([^,]+),([^)]+)\)/g, (m, e, v, a, b) => `sum("${e}","${v}",${a},${b})`).replace(/%/g, '/100').replace(/nPr\(([^,]+),([^)]+)\)/g, 'nPr($1,$2)').replace(/nCr\(([^,]+),([^)]+)\)/g, 'nCr($1,$2)')
-                  .replace(/×10\^/g, '*10**')
-                  .replace(/²/g, '**2').replace(/³/g, '**3');
-
-      // Enhanced implicit multiplication
-      proc = proc.replace(/(\d+)(Ans|[A-Zπe]|[a-z]+[0-9]*\()/g, '$1*$2')
-                 .replace(/(\bAns\b|[A-Zπe])(Ans|[A-Zπe]|[a-z]+[0-9]*\()/g, '$1*$2')
-                 .replace(/(\bAns\b|[A-Zπe])(\d+)/g, '$1*$2')
-                 .replace(/(\))(\d+|Ans|[A-Zπe]|[a-z]+[0-9]*\()/g, ')*$2')
-                 .replace(/(\d+|Ans|[A-Zπe]|\))(\()/g, '$1*(');
-      
-      // Safety: Ensure no weird dangling operators
-      proc = proc.replace(/\*+/g, '*').replace(/\/+/g, '/').replace(/\*\*+/g, '**');
-
-      let val = evaluateExpression(proc, vars, ans, angleMode);
-      if (isNaN(val) || !isFinite(val)) throw "Error";
+      let val = evaluateExpression(s, vars, ans, angleMode);
+      if (isNaN(val) || !isFinite(val)) {
+        console.warn("Evaluation resulted in non-finite value:", val);
+        throw "Error";
+      }
       
       const raw = currentInput.replace('‸', '');
       const finalSequence = reconstructSequence(raw);
 
       return { val, raw, finalSequence };
     } catch (e) {
+      console.error("Calculator Evaluation Error:", e);
       setSyntaxError(true);
       return null;
     }
@@ -1106,16 +1482,17 @@ const Calculator: React.FC = () => {
     }
     if (showingResult) { setShowingResult(false); return; }
     let i = currentInput.indexOf('‸');
-    if (i >= currentInput.length - 1) return;
+    if (i === -1 || i >= currentInput.length - 1) return;
     
+    let before = currentInput.substring(0, i);
     let after = currentInput.substring(i + 1);
-    let found = PATS.find(p => after.startsWith(p));
     
+    let found = PATS.find(p => after.startsWith(p));
     if (found) {
-      setCurrentInput(currentInput.substring(0, i) + found + '‸' + after.substring(found.length));
+      setCurrentInput(before + found + '‸' + after.substring(found.length));
     } else {
-      let c = currentInput[i+1];
-      setCurrentInput(currentInput.replace('‸', c).substring(0, i+1) + '‸' + currentInput.replace('‸', c).substring(i+2));
+      let c = after[0];
+      setCurrentInput(before + c + '‸' + after.substring(1));
     }
   }, [calcMode, showingResult, currentInput]);
 
@@ -1129,13 +1506,14 @@ const Calculator: React.FC = () => {
     if (i <= 0) return;
     
     let before = currentInput.substring(0, i);
-    let found = PATS.find(p => before.endsWith(p));
+    let after = currentInput.substring(i + 1);
     
+    let found = PATS.find(p => before.endsWith(p));
     if (found) {
-      setCurrentInput(before.substring(0, before.length - found.length) + '‸' + found + currentInput.substring(i + 1));
+      setCurrentInput(before.substring(0, before.length - found.length) + '‸' + found + after);
     } else {
-      let c = currentInput[i-1];
-      setCurrentInput(currentInput.substring(0, i-1) + '‸' + c + currentInput.substring(i+1));
+      let c = before[before.length - 1];
+      setCurrentInput(before.substring(0, before.length - 1) + '‸' + c + after);
     }
   }, [calcMode, showingResult, currentInput]);
 
@@ -1147,20 +1525,21 @@ const Calculator: React.FC = () => {
       return;
     }
     let i = currentInput.indexOf('‸');
+    if (i === -1) return;
     let before = currentInput.substring(0, i);
     let after = currentInput.substring(i + 1);
 
-    let fracMatch = before.match(/(frac|mix)\(([^\,)]*)$/);
-    if (fracMatch && after.includes(',')) {
-      let commaIdx = after.indexOf(',');
-      setCurrentInput(before + after.substring(0, commaIdx + 1) + '‸' + after.substring(commaIdx + 1));
-      return;
-    }
+    // Jump to next comma or closing paren within current template
+    let c = after.indexOf(',');
+    let p = after.indexOf(')');
+    let target = -1;
+    
+    if (c !== -1 && (p === -1 || c < p)) target = c;
+    else if (p !== -1) target = p;
 
-    let c = currentInput.indexOf(',', i), p = currentInput.indexOf(')', i), t = (c !== -1 && (p === -1 || c < p)) ? c : p; 
-    if (t !== -1) { 
-      setCurrentInput(currentInput.substring(0, i) + currentInput.substring(i+1, t+1) + '‸' + currentInput.substring(t+1)); 
-    } 
+    if (target !== -1) {
+      setCurrentInput(before + after.substring(0, target + 1) + '‸' + after.substring(target + 1));
+    }
   }, [calcMode, eqnResultIdx, eqnResults, currentInput]);
 
   const handleUp = useCallback(() => {
@@ -1171,22 +1550,21 @@ const Calculator: React.FC = () => {
       return;
     }
     let i = currentInput.indexOf('‸');
+    if (i <= 0) return;
     let before = currentInput.substring(0, i);
     let after = currentInput.substring(i + 1);
 
-    if (before.includes(',')) {
-      let lastComma = before.lastIndexOf(',');
-      let segment = before.substring(0, lastComma);
-      if (segment.match(/(frac|mix)\([^,]*$/)) {
-        setCurrentInput(segment + '‸' + before.substring(lastComma) + after);
-        return;
-      }
-    }
+    // Jump to previous comma or opening paren
+    let c = before.lastIndexOf(',', i - 1);
+    let p = before.lastIndexOf('(', i - 1);
+    let target = -1;
 
-    let c = currentInput.lastIndexOf(',', i-1), p = currentInput.lastIndexOf('(', i-1), t = Math.max(c, p); 
-    if (t !== -1) { 
-      setCurrentInput(currentInput.substring(0, t+1) + '‸' + currentInput.substring(t+1, i) + currentInput.substring(i+1)); 
-    } 
+    if (c !== -1 && (p === -1 || c > p)) target = c;
+    else if (p !== -1) target = p;
+
+    if (target !== -1) {
+      setCurrentInput(before.substring(0, target) + '‸' + before.substring(target) + after);
+    }
   }, [calcMode, eqnResultIdx, currentInput]);
 
   const toggleSD = useCallback(() => {
@@ -1422,20 +1800,36 @@ const Calculator: React.FC = () => {
   }, [isShift, handleInput]);
 
   const handleOpKey = useCallback((normal: string, shift: string) => {
-    handleInput(isShift ? shift : normal);
+    if (isShift) {
+      if (shift === 'nCr') handlePermComb('C');
+      else if (shift === 'nPr') handlePermComb('P');
+      else if (shift === 'pol') handleInput('pol(‸,)');
+      else if (shift === 'rec') handleInput('rec(‸,)');
+      else handleInput(shift);
+    } else {
+      handleInput(normal);
+    }
     setIsShift(false);
-  }, [isShift, handleInput]);
+  }, [isShift, handleInput, handlePermComb]);
 
   // --- Keyboard Support ---
   useEffect(() => {
     const record = (l: string) => setCurrentSequence(prev => [...prev, l]);
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Toggle Shift only when NOT typing other keys
       if (e.key === 'Shift') {
-        if (e.repeat) return;
         e.preventDefault();
-        record('SHIFT');
-        toggleShift();
+        if (!isShift) {
+          record('SHIFT');
+          setShiftMomentary(true);
+        }
+        return;
+      }
+      if (e.key === 'Alt') {
+        e.preventDefault();
+        if (!isAlpha) {
+          record('ALPHA');
+          setAlphaMomentary(true);
+        }
         return;
       }
       
@@ -1473,10 +1867,24 @@ const Calculator: React.FC = () => {
     else if (e.key.toLowerCase() === 'q' && !e.ctrlKey && !e.metaKey) { e.preventDefault(); record('x²'); handleSquareKey(); }
     else if (e.key.toLowerCase() === 'a' && !e.ctrlKey && !e.metaKey) { e.preventDefault(); record('Ans'); handleInput('Ans'); }
     };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Shift') {
+        e.preventDefault();
+        setShiftMomentary(false);
+      }
+      if (e.key === 'Alt') {
+        e.preventDefault();
+        setAlphaMomentary(false);
+      }
+    };
 
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [toggleShift, clearAll, del, solve, handleRight, handleLeft, handleUp, handleDown, handleInput, handleParentheses, handleTrig, handleLogKey]);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, [setShiftMomentary, setAlphaMomentary, clearAll, del, solve, handleRight, handleLeft, handleUp, handleDown, handleInput, handleParentheses, handleTrig, handleLogKey, isShift, isAlpha]);
 
   // --- Rendering Helpers ---
   const renderInput = () => {
@@ -1595,7 +2003,7 @@ const Calculator: React.FC = () => {
     navigator.clipboard.writeText(text);
   };
 
-    const renderMappingKey = (id: string, action: (e: React.MouseEvent<HTMLButtonElement>) => void, className: string = "") => {
+    const renderMappingKey = (id: string, action: (e: React.MouseEvent<HTMLButtonElement>) => void, className: string = "", momentary?: { onDown: () => void, onUp: () => void }) => {
       const style = keyStyles[id];
       const inlineStyle = style ? {
         top: `${style.top}px`,
@@ -1609,9 +2017,37 @@ const Calculator: React.FC = () => {
           key={id} 
           className={`key ${className} ${isDebug ? 'debug-visible' : ''}`} 
           style={inlineStyle}
-          onMouseDown={(e) => isDebug ? handleMouseDown(e, id, 'move') : null}
+          onMouseDown={(e) => {
+            if (isDebug) {
+              handleMouseDown(e, id, 'move');
+            } else if (momentary) {
+              momentary.onDown();
+            }
+          }}
+          onMouseUp={(e) => {
+             if (!isDebug && momentary) {
+               momentary.onUp();
+             }
+          }}
+          onMouseLeave={(e) => {
+            if (!isDebug && momentary) {
+              momentary.onUp();
+            }
+          }}
+          // Touch support
+          onPointerDown={(e) => {
+            if (!isDebug && momentary) {
+              e.currentTarget.setPointerCapture(e.pointerId);
+              momentary.onDown();
+            }
+          }}
+          onPointerUp={(e) => {
+            if (!isDebug && momentary) {
+              momentary.onUp();
+            }
+          }}
           onClick={(e) => { 
-            if (isDebug) return;
+            if (isDebug || momentary) return;
             e.stopPropagation(); 
             action(e); 
           }}
@@ -1631,7 +2067,7 @@ const Calculator: React.FC = () => {
 
     const renderMiniButton = (label: string, id: string | number) => {
       let typeClass = '';
-      if (label.match(/^[0-9.]+$/) || label === 'Ans' || label === 'π' || label === 'e' || label === 'EXP') {
+      if (label.match(/^[0-9.]+$/) || label === 'Ans' || label === 'π' || label === 'e' || label === '×10ˣ') {
         typeClass = 'num';
       } else if (['+', '-', '×', '÷', '=', 'DEL', 'AC', '(', ')'].includes(label)) {
         typeClass = 'op';
@@ -1709,6 +2145,9 @@ const Calculator: React.FC = () => {
             x<span className="text-[7px] -mt-2.5 ml-0.5 font-bold">{sup}</span>
           </span>
         );
+      }
+      if (label === '×10ˣ') {
+        return <span className={cls} key={id}>×10ˣ</span>;
       }
       if (label === 'd/dx') {
         return (
@@ -1860,8 +2299,14 @@ const Calculator: React.FC = () => {
         {renderMappingKey('down', withFlash(handleDown, 'DOWN'), 'key-down')}
         {renderMappingKey('left', withFlash(handleLeft, 'LEFT'), 'key-left')}
         {renderMappingKey('right', withFlash(handleRight, 'RIGHT'), 'key-right')}
-        {renderMappingKey('shift', withFlash(toggleShift, 'SHIFT'), 'key-shift')}
-        {renderMappingKey('alpha', withFlash(toggleAlpha, 'ALPHA'), 'key-alpha')}
+        {renderMappingKey('shift', () => {}, 'key-shift', { 
+          onDown: () => { setCurrentSequence(prev => [...prev, 'SHIFT']); setShiftMomentary(true); }, 
+          onUp: () => setShiftMomentary(false) 
+        })}
+        {renderMappingKey('alpha', () => {}, 'key-alpha', { 
+          onDown: () => { setCurrentSequence(prev => [...prev, 'ALPHA']); setAlphaMomentary(true); }, 
+          onUp: () => setAlphaMomentary(false) 
+        })}
         
         {renderMappingKey('mode', withFlash(handleModeSwitch, 'MODE'), 'sci sr0 sc6 absolute top-[372px] left-[346px] w-[42px] h-[28px] rounded-[12px] border border-white/5 bg-white/0')}
 
@@ -1885,7 +2330,7 @@ const Calculator: React.FC = () => {
         
         {renderMappingKey('0', withFlash(() => handleInput('0'), '0'), 'num nr4 nc1')}
         {renderMappingKey('dot', withFlash(() => handleInput('.'), '.'), 'num nr4 nc2')}
-        {renderMappingKey('exp', withFlash(handleExpKey, 'EXP'), 'num nr4 nc3')}
+        {renderMappingKey('exp', withFlash(handleExpKey, '×10ˣ'), 'num nr4 nc3')}
         {renderMappingKey('ans', withFlash(() => handleInput('Ans'), 'Ans'), 'num nr4 nc4')}
         {renderMappingKey('solve', withFlash(solve, '='), 'num nr4 nc5')}
         </div>
@@ -2021,7 +2466,8 @@ const Calculator: React.FC = () => {
                     <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">Esc</kbd> <span>Clear (AC)</span></div>
                     <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">Backspace</kbd> <span>Delete (DEL)</span></div>
                     <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">Arrows</kbd> <span>Navigate cursor</span></div>
-                    <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">Shift</kbd> <span>Toggle Shift mode</span></div>
+                    <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">Shift</kbd> <span>Hold for Shift mode</span></div>
+                    <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">Alt</kbd> <span>Hold for Alpha mode</span></div>
                   </div>
                 </section>
                 <section>
@@ -2039,12 +2485,6 @@ const Calculator: React.FC = () => {
                 </section>
               </div>
             )}
-          </div>
-          
-          <div className="p-4 bg-black/20 border-t border-white/5 space-y-2">
-            <div className="text-[10px] text-white/10 uppercase tracking-widest font-black text-center">
-              Scientific Calculator Emulator
-            </div>
           </div>
         </div>
       )}

@@ -2,5 +2,5 @@
   "name": "Scientific Calculator Emulator",
   "description": "A high-fidelity hardware emulator of a professional scientific calculator with Natural-V.P.A.M. display.",
   "requestFramePermissions": [],
-  "majorCapabilities": []
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
