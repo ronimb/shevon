@@ -2,9 +2,17 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import calculatorImg from './calculator_new.png';
 
 // --- Types ---
-type CalcMode = 'COMP' | 'MENU' | 'SETUP' | 'EQN_MENU' | 'EQN_QUAD' | 'EQN_RESULT';
+type CalcMode = 'COMP' | 'MENU' | 'SETUP' | 'EQN_MENU' | 'EQN_QUAD' | 'EQN_RESULT' | 'STAT_MENU' | 'STAT_DATA' | 'STAT_RESULT' | 'STAT_RESULT_SUB';
 type DisplayMode = 'decimal' | 'fraction';
 type AngleMode = 'DEG' | 'RAD' | 'GRA';
+
+type StatType = '1-VAR' | 'A+BX' | '_+CX2' | 'ln X' | 'e^X' | 'A*B^X' | 'A*X^B' | '1/X';
+
+interface StatEntry {
+  x: string;
+  y?: string;
+  freq: string;
+}
 
 interface EqnResult {
   label: string;
@@ -89,11 +97,11 @@ interface HistoryItem {
 }
 
 interface Vars {
-  [key: string]: number;
+  [key: string]: any;
 }
 
 // --- Constants ---
-const PATS = ['!', 'sin⁻¹(', 'cos⁻¹(', 'tan⁻¹(', 'sin(', 'cos(', 'tan(', '×10^', 'sqrt(', 'sqr(', 'cube(', 'pwr(', 'root(', 'frac(', 'mix(', 'int(', 'diff(', 'e^(', '10^(', 'log_b(', 'log10(', 'ln(', 'abs(', 'Ans', 'nCr(', 'nPr(', 'Σ(', 'pol(', 'rec(', 'RanInt(', 'Ran#'];
+const PATS = ['!', 'sin⁻¹(', 'cos⁻¹(', 'tan⁻¹(', 'sin(', 'cos(', 'tan(', '×10^', 'sqrt(', 'sqr(', 'cube(', 'pwr(', 'root(', 'frac(', 'mix(', 'int(', 'diff(', 'e^(', '10^(', 'log_b(', 'log10(', 'ln(', 'abs(', 'Ans', 'nCr(', 'nPr(', 'Σ(', 'pol(', 'rec(', 'RanInt(', 'Ran#', '^(', 'root(3,'];
 
 // --- Helper Functions ---
 const factorial = (n: number): number => {
@@ -111,7 +119,7 @@ const findPrecedingOperand = (text: string): string => {
   
   // 1. Check for basic tokens (number, Ans, vars/consts)
   // Match a number or a special token at the end
-  let match = text.match(/(\d+\.?\d*|Ans|[A-M X-Yπe])$/);
+  let match = text.match(/(\d+\.?\d*|Ans|stat_[a-z0-9_]+|pi|[A-M X-Yπe])$/);
   if (match) return match[0];
 
   // 2. Handle parentheses
@@ -130,7 +138,7 @@ const findPrecedingOperand = (text: string): string => {
             'sinh', 'cosh', 'tanh', 'asin', 'acos', 'atan',
             'sqrt', 'abs', 'frac', 'pwr', 'root', 'sqr', 'cube', 
             'int', 'diff', 'Σ', 'mix', 'nCr', 'nPr', 'RanInt', 
-            'log_b', 'log10', 'ln', 'e^', '10^'
+            'log_b', 'log10', 'ln', 'e^', '10^', '__pow', '__factorial', '__yhat', '__xhat', '__xhat1', '__xhat2'
         ];
         const sortedStems = [...stems].sort((a,b) => b.length - a.length);
         for (const stem of sortedStems) {
@@ -156,8 +164,182 @@ const toFraction = (decimal: number) => {
   return { n: best_n, d: best_d };
 };
 
-const evaluateExpression = (expr: string, scope: Vars, ans: number, angleMode: AngleMode): number => {
-  const toRad = (x: number) => {
+const calculateStatVars = (statType: StatType | null, statData: StatEntry[]): Vars => {
+    const s: Vars = {
+      'type': statType || '',
+      'N': 0,
+      'R': NaN,
+      'A': NaN,
+      'B': NaN,
+      'C': NaN,
+      'stat_sigx': 0,
+      'stat_sigx2': 0,
+      'stat_sigx3': 0,
+      'stat_sigx4': 0,
+      'stat_xbar': NaN,
+      'stat_sigmax': NaN,
+      'stat_sx': NaN,
+      'stat_minx': NaN,
+      'stat_maxx': NaN,
+      'stat_sigy': 0,
+      'stat_sigy2': 0,
+      'stat_sigxy': 0,
+      'stat_sigx2y': 0,
+      'stat_ybar': NaN,
+      'stat_sigmay': NaN,
+      'stat_sy': NaN,
+      'stat_miny': NaN,
+      'stat_maxy': NaN,
+    };
+    if (!statType) return s;
+
+    let n = 0, sumX = 0, sumX2 = 0, sumY = 0, sumY2 = 0, sumXY = 0;
+    let sumX3 = 0, sumX4 = 0, sumX2Y = 0;
+    const isTwoVar = statType !== '1-VAR';
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    
+    statData.forEach(d => {
+      const f = parseFloat(d.freq) || 0;
+      if (f <= 0) return;
+      if (d.x === '' && (!isTwoVar || d.y === '')) return;
+      const x = parseFloat(d.x) || 0;
+      const y = parseFloat(d.y) || 0;
+      
+      n += f;
+      sumX += x * f;
+      sumX2 += x * x * f;
+      sumX3 += x * x * x * f;
+      sumX4 += x * x * x * x * f;
+      minX = Math.min(minX, x);
+      maxX = Math.max(maxX, x);
+
+      if (isTwoVar) {
+        sumY += y * f;
+        sumY2 += y * y * f;
+        sumXY += x * y * f;
+        sumX2Y += x * x * y * f;
+        minY = Math.min(minY, y);
+        maxY = Math.max(maxY, y);
+      }
+    });
+
+    if (n > 0) {
+      s['type'] = statType;
+      s['N'] = n;
+      s['stat_sigx'] = sumX;
+      s['stat_sigx2'] = sumX2;
+      s['stat_sigx3'] = sumX3;
+      s['stat_sigx4'] = sumX4;
+      s['stat_xbar'] = sumX / n;
+      s['stat_sigmax'] = Math.sqrt(Math.max(0, (sumX2 / n) - (sumX / n) ** 2));
+      s['stat_sx'] = n > 1 ? Math.sqrt(Math.max(0, (sumX2 - (sumX ** 2) / n) / (n - 1))) : NaN;
+      s['stat_minx'] = minX;
+      s['stat_maxx'] = maxX;
+
+      if (isTwoVar) {
+        s['stat_sigy'] = sumY;
+        s['stat_sigy2'] = sumY2;
+        s['stat_sigxy'] = sumXY;
+        s['stat_sigx2y'] = sumX2Y;
+        s['stat_ybar'] = sumY / n;
+        s['stat_sigmay'] = Math.sqrt(Math.max(0, (sumY2 / n) - (sumY / n) ** 2));
+        s['stat_sy'] = n > 1 ? Math.sqrt(Math.max(0, (sumY2 - (sumY ** 2) / n) / (n - 1))) : NaN;
+        s['stat_miny'] = minY;
+        s['stat_maxy'] = maxY;
+
+        if (statType === '_+CX2') {
+          // Quadratic regression: Y = A + BX + CX^2
+          const m11 = n, m12 = sumX, m13 = sumX2;
+          const m21 = sumX, m22 = sumX2, m23 = sumX3;
+          const m31 = sumX2, m32 = sumX3, m33 = sumX4;
+          const y1 = sumY, y2 = sumXY, y3 = sumX2Y;
+
+          const detM = m11 * (m22 * m33 - m23 * m32) - m12 * (m21 * m33 - m23 * m31) + m13 * (m21 * m32 - m22 * m31);
+          if (detM !== 0) {
+            const detA = y1 * (m22 * m33 - m23 * m32) - m12 * (y2 * m33 - m23 * y3) + m13 * (y2 * m32 - m22 * y3);
+            const detB = m11 * (y2 * m33 - m23 * y3) - y1 * (m21 * m33 - m23 * m31) + m13 * (m21 * y3 - y2 * m31);
+            const detC = m11 * (m22 * y3 - y2 * m32) - m12 * (m21 * y3 - y2 * m31) + y1 * (m21 * m32 - m22 * m31);
+            s['A'] = detA / detM;
+            s['B'] = detB / detM;
+            s['C'] = detC / detM;
+          } else {
+            s['A'] = 0; s['B'] = 0; s['C'] = 0;
+          }
+        } else {
+          // Other regressions modeled via linear transformations
+          let nFit = 0, fitX = 0, fitX2 = 0, fitY = 0, fitY2 = 0, fitXY = 0;
+
+          statData.forEach(d => {
+            const f = parseFloat(d.freq) || 0;
+            if (f <= 0) return;
+            if (d.x === '' && (!isTwoVar || d.y === '')) return;
+            let xi = parseFloat(d.x) || 0;
+            let yi = parseFloat(d.y) || 0;
+
+            if (statType === 'ln X') {
+              if (xi <= 0) return;
+              xi = Math.log(xi);
+            } else if (statType === 'e^X' || statType === 'A*B^X') {
+              if (yi <= 0) return;
+              yi = Math.log(yi);
+            } else if (statType === 'A*X^B') {
+              if (xi <= 0 || yi <= 0) return;
+              xi = Math.log(xi);
+              yi = Math.log(yi);
+            } else if (statType === '1/X') {
+              if (xi === 0) return;
+              xi = 1 / xi;
+            }
+
+            nFit += f;
+            fitX += xi * f;
+            fitX2 += xi * xi * f;
+            fitY += yi * f;
+            fitY2 += yi * yi * f;
+            fitXY += xi * yi * f;
+          });
+
+          if (nFit > 0) {
+            const termX = Math.max(0, nFit * fitX2 - fitX ** 2);
+            const termY = Math.max(0, nFit * fitY2 - fitY ** 2);
+            const bDenom = (nFit * fitX2 - fitX ** 2);
+            const b = bDenom !== 0 ? (nFit * fitXY - fitX * fitY) / bDenom : 0;
+            const a = (fitY - b * fitX) / nFit;
+            
+            const rDenom = Math.sqrt(termX * termY);
+            const r = rDenom > 1e-15 ? Math.max(-1, Math.min(1, (nFit * fitXY - fitX * fitY) / rDenom)) : 0;
+
+            if (statType === 'e^X') {
+              s['A'] = Math.exp(a);
+              s['B'] = b;
+            } else if (statType === 'A*B^X') {
+              s['A'] = Math.exp(a);
+              s['B'] = Math.exp(b);
+            } else if (statType === 'A*X^B') {
+              s['A'] = Math.exp(a);
+              s['B'] = b;
+            } else {
+              s['A'] = a;
+              s['B'] = b;
+            }
+            s['R'] = r;
+          } else {
+            s['A'] = 0; s['B'] = 0; s['R'] = 0;
+          }
+        }
+        s['xHat'] = 0; // Handled in __xhat
+        s['yHat'] = 0; // Handled in __yhat
+      }
+    }
+    if (isNaN(s['A'])) delete s['A'];
+    if (isNaN(s['B'])) delete s['B'];
+    if (isNaN(s['C'])) delete s['C'];
+    if (isNaN(s['R'])) delete s['R'];
+    return s;
+};
+
+const evaluateExpression = (expr: string, scope: Vars, ans: number, angleMode: AngleMode, statVars: Vars): number => {
+    const toRad = (x: number) => {
     if (angleMode === 'DEG') return x * Math.PI / 180;
     if (angleMode === 'GRA') return x * Math.PI / 200;
     return x;
@@ -224,23 +406,68 @@ const evaluateExpression = (expr: string, scope: Vars, ans: number, angleMode: A
       scope.X = x; scope.Y = y;
       return x;
     },
-    __int: (expStr: string, a: number, b: number, v: string) => {
-      let f = (x: number) => evaluateExpression(expStr, { ...scope, [v]: x }, ans, angleMode);
-      let n = 20, step = (b - a) / n, sumVal = f(a) + f(b);
-      for (let i = 1; i < n; i++) sumVal += f(a + i * step) * (i % 2 === 0 ? 2 : 4);
-      return (step / 3) * sumVal;
+    __xhat: (y: number) => {
+       const { A, B, C, type } = statVars;
+       const a = A || 0, b = B || 0, c = C || 0;
+       const t = type || 'A+BX';
+       if (t === 'A+BX') return (y - a) / (b || 1);
+       if (t === 'ln X') return Math.exp((y - a) / (b || 1));
+       if (t === 'e^X') return b !== 0 ? Math.log(y / (a || 1)) / b : 0;
+       if (t === 'A*B^X') return (a !== 0 && b > 0) ? Math.log(y / a) / Math.log(b) : 0;
+       if (t === 'A*X^B') return (a !== 0 && b !== 0) ? Math.exp(Math.log(y / a) / b) : 0;
+       if (t === '1/X') return b / (y - a);
+       if (t === '_+CX2') {
+         if (c === 0) return b !== 0 ? (y - a) / b : 0;
+         const disc = b * b - 4 * c * (a - y);
+         if (disc < 0) return 0;
+         return (-b + Math.sqrt(disc)) / (2 * c);
+       }
+       return 0;
     },
-    __diff: (expStr: string, v: string, a: number) => {
-      let hVal = 1e-7;
-      let f = (x: number) => evaluateExpression(expStr, { ...scope, [v]: x }, ans, angleMode);
-      return (f(a + hVal) - f(a)) / hVal;
+    __xhat1: (y: number) => {
+       const { A, B, C } = statVars;
+       const a = A || 0, b = B || 0, c = C || 0;
+       if (c === 0) return b !== 0 ? (y - a) / b : 0;
+       const disc = b * b - 4 * c * (a - y);
+       if (disc < 0) return 0;
+       return (-b + Math.sqrt(disc)) / (2 * c);
     },
-    __sum: (expStr: string, v: string, a: number, b: number) => {
+    __xhat2: (y: number) => {
+       const { A, B, C } = statVars;
+       const a = A || 0, b = B || 0, c = C || 0;
+       if (c === 0) return b !== 0 ? (y - a) / b : 0;
+       const disc = b * b - 4 * c * (a - y);
+       if (disc < 0) return 0;
+       return (-b - Math.sqrt(disc)) / (2 * c);
+    },
+    __yhat: (x: number) => {
+       const { A, B, C, type } = statVars;
+       const a = A || 0, b = B || 0, c = C || 0;
+       const t = type || 'A+BX';
+       if (t === 'A+BX') return a + b * x;
+       if (t === 'ln X') return x > 0 ? a + b * Math.log(x) : 0;
+       if (t === 'e^X') return a * Math.exp(b * x);
+       if (t === 'A*B^X') return a * Math.pow(b, x);
+       if (t === 'A*X^B') return (a !== 0 && x > 0) ? a * Math.pow(x, b) : 0;
+       if (t === '1/X') return x !== 0 ? a + b / x : 0;
+       if (t === '_+CX2') return a + b * x + c * x * x;
+       return 0;
+    },
+    __int: (f: (v: number) => number, a: number, b: number) => {
+      const n = 100;
+      const h = (b - a) / n;
+      let res = (f(a) + f(b)) / 2;
+      for (let i = 1; i < n; i++) res += f(a + i * h);
+      return res * h;
+    },
+    __diff: (f: (v: number) => number, p: number) => {
+      const h = 1e-7;
+      return (f(p + h) - f(p)) / h;
+    },
+    __sum: (f: (v: number) => number, start: number, end: number) => {
       let t = 0;
-      let start = Math.floor(a);
-      let end = Math.floor(b);
-      if (end - start > 5000) end = start + 5000;
-      for (let i = start; i <= end; i++) t += evaluateExpression(expStr, { ...scope, [v]: i }, ans, angleMode);
+      let s = Math.round(start), e = Math.min(Math.round(end), s + 1000);
+      for (let i = s; i <= e; i++) t += f(i);
       return t;
     }
   };
@@ -275,7 +502,163 @@ const evaluateExpression = (expr: string, scope: Vars, ans: number, angleMode: A
     return args;
   };
 
-  let proc = expr.replace(/[‸⬚]/g, '');
+  const resolveExponents = (s: string): string => {
+    let curr = s;
+    while (true) {
+      let idxPower = curr.lastIndexOf('^');
+      let idxSqr = curr.lastIndexOf('²');
+      let idxCube = curr.lastIndexOf('³');
+      
+      let maxIdx = Math.max(idxPower, idxSqr, idxCube);
+      if (maxIdx === -1) {
+        break;
+      }
+      
+      let op = curr[maxIdx];
+      let before = curr.substring(0, maxIdx);
+      let after = curr.substring(maxIdx + 1);
+      
+      let base = findPrecedingOperand(before);
+      if (!base) {
+        curr = before + (op === '^' ? '**' : (op === '²' ? '**2' : '**3')) + after;
+        continue;
+      }
+      
+      let beforeWithoutBase = before.substring(0, before.length - base.length);
+      let exponent = '';
+      let afterWithoutExponent = '';
+      
+      if (op === '²') {
+        exponent = '2';
+        afterWithoutExponent = after;
+      } else if (op === '³') {
+        exponent = '3';
+        afterWithoutExponent = after;
+      } else { // op is '^'
+        if (after.startsWith('(')) {
+          let bal = getBalanced(curr, maxIdx + 1);
+          if (bal) {
+            exponent = bal.content;
+            afterWithoutExponent = curr.substring(bal.endIdx + 1);
+          } else {
+            let match = after.match(/^(\([^)]*\)|[a-zA-Z0-9_]+)/);
+            if (match) {
+              exponent = match[0];
+              afterWithoutExponent = after.substring(match[0].length);
+            } else {
+              exponent = 'NaN';
+              afterWithoutExponent = after;
+            }
+          }
+        } else {
+          let fNameMatch = after.match(/^[a-zA-Z0-9_]+\(/);
+          if (fNameMatch) {
+            let fNameLength = fNameMatch[0].length - 1;
+            let bal = getBalanced(after, fNameLength);
+            if (bal) {
+              exponent = after.substring(0, bal.endIdx + 1);
+              afterWithoutExponent = after.substring(bal.endIdx + 1);
+            } else {
+              exponent = 'NaN';
+              afterWithoutExponent = after;
+            }
+          } else {
+            let match = after.match(/^([a-zA-Z0-9_]+|\([^)]*\))/);
+            if (match) {
+              exponent = match[0];
+              afterWithoutExponent = after.substring(match[0].length);
+            } else {
+              exponent = 'NaN';
+              afterWithoutExponent = after;
+            }
+          }
+        }
+      }
+      
+      let parsedBase = resolveExponents(base);
+      let parsedExponent = resolveExponents(exponent);
+      curr = beforeWithoutBase + `__pow(${parsedBase},${parsedExponent})` + afterWithoutExponent;
+    }
+    return curr;
+  };
+
+  let proc = expr.replace(/[‸⬚]/g, '').normalize('NFD');
+
+  // Convert statistical power/summation variables FIRST to avoid any word boundary or symbol conflicts with x, y, n, etc.
+  proc = proc
+    .replace(/Σx²/g, 'stat_sigx2')
+    .replace(/Σx⁴/g, 'stat_sigx4')
+    .replace(/Σx³/g, 'stat_sigx3')
+    .replace(/Σx²y/g, 'stat_sigx2y')
+    .replace(/Σxy/g, 'stat_sigxy')
+    .replace(/Σx/g, 'stat_sigx')
+    .replace(/x\u0304/g, 'stat_xbar')
+    .replace(/x\u0305/g, 'stat_xbar')
+    .replace(/x̄/g, 'stat_xbar')
+    .replace(/x̅/g, 'stat_xbar')
+    .replace(/X\u0304/g, 'stat_xbar')
+    .replace(/X\u0305/g, 'stat_xbar')
+    .replace(/X̄/g, 'stat_xbar')
+    .replace(/X̅/g, 'stat_xbar')
+    .replace(/σx/g, 'stat_sigmax')
+    .replace(/\u03C3x/g, 'stat_sigmax')
+    .replace(/\bsx\b/g, 'stat_sx')
+    .replace(/Σy²/g, 'stat_sigy2')
+    .replace(/Σy/g, 'stat_sigy')
+    .replace(/y\u0304/g, 'stat_ybar')
+    .replace(/y\u0305/g, 'stat_ybar')
+    .replace(/ȳ/g, 'stat_ybar')
+    .replace(/y̅/g, 'stat_ybar')
+    .replace(/Y\u0304/g, 'stat_ybar')
+    .replace(/Y\u0305/g, 'stat_ybar')
+    .replace(/Ȳ/g, 'stat_ybar')
+    .replace(/Y̅/g, 'stat_ybar')
+    .replace(/σy/g, 'stat_sigmay')
+    .replace(/\u03C3y/g, 'stat_sigmay')
+    .replace(/\bsy\b/g, 'stat_sy')
+    .replace(/\bn\b/g, 'N')
+    .replace(/\br\b/g, 'R')
+    .replace(/minX/g, 'stat_minx')
+    .replace(/maxX/g, 'stat_maxx')
+    .replace(/minY/g, 'stat_miny')
+    .replace(/maxY/g, 'stat_maxy');
+
+  // Robust xHat/yHat replacement
+  for (const sym of ['x̂1', 'x̂2', 'x̂', 'ŷ'].map(s => s.normalize('NFD'))) {
+    let sIdx;
+    while ((sIdx = proc.indexOf(sym)) !== -1) {
+      let before = proc.substring(0, sIdx);
+      let after = proc.substring(sIdx + sym.length);
+      let operand = '';
+      if (before.endsWith(')')) {
+        let parenCount = 0;
+        for (let i = before.length - 1; i >= 0; i--) {
+          if (before[i] === ')') parenCount++;
+          else if (before[i] === '(') parenCount--;
+          if (parenCount === 0) {
+            operand = before.substring(i);
+            before = before.substring(0, i);
+            break;
+          }
+        }
+      } else {
+        let match = before.match(/(\d+\.?\d*|Ans|[A-Zπe])$/);
+        if (match) {
+          operand = match[0];
+          before = before.substring(0, before.length - operand.length);
+        }
+      }
+      if (operand) {
+        let fn = '__yhat';
+        if (sym === 'x̂1'.normalize('NFD')) fn = '__xhat1';
+        else if (sym === 'x̂2'.normalize('NFD')) fn = '__xhat2';
+        else if (sym === 'x̂'.normalize('NFD')) fn = '__xhat';
+        proc = before + `${fn}(${operand})` + after;
+      } else {
+        proc = before + '0' + after;
+      }
+    }
+  }
   
   if (proc.includes('=') && !proc.includes('→')) {
     let parts = proc.split('=');
@@ -284,30 +667,10 @@ const evaluateExpression = (expr: string, scope: Vars, ans: number, angleMode: A
     }
   }
 
-  // Pre-process templates that need transformation (e.g., adding quotes for variables)
-  const templatesToTransform = ['int', 'diff', 'Σ'];
-  for (const t of templatesToTransform) {
-    let idx = 0;
-    while ((idx = proc.indexOf(t + '(', idx)) !== -1) {
-        const bal = getBalanced(proc, idx + t.length);
-        if (!bal) { idx += t.length + 1; continue; }
-        const topArgs = splitTopLevelArgs(bal.content);
-
-        let replaced = '';
-        if (t === 'int' && topArgs.length === 4) replaced = `__int("${topArgs[0]}",${topArgs[1]},${topArgs[2]},"${topArgs[3]}")`;
-        else if (t === 'diff' && topArgs.length === 3) replaced = `__diff("${topArgs[0]}","${topArgs[1]}",${topArgs[2]})`;
-        else if (t === 'Σ' && topArgs.length === 4) replaced = `__sum("${topArgs[0]}","${topArgs[1]}",${topArgs[2]},${topArgs[3]})`;
-        else {
-            idx += t.length + 1;
-            continue; 
-        }
-        
-        proc = proc.substring(0, idx) + replaced + proc.substring(bal.endIdx + 1);
-        idx += replaced.length;
-    }
-  }
-
   const mathTemplates = [
+    { name: 'diff', replace: (args: string[]) => `__diff((X) => ${args[0]}, ${args[2]})` },
+    { name: 'int', replace: (args: string[]) => `__int((X) => ${args[0]}, ${args[1]}, ${args[2]})` },
+    { name: 'Σ', replace: (args: string[]) => `__sum((X) => ${args[0]}, ${args[2]}, ${args[3]})` },
     { name: 'pwr', replace: (args: string[]) => `((${args[0]})**(${args[1]}))` },
     { name: 'root', replace: (args: string[]) => `__nthroot(${args[0]},${args[1]})` },
     { name: 'mix', replace: (args: string[]) => `((${args[0]})+(${args[1]})/(${args[2]}))` },
@@ -423,32 +786,32 @@ const evaluateExpression = (expr: string, scope: Vars, ans: number, angleMode: A
     .replace(/÷/g, '/')
     .replace(/Ran#/g, '__ranhash()')
     .replace(/%/g, '/100')
-    .replace(/×10\^/g, '*10**')
-    .replace(/²/g, '**2')
-    .replace(/³/g, '**3');
+    .replace(/×10\^/g, '*10**');
+
+  proc = resolveExponents(proc);
 
   // Enhanced implicit multiplication
-  const funcOrVar = '(Ans|[A-Zπe]|__[a-z]+[A-Za-z0-9]*\\()';
+  const funcOrVar = '(Ans|[A-Zπe]|stat_[a-z0-9_]+|__[a-z]+[A-Za-z0-9]*\\()';
   proc = proc.replace(new RegExp(`(\\d+)${funcOrVar}`, 'g'), '$1*$2')
              .replace(new RegExp(`(\\bAns\\b|[A-Zπe])${funcOrVar}`, 'g'), '$1*$2')
-             .replace(/(\bAns\b|[A-Zπe])(\d+)/g, '$1*$2')
+             .replace(/(\bAns\\b|[A-Zπe])(\d+)/g, '$1*$2')
              .replace(new RegExp(`(\\))(\\d+|${funcOrVar})`, 'g'), ')*$2')
              .replace(new RegExp(`(\\d+|Ans|[A-Zπe]|\\))(\\()`, 'g'), '$1*(');
 
   proc = proc.replace(/π/g, 'pi')
-    .replace(/\be\b/g, 'e');
+    .replace(/\be\b/g, 'e')
+    .replace(/\bx\b/g, 'X')
+    .replace(/\by\b/g, 'Y');
 
-  let js = proc.replace(/\^/g, '**');
+  let js = proc;
   try {
-    const context = { Ans: ans, ...scope, ...h };
+    const context = { Ans: ans, ...scope, ...statVars, ...h };
     const keys = Object.keys(context);
     const values = Object.values(context);
-    if (process.env.NODE_ENV !== "production") {
-       console.log("Evaluating JS:", js, "Context:", context);
-    }
+    console.log("Evaluating JS:", js, "Context:", context);
     return new Function(...keys, `return ${js};`)(...values);
   } catch (e) {
-    console.error("JS Evaluation Error for code:", js, e);
+    console.warn("JS Evaluation Error for code:", js, e);
     throw e;
   }
 };
@@ -563,13 +926,15 @@ const toLaTeX = (expr: string): string => {
 const formatMath = (input: string): string => {
   const isEmpty = (text: string) => {
     if (!text) return true;
-    let clean = text.replace('‸', '');
+    let clean = text.replace(/[‸⬚]/g, '');
     return clean.trim() === '';
   };
 
-  const slot = (text: string) => {
+  const slot = (text: any) => {
+    if (typeof text !== 'string') return '<span class="empty-slot">⬚</span>';
     if (text.includes('‸')) return text;
-    return isEmpty(text) ? '⬚' : text;
+    if (isEmpty(text)) return '<span class="empty-slot">⬚</span>';
+    return text;
   };
   
   let h = input;
@@ -649,7 +1014,11 @@ const formatMath = (input: string): string => {
                 } else if (bestT === 'int') {
                     replaced = `<div class="int-container"><div class="int-bounds"><span>${slot(args[2])}</span><span>${slot(args[1])}</span></div><span class="int-symbol">∫</span><div class="int-body">${slot(args[0])} d${slot(args[3] || 'x')}</div></div>`;
                 } else if (bestT === 'diff') {
-                    replaced = `<div class="diff-container"><div class="diff-frac"><span class="diff-top">d</span><span>d${slot(args[1] || 'x')}</span></div>(${slot(args[0])})<div class="diff-at">| ${slot(args[1] || 'x')}=${slot(args[2])}</div></div>`;
+                    const varName = args[1] || 'x';
+                    const varDisplay = slot(varName);
+                    // Avoid cursor duplication in the 'at' portion by stripping cursor from the second mention
+                    const varSilent = varName.replace('‸', '');
+                    replaced = `<div class="diff-container"><div class="diff-frac"><span class="diff-top">d</span><span>d${varDisplay}</span></div>(${slot(args[0])})<div class="diff-at">${varSilent}=${slot(args[2])}</div></div>`;
                 } else if (bestT === 'root') {
                     replaced = `<span class="sup">${slot(args[0])}</span><span class="root-symbol">√</span><span class="root-body">${slot(args[1] || '')}</span>`;
                 } else if (bestT === 'sqrt') {
@@ -695,7 +1064,55 @@ const formatMath = (input: string): string => {
   h = h.replace(/<span class="empty-slot">⬚<\/span><span class="cursor"><\/span>/g, '<span class="cursor"></span>')
        .replace(/<span class="cursor"><\/span><span class="empty-slot">⬚<\/span>/g, '<span class="cursor"></span>');
   
+  // Custom absolute-positioned HTML spans for rendering overbars and hats beautifully inside monospace fonts
+  h = h
+    .replace(/(x\u0304|x̄|x̅|X\u0304|X̄|X̅)/g, '<span class="relative inline-block" style="line-height: 1em;">x<span class="absolute left-[0.025em] right-[0.025em] -top-[0.08em] border-t-[1.5px] border-current"></span></span>')
+    .replace(/(y\u0304|ȳ|y̅|Y\u0304|Ȳ|Y̅)/g, '<span class="relative inline-block" style="line-height: 1em;">y<span class="absolute left-[0.025em] right-[0.025em] -top-[0.08em] border-t-[1.5px] border-current"></span></span>')
+    .replace(/(x\u03021|x̂1|X\u03021|X̂1)/g, '<span class="inline-flex items-baseline" style="line-height: 1em;"><span class="relative inline-block">x<span class="absolute left-0 right-0 -top-[0.25em] text-center font-bold text-[0.8em]">^</span></span><sub class="text-[0.6em] ml-[0.05em] align-sub">1</sub></span>')
+    .replace(/(x\u03022|x̂2|X\u03022|X̂2)/g, '<span class="inline-flex items-baseline" style="line-height: 1em;"><span class="relative inline-block">x<span class="absolute left-0 right-0 -top-[0.25em] text-center font-bold text-[0.8em]">^</span></span><sub class="text-[0.6em] ml-[0.05em] align-sub">2</sub></span>')
+    .replace(/(x\u0302|x̂|X\u0302|X̂)/g, '<span class="relative inline-block" style="line-height: 1em;">x<span class="absolute left-0 right-0 -top-[0.25em] text-center font-bold text-[0.8em]">^</span></span>')
+    .replace(/(y\u0302|ŷ|Y\u0302|Ŷ)/g, '<span class="relative inline-block" style="line-height: 1em;">y<span class="absolute left-0 right-0 -top-[0.25em] text-center font-bold text-[0.8em]">^</span></span>');
+
   return h;
+};
+
+const renderMathSymbol = (sym: string): React.ReactNode => {
+  const norm = sym.normalize('NFD');
+  if (norm.startsWith('x') && (norm.includes('\u0304') || norm.includes('\u0305') || norm.includes('̄') || norm.includes('̅'))) {
+    return (
+      <span className="relative inline-block" style={{ lineHeight: '1em' }}>
+        x<span className="absolute left-[0.025em] right-[0.025em] -top-[0.05em] border-t-[1.5px] border-current" />
+      </span>
+    );
+  }
+  if (norm.startsWith('y') && (norm.includes('\u0304') || norm.includes('\u0305') || norm.includes('̄') || norm.includes('̅'))) {
+    return (
+      <span className="relative inline-block" style={{ lineHeight: '1em' }}>
+        y<span className="absolute left-[0.025em] right-[0.025em] -top-[0.05em] border-t-[1.5px] border-current" />
+      </span>
+    );
+  }
+  if (norm.startsWith('x') && (norm.includes('\u0302') || norm.includes('̂'))) {
+    const has1 = norm.includes('1');
+    const has2 = norm.includes('2');
+    return (
+      <span className="inline-flex items-baseline" style={{ lineHeight: '1em' }}>
+        <span className="relative inline-block">
+          x<span className="absolute left-0 right-0 -top-[0.25em] text-center font-bold text-[0.8em]">^</span>
+        </span>
+        {has1 && <sub className="text-[0.6em] ml-[0.05em] align-sub">1</sub>}
+        {has2 && <sub className="text-[0.6em] ml-[0.05em] align-sub">2</sub>}
+      </span>
+    );
+  }
+  if (norm.startsWith('y') && (norm.includes('\u0302') || norm.includes('̂'))) {
+    return (
+      <span className="relative inline-block" style={{ lineHeight: '1em' }}>
+        y<span className="absolute left-0 right-0 -top-[0.25em] text-center font-bold text-[0.8em]">^</span>
+      </span>
+    );
+  }
+  return <span>{sym}</span>;
 };
 
 const Calculator: React.FC = () => {
@@ -825,6 +1242,11 @@ const Calculator: React.FC = () => {
   const [isRcl, setIsRcl] = useState<boolean>(false);
   const [displayMode, setDisplayMode] = useState<DisplayMode>('decimal');
   const [calcMode, setCalcMode] = useState<CalcMode>('COMP');
+  const [statType, setStatType] = useState<StatType | null>(null);
+  const [statFrequencyEnabled, setStatFrequencyEnabled] = useState<boolean>(false);
+  const [statData, setStatData] = useState<StatEntry[]>([]);
+  const [statCursor, setStatCursor] = useState({ row: 0, col: 0 }); // col 0:x, 1:y, 2:freq
+  const [statSubMenu, setStatSubMenu] = useState<string | null>(null);
   const [promptVar, setPromptVar] = useState<string | null>(null);
   const [promptValue, setPromptValue] = useState<string>("0");
   const [prevPromptValue, setPrevPromptValue] = useState<string>("0");
@@ -835,6 +1257,7 @@ const Calculator: React.FC = () => {
   const [eqnResultIdx, setEqnResultIdx] = useState<number>(0);
   const solveRef = useRef<() => void>(() => {});
   const [syntaxError, setSyntaxError] = useState<boolean>(false);
+  const [mathError, setMathError] = useState<boolean>(false);
   const [currentSequence, setCurrentSequence] = useState<string[]>([]);
   const [showPane, setShowPane] = useState<boolean>(false);
 
@@ -853,6 +1276,9 @@ const Calculator: React.FC = () => {
   const [paneView, setPaneView] = useState<'history' | 'help'>('history');
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
 
+  const statCursorRef = useRef(statCursor);
+  useEffect(() => { statCursorRef.current = statCursor; }, [statCursor]);
+
   const handleInput = useCallback((val: string) => {
     if (promptVar) {
       if (!isNaN(Number(val)) || val === '.' || val === '-') {
@@ -865,12 +1291,121 @@ const Calculator: React.FC = () => {
       return;
     }
     if (calcMode === 'MENU') {
-      if (val === '1') setCalcMode('COMP');
+      if (val === '1') {
+        setCalcMode('COMP');
+        setStatType(null);
+      }
+      else if (val === '3') setCalcMode('STAT_MENU');
       else if (val === '5') setCalcMode('EQN_MENU');
       else {
         setCalcMode('COMP'); // Default back for others for now
       }
       setCurrentInput("‸");
+      return;
+    }
+    if (calcMode === 'STAT_MENU') {
+      const types: Record<string, StatType> = {
+        '1': '1-VAR', '2': 'A+BX', '3': '_+CX2', '4': 'ln X',
+        '5': 'e^X', '6': 'A*B^X', '7': 'A*X^B', '8': '1/X'
+      };
+      if (types[val]) {
+        setStatType(types[val]);
+        setCalcMode('STAT_DATA');
+        setStatData([{ x: '', y: '', freq: '1' }]);
+        setStatCursor({ row: 0, col: 0 });
+      }
+      return;
+    }
+    if (calcMode === 'STAT_DATA') {
+      if (!isNaN(Number(val)) || val === '.' || val === '-') {
+        const isTwoVar = statType !== '1-VAR';
+        
+        setStatData(prev => {
+          const next = [...prev];
+          const row = statCursorRef.current.row;
+          const col = statCursorRef.current.col;
+          
+          if (row < 0 || row >= next.length) return prev;
+          
+          const entry = { ...next[row] };
+          let field: keyof StatEntry = 'x';
+          if (col === 1) {
+            if (isTwoVar) field = 'y';
+            else if (statFrequencyEnabled) field = 'freq';
+          } else if (col === 2 && isTwoVar && statFrequencyEnabled) {
+            field = 'freq';
+          }
+          
+          let currentStr = String(entry[field] || "0");
+          if (currentStr === "0" && val !== '.') currentStr = "";
+          if (val === '-' && currentStr.startsWith('-')) return prev;
+          
+          entry[field] = currentStr + val;
+          next[row] = entry;
+          return next;
+        });
+      }
+      return;
+    }
+    if (calcMode === 'STAT_RESULT') {
+      const topOptions: Record<string, string> = {
+        '1': 'Type', '2': 'Data', '3': 'Sum', '4': 'Var', '5': 'Dist', '6': 'MinMax', '7': 'Reg'
+      };
+      if (val === '1') setCalcMode('STAT_MENU');
+      else if (val === '2') setCalcMode('STAT_DATA');
+      else if (topOptions[val]) {
+        setStatSubMenu(topOptions[val]);
+        setCalcMode('STAT_RESULT_SUB');
+      }
+      return;
+    }
+    if (calcMode === 'STAT_RESULT_SUB') {
+      const isTwoVar = statType !== '1-VAR';
+      
+      const insertStatVar = (name: string) => {
+        setCalcMode('COMP');
+        setSyntaxError(false);
+        setMathError(false);
+        if (showingResult || currentInput.includes('→')) {
+          const isOperator = /[+×÷\-]/.test(name) || name === 'sqr(‸)' || name === 'cube(‸)' || name.startsWith('pwr(') || name.startsWith('root(') || name.startsWith('frac(');
+          let nextInput = isOperator ? "Ans" + name : name;
+          if (!nextInput.includes('‸')) nextInput += '‸';
+          setCurrentInput(nextInput);
+          setShowingResult(false);
+        } else {
+          let target = name.includes('‸') ? name : name + '‸';
+          setCurrentInput(prev => {
+            const hasCursor = prev.includes('‸');
+            if (hasCursor) {
+              return prev.replace('‸', target);
+            } else {
+              return prev + target;
+            }
+          });
+        }
+      };
+
+      if (statSubMenu === 'Sum') {
+        const options: Record<string, string> = isTwoVar 
+          ? { '1': 'Σx²', '2': 'Σx', '3': 'Σy²', '4': 'Σy', '5': 'Σxy', '6': 'Σx³', '7': 'Σx²y', '8': 'Σx⁴' }
+          : { '1': 'Σx²', '2': 'Σx' };
+        if (options[val]) insertStatVar(options[val]);
+      } else if (statSubMenu === 'Var') {
+        const options: Record<string, string> = isTwoVar
+          ? { '1': 'n', '2': 'x̄', '3': 'σx', '4': 'sx', '5': 'ȳ', '6': 'σy', '7': 'sy' }
+          : { '1': 'n', '2': 'x̄', '3': 'σx', '4': 'sx' };
+        if (options[val]) insertStatVar(options[val]);
+      } else if (statSubMenu === 'MinMax') {
+        const options: Record<string, string> = isTwoVar
+          ? { '1': 'minX', '2': 'maxX', '3': 'minY', '4': 'maxY' }
+          : { '1': 'minX', '2': 'maxX' };
+        if (options[val]) insertStatVar(options[val]);
+      } else if (statSubMenu === 'Reg' && isTwoVar) {
+        const options: Record<string, string> = statType === '_+CX2'
+          ? { '1': 'A', '2': 'B', '3': 'C', '4': 'x̂1', '5': 'x̂2', '6': 'ŷ' }
+          : { '1': 'A', '2': 'B', '3': 'r', '4': 'x̂', '5': 'ŷ' };
+        if (options[val]) insertStatVar(options[val]);
+      }
       return;
     }
     if (calcMode === 'SETUP') {
@@ -890,12 +1425,13 @@ const Calculator: React.FC = () => {
     }
     if (calcMode === 'EQN_QUAD') {
       if (!isNaN(Number(val)) || val === '.' || val === '-') {
+        const currentIndex = eqnIndex;
         setEqnCoeffs(prev => {
           const next = [...prev];
-          let currentStr = next[eqnIndex];
+          let currentStr = next[currentIndex];
           if (currentStr === "0" && val !== '.') currentStr = "";
           if (val === '-' && currentStr.startsWith('-')) return next;
-          next[eqnIndex] = currentStr + val;
+          next[currentIndex] = currentStr + val;
           return next;
         });
       }
@@ -910,6 +1446,7 @@ const Calculator: React.FC = () => {
     }
 
     setSyntaxError(false);
+    setMathError(false);
     if (showingResult || currentInput.includes('→')) {
       const isOperator = /[+×÷\-]/.test(val) || val === 'sqr(‸)' || val === 'cube(‸)' || val.startsWith('pwr(') || val.startsWith('root(') || val.startsWith('frac(');
       let nextInput = isOperator ? "Ans" + val : val;
@@ -920,10 +1457,10 @@ const Calculator: React.FC = () => {
       let target = val.includes('‸') ? val : val + '‸';
       setCurrentInput(prev => prev.replace('‸', target));
     }
-  }, [calcMode, eqnIndex, showingResult, currentInput]);
+  }, [calcMode, eqnIndex, showingResult, currentInput, promptVar, statType, statFrequencyEnabled, statCursor]);
 
   const handleTemplateKey = useCallback((type: string) => {
-    if (type === 'diff') handleInput("diff(‸,x,‸)");
+    if (type === 'diff') handleInput("diff(‸,x,)");
     else if (type === 'sum') handleInput("Σ(‸,x,0,10)");
     setIsShift(false);
   }, [handleInput]);
@@ -1164,14 +1701,23 @@ const Calculator: React.FC = () => {
   const performEvaluation = useCallback(() => {
     if (!currentInput || currentInput.includes('→')) return null;
     try {
+      setSyntaxError(false);
+      setMathError(false);
       let s = currentInput;
       let openCount = (s.match(/\(/g) || []).length, closeCount = (s.match(/\)/g) || []).length;
       s += ')'.repeat(Math.max(0, openCount - closeCount));
       
-      let val = evaluateExpression(s, vars, ans, angleMode);
+      const statVars = calculateStatVars(statType, statData);
+      let val = evaluateExpression(s, vars, ans, angleMode, statVars);
       if (isNaN(val) || !isFinite(val)) {
-        console.warn("Evaluation resulted in non-finite value:", val);
-        throw "Error";
+        console.warn("Evaluation resulted in non-finite value:", val, {
+          inputExpression: s,
+          vars,
+          statType,
+          statData,
+          computedStatVars: statVars
+        });
+        throw "MathError";
       }
       
       const raw = currentInput.replace('‸', '');
@@ -1179,11 +1725,22 @@ const Calculator: React.FC = () => {
 
       return { val, raw, finalSequence };
     } catch (e) {
-      console.error("Calculator Evaluation Error:", e);
-      setSyntaxError(true);
+      console.warn("Calculator Evaluation Error details:", {
+        error: e,
+        inputExpression: currentInput,
+        vars,
+        statType,
+        statData,
+        stack: e instanceof Error ? e.stack : undefined
+      });
+      if (e === "MathError") {
+        setMathError(true);
+      } else {
+        setSyntaxError(true);
+      }
       return null;
     }
-  }, [currentInput, vars, ans, angleMode]);
+  }, [currentInput, vars, ans, angleMode, statType, statData]);
 
   const handleCalc = useCallback(() => {
     if (isShift) {
@@ -1202,11 +1759,12 @@ const Calculator: React.FC = () => {
       }
 
       try {
+        const sVars = calculateStatVars(statType, statData);
         // Simple Newton-Raphson
         for (let i = 0; i < 40; i++) {
-          let f = evaluateExpression(expr, { ...vars, X: x }, ans, angleMode);
+          let f = evaluateExpression(expr, { ...vars, X: x }, ans, angleMode, sVars);
           if (Math.abs(f) < 1e-12) break;
-          let df = (evaluateExpression(expr, { ...vars, X: x + 1e-7 }, ans, angleMode) - f) / 1e-7;
+          let df = (evaluateExpression(expr, { ...vars, X: x + 1e-7 }, ans, angleMode, sVars) - f) / 1e-7;
           if (Math.abs(df) < 1e-15) break; 
           let nextX = x - f / df;
           if (isNaN(nextX)) break;
@@ -1264,6 +1822,27 @@ const Calculator: React.FC = () => {
   const solve = useCallback(() => {
     if (promptVar) {
       tackleNextPrompt();
+      return;
+    }
+    if (calcMode === 'STAT_DATA') {
+      const isTwoVar = statType !== '1-VAR';
+      const maxCol = (isTwoVar ? 1 : 0) + (statFrequencyEnabled ? 1 : 0);
+      
+      setStatCursor(prev => {
+        if (prev.col < maxCol) return { ...prev, col: prev.col + 1 };
+        const nextRow = prev.row + 1;
+        setStatData(d => {
+          if (nextRow >= d.length) {
+            return [...d, { x: '', y: '', freq: '1' }];
+          }
+          return d;
+        });
+        return { row: nextRow, col: 0 };
+      });
+      return;
+    }
+    if (calcMode === 'MENU') {
+      setCalcMode('COMP');
       return;
     }
     if (calcMode === 'EQN_QUAD') {
@@ -1327,7 +1906,7 @@ const Calculator: React.FC = () => {
       setShowingResult(true);
       setDisplayMode(Number.isInteger(val) ? 'decimal' : 'fraction');
     }
-  }, [calcMode, eqnIndex, eqnCoeffs, eqnResultIdx, eqnResults, performEvaluation, toLaTeX, formatMath, promptVar, tackleNextPrompt]);
+  }, [calcMode, eqnIndex, eqnCoeffs, eqnResultIdx, eqnResults, performEvaluation, toLaTeX, formatMath, promptVar, tackleNextPrompt, statType, statData, statCursor]);
 
   useEffect(() => {
     solveRef.current = solve;
@@ -1336,6 +1915,30 @@ const Calculator: React.FC = () => {
   const del = useCallback(() => {
     if (promptVar) {
       setPromptValue(prev => prev.length > 1 ? prev.slice(0, -1) : "0");
+      return;
+    }
+    if (calcMode === 'STAT_DATA') {
+      const isTwoVar = statType !== '1-VAR';
+      const currentRow = statCursor.row;
+      const currentCol = statCursor.col;
+      
+      setStatData(prev => {
+        const next = [...prev];
+        const entry = { ...next[currentRow] };
+        let field: keyof StatEntry = 'x';
+        if (currentCol === 1) {
+          if (isTwoVar) field = 'y';
+          else if (statFrequencyEnabled) field = 'freq';
+        } else if (currentCol === 2 && isTwoVar && statFrequencyEnabled) {
+          field = 'freq';
+        }
+        let str = String(entry[field]);
+        if (str.length > 0) {
+          entry[field] = str.slice(0, -1) || "0";
+        }
+        next[currentRow] = entry;
+        return next;
+      });
       return;
     }
     if (calcMode === 'EQN_QUAD') {
@@ -1365,7 +1968,11 @@ const Calculator: React.FC = () => {
     // 1. Atomic buttons
     let found = PATS.find(p => before.endsWith(p));
     if (found) {
-      setCurrentInput(before.slice(0, -found.length) + '‸' + after);
+      let nextAfter = after;
+      if ((found.endsWith('(') || found.endsWith(',')) && after.startsWith(')')) {
+        nextAfter = after.slice(1);
+      }
+      setCurrentInput(before.slice(0, -found.length) + '‸' + nextAfter);
       return;
     }
 
@@ -1450,13 +2057,17 @@ const Calculator: React.FC = () => {
     }
     
     setCurrentInput(nextBefore + '‸' + after);
-  }, [calcMode, eqnIndex, showingResult, currentInput]);
+  }, [calcMode, eqnIndex, showingResult, currentInput, promptVar, statCursor, statData]);
 
   const clearHistory = () => {
     setHistory([]);
   };
 
   const clearAll = useCallback(() => {
+    if (calcMode === 'STAT_DATA' || calcMode === 'STAT_MENU' || calcMode === 'STAT_RESULT' || calcMode === 'STAT_RESULT_SUB') {
+      setCalcMode('COMP');
+      return;
+    }
     if (calcMode === 'EQN_QUAD' || calcMode === 'EQN_RESULT') {
       setEqnCoeffs(["0", "0", "0"]);
       setEqnIndex(0);
@@ -1473,9 +2084,16 @@ const Calculator: React.FC = () => {
     setIsRcl(false);
     setCalcMode('COMP');
     setSyntaxError(false);
+    setMathError(false);
   }, [calcMode]);
 
   const handleRight = useCallback(() => {
+    if (calcMode === 'STAT_DATA') {
+      const isTwoVar = statType !== '1-VAR';
+      const maxCol = (isTwoVar ? 1 : 0) + (statFrequencyEnabled ? 1 : 0);
+      setStatCursor(prev => ({ ...prev, col: Math.min(maxCol, prev.col + 1) }));
+      return;
+    }
     if (calcMode === 'EQN_QUAD') {
       setEqnIndex(prev => (prev + 1) % 3);
       return;
@@ -1486,17 +2104,40 @@ const Calculator: React.FC = () => {
     
     let before = currentInput.substring(0, i);
     let after = currentInput.substring(i + 1);
-    
+    const PATS = ['root(', 'sqrt(', 'sqr(', 'cube(', 'frac(', 'mix(', 'pwr(', 'diff(', 'int(', 'abs(', 'log_b(', 'sin(', 'cos(', 'tan(', 'Σ(', 'nCr(', 'nPr(', 'pow(', 'exp(', 'RanInt(', ','];
+
     let found = PATS.find(p => after.startsWith(p));
     if (found) {
-      setCurrentInput(before + found + '‸' + after.substring(found.length));
+      const nextBefore = before + found;
+      const nextAfter = after.substring(found.length);
+      // Skip logic for diff template variable
+      if (found === 'diff(' && nextAfter.includes(',x,')) {
+         setCurrentInput(nextBefore + '‸' + nextAfter);
+      } else if (found === ',' && (nextAfter.startsWith('x,') || nextAfter.startsWith('X,'))) {
+         const skippedVar = nextAfter.startsWith('x,') ? 'x,' : 'X,';
+         setCurrentInput(nextBefore + skippedVar + '‸' + nextAfter.substring(2));
+      } else {
+         setCurrentInput(nextBefore + '‸' + nextAfter);
+      }
     } else {
       let c = after[0];
-      setCurrentInput(before + c + '‸' + after.substring(1));
+      const nextBefore = before + c;
+      const nextAfter = after.substring(1);
+      // Skip logic for diff template variable
+      if (c === ',' && (nextAfter.startsWith('x,') || nextAfter.startsWith('X,'))) {
+         const skippedVar = nextAfter.startsWith('x,') ? 'x,' : 'X,';
+         setCurrentInput(nextBefore + skippedVar + '‸' + nextAfter.substring(2));
+      } else {
+         setCurrentInput(nextBefore + '‸' + nextAfter);
+      }
     }
-  }, [calcMode, showingResult, currentInput]);
+  }, [calcMode, showingResult, currentInput, statType, statFrequencyEnabled]);
 
   const handleLeft = useCallback(() => {
+    if (calcMode === 'STAT_DATA') {
+      setStatCursor(prev => ({ ...prev, col: Math.max(0, prev.col - 1) }));
+      return;
+    }
     if (calcMode === 'EQN_QUAD') {
       setEqnIndex(prev => (prev + 2) % 3);
       return;
@@ -1507,17 +2148,54 @@ const Calculator: React.FC = () => {
     
     let before = currentInput.substring(0, i);
     let after = currentInput.substring(i + 1);
+    const PATS = ['root(', 'sqrt(', 'sqr(', 'cube(', 'frac(', 'mix(', 'pwr(', 'diff(', 'int(', 'abs(', 'log_b(', 'sin(', 'cos(', 'tan(', 'Σ(', 'nCr(', 'nPr(', 'pow(', 'exp(', 'RanInt(', ','];
     
     let found = PATS.find(p => before.endsWith(p));
     if (found) {
-      setCurrentInput(before.substring(0, before.length - found.length) + '‸' + found + after);
+      const nextBefore = before.substring(0, before.length - found.length);
+      const targetStr = found + after;
+
+      // Special skip logic for diff variable (args[1])
+      if (found === ',' && (nextBefore.endsWith(',x') || nextBefore.endsWith(',X'))) {
+          // JUMP BACK across the ',x' or ',X' to land at end of first arg
+          const preVal = nextBefore.slice(0, -2);
+          setCurrentInput(preVal + '‸' + nextBefore.slice(-2) + targetStr);
+          return;
+      }
+
+      setCurrentInput(nextBefore + '‸' + targetStr);
     } else {
       let c = before[before.length - 1];
-      setCurrentInput(before.substring(0, before.length - 1) + '‸' + c + after);
+      const nextBefore = before.substring(0, before.length - 1);
+      const targetStr = c + after;
+
+      // Skip logic for diff template variable (jumping from third to first arg)
+      if (c === ',' && (nextBefore.endsWith('x') || nextBefore.endsWith('X'))) {
+          const preVar = nextBefore.slice(0, -1);
+          if (preVar.endsWith(',')) {
+              setCurrentInput(preVar.slice(0, -1) + '‸' + ',' + nextBefore.slice(-1) + targetStr);
+              return;
+          }
+      }
+
+      setCurrentInput(nextBefore + '‸' + targetStr);
     }
   }, [calcMode, showingResult, currentInput]);
 
   const handleDown = useCallback(() => {
+    if (calcMode === 'STAT_DATA') {
+      setStatCursor(prev => {
+        const nextRow = prev.row + 1;
+        setStatData(d => {
+          if (nextRow >= d.length) {
+            return [...d, { x: '', y: '', freq: '1' }];
+          }
+          return d;
+        });
+        return { ...prev, row: nextRow };
+      });
+      return;
+    }
     if (calcMode === 'EQN_RESULT') {
       if (eqnResultIdx < eqnResults.length - 1) {
         setEqnResultIdx(prev => prev + 1);
@@ -1540,9 +2218,13 @@ const Calculator: React.FC = () => {
     if (target !== -1) {
       setCurrentInput(before + after.substring(0, target + 1) + '‸' + after.substring(target + 1));
     }
-  }, [calcMode, eqnResultIdx, eqnResults, currentInput]);
+  }, [calcMode, eqnResultIdx, eqnResults, currentInput, statCursor, statData]);
 
   const handleUp = useCallback(() => {
+    if (calcMode === 'STAT_DATA') {
+      setStatCursor(prev => ({ ...prev, row: Math.max(0, prev.row - 1) }));
+      return;
+    }
     if (calcMode === 'EQN_RESULT') {
       if (eqnResultIdx > 0) {
         setEqnResultIdx(prev => prev - 1);
@@ -1625,7 +2307,8 @@ const Calculator: React.FC = () => {
         setCurrentInput(`Ans→${v}‸`);
       } else {
         try {
-          let valToSave = evaluateExpression(operand.replace(/Ans/g, String(ans)), {}, ans, angleMode);
+          const sVars = calculateStatVars(statType, statData);
+          let valToSave = evaluateExpression(operand.replace(/Ans/g, String(ans)), {}, ans, angleMode, sVars);
           setVars(prev => ({ ...prev, [v]: valToSave }));
           setCurrentInput(beforeText + `→${v}‸`);
         } catch(e) {
@@ -1731,7 +2414,7 @@ const Calculator: React.FC = () => {
   }, [isShift, showingResult, currentInput, handleInput]);
 
   const handleIntegralKey = useCallback(() => {
-    if (isShift) handleInput("diff(‸,x,‸)"); 
+    if (isShift) handleInput("diff(‸,x,)"); 
     else handleInput("int(‸,,,x)");
     setIsShift(false);
   }, [isShift, handleInput]);
@@ -1900,15 +2583,87 @@ const Calculator: React.FC = () => {
     }
     if (calcMode === 'MENU') {
       return (
-        <div className="mode-menu">
-            <div className="mode-item"><span className="mode-num">1:</span>COMP</div>
-            <div className="mode-item"><span className="mode-num">2:</span>CMPLX</div>
-            <div className="mode-item"><span className="mode-num">3:</span>STAT</div>
-            <div className="mode-item"><span className="mode-num">4:</span>BASE-N</div>
-            <div className="mode-item"><span className="mode-num">5:</span>EQN</div>
-            <div className="mode-item"><span className="mode-num">6:</span>MATRIX</div>
-            <div className="mode-item"><span className="mode-num">7:</span>TABLE</div>
-            <div className="mode-item"><span className="mode-num">8:</span>VECTOR</div>
+        <div className="mode-menu grid grid-cols-2 gap-x-4 gap-y-2 text-[0.95rem] flex-1">
+            <div className="mode-item"><span className="mode-num mr-1 text-black/40">1:</span>COMP</div>
+            <div className="mode-item"><span className="mode-num mr-1 text-black/40">2:</span>CMPLX</div>
+            <div className="mode-item"><span className="mode-num mr-1 text-black/40">3:</span>STAT</div>
+            <div className="mode-item"><span className="mode-num mr-1 text-black/40">4:</span>BASE-N</div>
+            <div className="mode-item"><span className="mode-num mr-1 text-black/40">5:</span>EQN</div>
+            <div className="mode-item"><span className="mode-num mr-1 text-black/40">6:</span>MATRIX</div>
+            <div className="mode-item"><span className="mode-num mr-1 text-black/40">7:</span>TABLE</div>
+            <div className="mode-item"><span className="mode-num mr-1 text-black/40">8:</span>VECTOR</div>
+        </div>
+      );
+    }
+    if (calcMode === 'STAT_MENU') {
+      return (
+        <div className="stat-menu grid grid-cols-2 gap-x-2 gap-y-1 text-[0.9rem] flex-1">
+            <div className="mode-item"><span className="mode-num mr-1 opacity-50">1:</span>1-VAR</div>
+            <div className="mode-item"><span className="mode-num mr-1 opacity-50">2:</span>A+BX</div>
+            <div className="mode-item"><span className="mode-num mr-1 opacity-50">3:</span>_+CX²</div>
+            <div className="mode-item"><span className="mode-num mr-1 opacity-50">4:</span>ln X</div>
+            <div className="mode-item"><span className="mode-num mr-1 opacity-50">5:</span>e^X</div>
+            <div className="mode-item"><span className="mode-num mr-1 opacity-50">6:</span>A·B^X</div>
+            <div className="mode-item"><span className="mode-num mr-1 opacity-50">7:</span>A·X^B</div>
+            <div className="mode-item"><span className="mode-num mr-1 opacity-50">8:</span>1/X</div>
+        </div>
+      );
+    }
+    if (calcMode === 'STAT_DATA') {
+      const isTwoVar = statType !== '1-VAR';
+      const gridCols = isTwoVar 
+        ? `40px 1fr 1fr ${statFrequencyEnabled ? '1fr' : ''}`
+        : `40px 80px ${statFrequencyEnabled ? '1fr' : ''}`;
+      
+      return (
+        <div className="stat-data w-full h-[140px] overflow-hidden flex flex-col font-mono text-[0.9rem] bg-black/5 rounded">
+          <div className="grid border-b border-black/20 font-bold bg-black/10" style={{ gridTemplateColumns: gridCols }}>
+            <div className="px-1 border-r border-black/10 text-center"></div>
+            <div className="px-1 border-r border-black/10 text-center">X</div>
+            {isTwoVar && <div className="px-1 border-r border-black/10 text-center">Y</div>}
+            {statFrequencyEnabled && <div className="px-1 text-center">FREQ</div>}
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            {statData.map((entry, idx) => (
+              <div key={idx} className="grid border-b border-black/5" style={{ gridTemplateColumns: gridCols }}>
+                <div className="px-1 border-r border-black/10 text-center bg-black/5">{idx + 1}</div>
+                <div className={`px-1 border-r border-black/10 text-right ${statCursor.row === idx && statCursor.col === 0 ? 'bg-black/20 outline outline-1 outline-black/30' : ''}`}>{entry.x === '' ? '0' : entry.x}</div>
+                {isTwoVar && <div className={`px-1 border-r border-black/10 text-right ${statCursor.row === idx && statCursor.col === 1 ? 'bg-black/20 outline outline-1 outline-black/30' : ''}`}>{entry.y === '' ? '0' : entry.y}</div>}
+                {statFrequencyEnabled && <div className={`px-1 text-right ${statCursor.row === idx && (isTwoVar ? statCursor.col === 2 : statCursor.col === 1) ? 'bg-black/20 outline outline-1 outline-black/30' : ''}`}>{entry.freq}</div>}
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+    if (calcMode === 'STAT_RESULT') {
+      return (
+        <div className="stat-result-menu grid grid-cols-2 gap-x-4 gap-y-2 text-[0.95rem] flex-1">
+            <div className="mode-item"><span className="mode-num mr-1 opacity-50">1:</span>Type</div>
+            <div className="mode-item"><span className="mode-num mr-1 opacity-50">2:</span>Data</div>
+            <div className="mode-item"><span className="mode-num mr-1 opacity-50">3:</span>Sum</div>
+            <div className="mode-item"><span className="mode-num mr-1 opacity-50">4:</span>Var</div>
+            <div className="mode-item"><span className="mode-num mr-1 opacity-50">5:</span>Dist</div>
+            <div className="mode-item"><span className="mode-num mr-1 opacity-50">6:</span>MinMax</div>
+            {statType !== '1-VAR' && <div className="mode-item"><span className="mode-num mr-1 opacity-50">7:</span>Reg</div>}
+        </div>
+      );
+    }
+    if (calcMode === 'STAT_RESULT_SUB') {
+      const isTwoVar = statType !== '1-VAR';
+      let options: string[] = [];
+      if (statSubMenu === 'Sum') options = isTwoVar ? ['Σx²', 'Σx', 'Σy²', 'Σy', 'Σxy', 'Σx³', 'Σx²y', 'Σx⁴'] : ['Σx²', 'Σx'];
+      else if (statSubMenu === 'Var') options = isTwoVar ? ['n', 'x̄', 'σx', 'sx', 'ȳ', 'σy', 'sy'] : ['n', 'x̄', 'σx', 'sx'];
+      else if (statSubMenu === 'MinMax') options = isTwoVar ? ['minX', 'maxX', 'minY', 'maxY'] : ['minX', 'maxX'];
+      else if (statSubMenu === 'Reg') {
+        options = statType === '_+CX2' ? ['A', 'B', 'C', 'x̂1', 'x̂2', 'ŷ'] : ['A', 'B', 'r', 'x̂', 'ŷ'];
+      }
+
+      return (
+        <div className="stat-submenu grid grid-cols-2 gap-x-4 gap-y-2 text-[0.85rem] flex-1">
+          {options.map((opt, i) => (
+            <div key={i} className="mode-item"><span className="mode-num mr-1 opacity-50">{i + 1}:</span>{renderMathSymbol(opt)}</div>
+          ))}
         </div>
       );
     }
@@ -1960,6 +2715,66 @@ const Calculator: React.FC = () => {
     return <div dangerouslySetInnerHTML={{ __html: formatMath(currentInput) }} />;
   };
 
+  const formatResultNumber = (n: number | undefined | null): React.ReactNode => {
+    if (n === undefined || n === null || isNaN(n)) return "Error";
+    if (!isFinite(n)) return "Error";
+    
+    const absVal = Math.abs(n);
+    if (absVal < 1e-15) {
+      return "0";
+    }
+    
+    // Casio typically displays in scientific notation if >= 10^10 or < 10^-9
+    const useSci = absVal >= 1e10 || absVal < 1e-9;
+    
+    if (useSci) {
+      // Format as base ×10^exponent with a 10-digit mantissa
+      const sciStr = n.toExponential(9);
+      const parts = sciStr.split('e');
+      let mantissa = parts[0];
+      const exponent = parts[1];
+      
+      // Trim unnecessary trailing zeros
+      if (mantissa.indexOf('.') !== -1) {
+        mantissa = mantissa.replace(/0+$/, '');
+        if (mantissa.endsWith('.')) {
+          mantissa = mantissa.slice(0, -1);
+        }
+      }
+      
+      const expPower = parseInt(exponent, 10);
+      
+      return (
+        <span className="inline-flex items-center font-mono select-all">
+          <span>{mantissa}</span>
+          <span className="text-[0.6em] font-sans mx-0.5 self-center translate-y-[0.05em]">×10</span>
+          <span className="text-[0.8em] self-start relative -top-[0.25em] font-bold">{expPower}</span>
+        </span>
+      );
+    }
+    
+    // Integer within 10-digit limit
+    if (Number.isInteger(n)) {
+      return <span className="font-mono select-all">{n.toString()}</span>;
+    }
+    
+    // Decimal: format number to fit exactly under the 10-digit total budget
+    const isNegative = n < 0;
+    const intPartLength = Math.max(1, Math.floor(Math.log10(absVal)) + 1);
+    const maxDecimals = Math.max(0, 10 - intPartLength);
+    
+    const fixedStr = n.toFixed(maxDecimals);
+    let cleanStr = fixedStr;
+    if (cleanStr.indexOf('.') !== -1) {
+      cleanStr = cleanStr.replace(/0+$/, '');
+      if (cleanStr.endsWith('.')) {
+        cleanStr = cleanStr.slice(0, -1);
+      }
+    }
+    
+    return <span className="font-mono select-all">{cleanStr}</span>;
+  };
+
   const renderResult = () => {
     if (promptVar) {
       return (
@@ -1975,25 +2790,33 @@ const Calculator: React.FC = () => {
       return <div className="decimal-result error">Syntax ERROR</div>;
     }
 
+    if (mathError) {
+      return <div className="decimal-result error">Math ERROR</div>;
+    }
+
     if (calcMode === 'EQN_RESULT') {
       let res = eqnResults[eqnResultIdx];
-      return <div className="decimal-result">{res?.val !== undefined && !isNaN(res.val) ? parseFloat(res.val.toFixed(9)) : "Error"}</div>;
+      return (
+        <div className="decimal-result">
+          {res?.val !== undefined && !isNaN(res.val) ? formatResultNumber(res.val) : "Error"}
+        </div>
+      );
     }
 
     if (showingResult) {
       if (displayMode === 'fraction' && !Number.isInteger(ans)) {
         let f = toFraction(ans);
         if (f.d > 1000000 || f.d === 1) {
-          return <div className="decimal-result">{parseFloat(ans.toFixed(9))}</div>;
+          return <div className="decimal-result">{formatResultNumber(ans)}</div>;
         }
         return (
           <div className="fraction-result">
-            <span className="res-num">{f.n}</span>
-            <span className="res-den">{f.d}</span>
+            <span className="res-num">{formatResultNumber(f.n)}</span>
+            <span className="res-den">{formatResultNumber(f.d)}</span>
           </div>
         );
       }
-      return <div className="decimal-result">{Number.isInteger(ans) ? ans : parseFloat(ans.toFixed(10))}</div>;
+      return <div className="decimal-result">{formatResultNumber(ans)}</div>;
     }
     
     return <div className="decimal-result">0</div>;
@@ -2243,7 +3066,7 @@ const Calculator: React.FC = () => {
             <div className={`status-item ${vars.M !== 0 ? 'active' : 'opacity-10'}`}>M</div>
             <div className={`status-item ${isSto ? 'active' : 'opacity-10'}`}>STO</div>
             <div className={`status-item ${isRcl ? 'active' : 'opacity-10'}`}>RCL</div>
-            <div className={`status-item opacity-10`}>STAT</div>
+            <div className={`status-item ${statType !== null ? 'active' : 'opacity-10'}`}>STAT</div>
             <div className={`status-item opacity-10`}>CMPLX</div>
             <div className={`status-item opacity-10`}>MAT</div>
             <div className={`status-item opacity-10`}>VCT</div>
@@ -2299,14 +3122,14 @@ const Calculator: React.FC = () => {
         {renderMappingKey('down', withFlash(handleDown, 'DOWN'), 'key-down')}
         {renderMappingKey('left', withFlash(handleLeft, 'LEFT'), 'key-left')}
         {renderMappingKey('right', withFlash(handleRight, 'RIGHT'), 'key-right')}
-        {renderMappingKey('shift', () => {}, 'key-shift', { 
-          onDown: () => { setCurrentSequence(prev => [...prev, 'SHIFT']); setShiftMomentary(true); }, 
-          onUp: () => setShiftMomentary(false) 
-        })}
-        {renderMappingKey('alpha', () => {}, 'key-alpha', { 
-          onDown: () => { setCurrentSequence(prev => [...prev, 'ALPHA']); setAlphaMomentary(true); }, 
-          onUp: () => setAlphaMomentary(false) 
-        })}
+        {renderMappingKey('shift', withFlash(() => {
+          setIsShift(prev => !prev);
+          setIsAlpha(false);
+        }, 'SHIFT'), 'key-shift')}
+        {renderMappingKey('alpha', withFlash(() => {
+          setIsAlpha(prev => !prev);
+          setIsShift(false);
+        }, 'ALPHA'), 'key-alpha')}
         
         {renderMappingKey('mode', withFlash(handleModeSwitch, 'MODE'), 'sci sr0 sc6 absolute top-[372px] left-[346px] w-[42px] h-[28px] rounded-[12px] border border-white/5 bg-white/0')}
 
@@ -2322,7 +3145,14 @@ const Calculator: React.FC = () => {
         {renderMappingKey('mul', withFlash(() => handleOpKey('×', 'nPr'), '×'), 'num nr2 nc4')}
         {renderMappingKey('div', withFlash(() => handleOpKey('÷', 'nCr'), '÷'), 'num nr2 nc5')}
         
-        {renderMappingKey('1', withFlash(() => handleInput('1'), '1'), 'num nr3 nc1')}
+        {renderMappingKey('1', withFlash(() => {
+          if (isShift && statType !== null) {
+            setCalcMode('STAT_RESULT');
+            setIsShift(false);
+          } else {
+            handleInput('1');
+          }
+        }, '1'), 'num nr3 nc1')}
         {renderMappingKey('2', withFlash(() => handleInput('2'), '2'), 'num nr3 nc2')}
         {renderMappingKey('3', withFlash(() => handleInput('3'), '3'), 'num nr3 nc3')}
         {renderMappingKey('add', withFlash(() => handleOpKey('+', 'pol'), '+'), 'num nr3 nc4')}
