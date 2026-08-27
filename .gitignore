@@ -6,3 +6,4 @@ coverage/
 *.log
 .env*
 !.env.example
+fx-570_991ES_PLUS_EN.pdf
