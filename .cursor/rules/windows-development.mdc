@@ -1,0 +1,12 @@
+---
+description: Windows is the only supported development OS
+alwaysApply: true
+---
+
+All development happens on Windows. Canonical clone path: `C:\projects\shevon\`.
+
+- Use PowerShell and Windows paths. Never assume bash, `/workspace`, or `/home/ubuntu`.
+- Do not clone this repository onto Linux or keep a remote Linux environment. If one exists, delete it.
+- Do not add Cursor Cloud Linux environment config (`.cursor/environment.json`, Dockerfiles, apt-based install scripts).
+- Keep npm scripts Windows-safe. No `rm -rf` or other Unix-only shell.
+- Electron/desktop builds target Windows (`npm run build:exe`).
