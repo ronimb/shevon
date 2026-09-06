@@ -34,10 +34,26 @@ export default function ShevonRoadmap() {
         </Text>
       </Stack>
 
-      <Callout tone="warning" title="Do this first">
-        Stabilize the foundation before adding MATRIX or CMPLX. The monolith
-        plus `new Function` will make every new mode more expensive if we
-        keep piling into `App.tsx`.
+      <Callout tone="success" title="Foundation is stable">
+        Phase 0 is done: `App.tsx` is split into a `Calculator.tsx` shell plus
+        `parser` / `evaluator` / `display` / `keys` / `modes`, `new Function`
+        is gone (expressions parse into a typed AST with golden + parser
+        tests), and the AI Studio leftovers — `@google/genai`, `mathjs`,
+        `GEMINI_API_KEY`, `metadata.json` — are removed with the README
+        rewritten. Next: make COMP / SETUP honest before adding MATRIX or
+        CMPLX.
+      </Callout>
+
+      <Callout tone="info" title="Visual fidelity = all elements present + same behavior">
+        Not pixel-perfect mimicry — browser fonts and our own HTML rendering
+        are fine, and we can lean on our technical advantages as long as we
+        stay stylistically close to the hardware (today's look is a good
+        proxy). The bar for every feature: each visual element the real
+        fx-991ES PLUS shows is present, in the hardware's position/role, and
+        behaves the same. Example: the EQN quadratic editor must show the
+        a / b / c coefficient labels and put the active number entry at the
+        bottom-left like the real unit — not an unlabeled boxed grid. This
+        applies to all modes and all phases, not just Phase 4.
       </Callout>
 
       <Row gap={8} wrap>
@@ -45,38 +61,109 @@ export default function ShevonRoadmap() {
           variant="primary"
           onClick={() =>
             start(
-              "Split src/App.tsx into modules (evaluator, display, keys, COMP/STAT/EQN) without changing behavior. Add a first golden-test file from the Casio manual examples.",
+              "Start Phase 1: make COMP and SETUP honest. Implement SETUP Fix/Sci/Norm with FIX/SCI indicators, the hyp menu (SHIFT hyp = Abs), Ran#/RanInt#, ENG shift, sexagesimal °′″, and Rnd( — never dump the literal letters ENG or hyp onto the LCD.",
             )
           }
         >
-          Start Phase 0
+          Start Phase 1
         </Button>
         <Button
           variant="secondary"
           onClick={() =>
             start(
-              "Replace new Function evaluation with a real parser (prefer the already-installed mathjs or a dedicated AST). Keep the current template language as the frontend IR.",
+              "Replace the trapezoid ∫ (n=100) with Gauss–Kronrod and the forward-difference d/dx with a central difference plus tolerance, so numeric methods match the Casio to displayed precision. Add golden tests from the manual.",
             )
           }
         >
-          Start engine swap
+          Casio-accurate numerics
         </Button>
         <Button
           variant="ghost"
           onClick={() =>
             start(
-              "Audit src/calculator_new.png, README, unused @google/genai and mathjs usage, and GEMINI_API_KEY in vite.config.ts. Clean AI Studio leftovers without breaking the overlay emulator.",
+              "Finish STAT and EQN: SETUP STAT FREQ ON/OFF with row caps, editor Ins/Del-A, 1-VAR distributions (P/Q/R and 't), keep STAT active when recalling vars, and add 2-/3-unknown linear + cubic EQN with complex quadratic roots.",
             )
           }
         >
-          Clean AI Studio leftovers
+          Finish STAT / EQN
         </Button>
       </Row>
+
+      <H2>Cross-cutting — match the hardware's elements and behavior in every feature</H2>
+      <Text>
+        Runs alongside every phase. Not pixel-perfect mimicry — our fonts and
+        HTML rendering are fine, and we can use technical advantages (show more
+        at once, cleaner layout) while staying stylistically close (today's
+        look is a good proxy). The bar: every element the real unit shows is
+        present and in a sensible place, and each feature behaves functionally
+        the same. Use the manual figures and a photo as the element/behavior
+        checklist, not a pixel reference.
+      </Text>
+      <TodoListCard
+        defaultExpanded
+        todos={[
+          {
+            id: "vis-elements",
+            status: "pending",
+            content:
+              "Audit each screen against the hardware and add any missing elements — e.g. EQN's a / b / c coefficient labels, mode/menu captions, dual-line answers — even if styled our own way",
+          },
+          {
+            id: "vis-placement",
+            status: "pending",
+            content:
+              "Put entry and answer in the hardware's position/role — e.g. EQN quadratic: active number entry at the bottom-left, coefficients in a labeled a / b / c layout",
+          },
+          {
+            id: "vis-indicators",
+            status: "pending",
+            content:
+              "All status indicators present and lit when the unit lights them: S / A (SHIFT/ALPHA), M, STO, RCL, STAT, CMPLX, D/R/G, FIX/SCI, Disp, ◀▶▲▼ (roughly matching positions; our styling is fine)",
+          },
+          {
+            id: "vis-menus",
+            status: "pending",
+            content:
+              "Every MODE / SETUP / STAT-type / EQN / distribution menu shows the same options and captions the hardware does — never a placeholder or a silent COMP fallback",
+          },
+          {
+            id: "vis-cursor",
+            status: "pending",
+            content:
+              "Show where the next character lands — a caret in the active field (COMP already uses ‸; extend to the EQN/STAT editor cells). A shaded box alone is not enough",
+          },
+          {
+            id: "vis-result",
+            status: "pending",
+            content:
+              "Offer the same result forms the unit can — S⇔D fraction/surd/π, complex a+bi, ×10ⁿ scientific, dual-line Pol/Rec r,θ — glyphs may be our fonts",
+          },
+          {
+            id: "vis-errors",
+            status: "pending",
+            content:
+              "Error screens carry the same elements/behavior (Math / Syntax / Stack / Argument ERROR) with the ◀▶ jump-to-token behavior from E-40",
+          },
+          {
+            id: "vis-no-literal",
+            status: "pending",
+            content:
+              "Never show literal function text (ENG, hyp) where the hardware shows a symbol or opens a menu",
+          },
+          {
+            id: "vis-checklist",
+            status: "pending",
+            content:
+              "Definition of done per feature: an element + behavior parity check vs the manual figure — same elements, same placement/role, same behavior; pixel-exactness not required",
+          },
+        ]}
+        onTodoClick={(todo) => start(`Visual parity: ${todo.content}`)}
+      />
 
       <H2>Phase 0 — Cursor-ready foundation</H2>
       <Text>
         Goal: the repo is understandable, testable, and honest about what
-        it is. No new Casio modes yet.
+        it is. Complete — one small console cleanup remains.
       </Text>
       <TodoListCard
         defaultExpanded
@@ -89,39 +176,39 @@ export default function ShevonRoadmap() {
           },
           {
             id: "p0-engine",
-            status: "pending",
+            status: "completed",
             content:
-              "Stop evaluating via new Function; use mathjs or a custom AST so tests can assert intermediate forms",
+              "Stop evaluating via new Function; parse into a typed AST (src/parser.ts) and walk it (src/evaluator.ts) so tests can assert intermediate forms",
           },
           {
             id: "p0-tests",
             status: "completed",
             content:
-              "Golden tests from the manual: sin 30=0.5, 2/3+1/2=7/6, nPr/nCr samples, STAT mean/σx sample on E-24",
+              "Golden tests from the manual: sin 30=0.5, 2/3+1/2=7/6, nPr/nCr samples, STAT mean/σx on E-24 (6 golden + 16 parser = 22)",
           },
           {
             id: "p0-readme",
-            status: "pending",
+            status: "completed",
             content:
               "Replace AI Studio README with how to run web / electron, where the PDF lives, and what is unimplemented",
           },
           {
             id: "p0-deps",
-            status: "pending",
+            status: "completed",
             content:
-              "Remove @google/genai and GEMINI_API_KEY unless we truly need them; decide to use or drop mathjs",
+              "Removed @google/genai + mathjs and the GEMINI_API_KEY injection from vite.config.ts; deleted metadata.json",
           },
           {
             id: "p0-asset",
-            status: "pending",
+            status: "completed",
             content:
-              "Confirm calculator_new.png is committed and loads; keep the Casio PDF gitignored",
+              "calculator_new.png committed under src/ and loading; Casio PDF stays gitignored",
           },
           {
             id: "p0-console",
             status: "pending",
             content:
-              "Remove evaluateExpression console.log of full expressions; keep errors behind a debug flag",
+              "Remove the remaining console.log of expressions; keep any diagnostics behind a debug flag",
           },
         ]}
         onTodoClick={(todo) => start(`Phase 0: ${todo.content}`)}
@@ -315,7 +402,7 @@ export default function ShevonRoadmap() {
         onTodoClick={(todo) => start(`Phase 4: ${todo.content}`)}
       />
 
-      <H2>Suggested first sprint (this week)</H2>
+      <H2>Suggested next sprint (this week)</H2>
       <GridLike />
     </Stack>
   );
@@ -327,13 +414,15 @@ function GridLike() {
     <Stack gap={16}>
       <Card>
         <CardHeader trailing={<Pill size="sm" active>1</Pill>}>
-          Inventory freeze
+          Fix lying keys
         </CardHeader>
         <CardBody>
           <Stack gap={10}>
             <Text>
-              Treat the coverage canvas as the backlog. Do not add CMPLX
-              until Phase 0 tests exist for COMP samples on E-16–E-18.
+              ENG, hyp, Ran#/RanInt, Abs, SETUP Fix/Sci/Norm, and MODE
+              2/4/6/7/8 currently look like Casio and then fail. Either
+              implement them or show a clear “not yet” on the LCD — do not
+              insert the letters ENG into the expression.
             </Text>
             <Button
               variant="secondary"
@@ -351,26 +440,25 @@ function GridLike() {
       </Card>
       <Card>
         <CardHeader trailing={<Pill size="sm" active>2</Pill>}>
-          Extract evaluator
+          Make SETUP real
         </CardHeader>
         <CardBody>
           <Text>
-            Move `evaluateExpression`, `calculateStatVars`, and
-            `toFraction` out of the React component. That is the seam for
-            tests and for replacing `new Function`.
+            Fix/Sci/Norm is the unlock for Rnd(, engineering notation, and
+            Casio-accurate result formatting. Wire the SETUP pages and light
+            the FIX/SCI indicators before touching new modes.
           </Text>
         </CardBody>
       </Card>
       <Card>
         <CardHeader trailing={<Pill size="sm" active>3</Pill>}>
-          Fix lying keys
+          Trust the numerics
         </CardHeader>
         <CardBody>
           <Text>
-            ENG, hyp, Ran#/RanInt, Abs, SETUP Fix/Sci/Norm, and MODE 2/4/6/7/8
-            currently look like Casio and then fail. Either implement or
-            show a clear “not yet” on the LCD — do not insert the letters
-            ENG into the expression.
+            Swap the trapezoid ∫ and forward d/dx for Gauss–Kronrod and a
+            central difference with tolerance, then pin them with golden
+            tests from the manual so ∫ and d/dx match the hardware.
           </Text>
         </CardBody>
       </Card>

@@ -3,7 +3,13 @@ import calculatorImg from './calculator_new.png';
 import type { CalcMode, DisplayMode, AngleMode, StatType, StatEntry, EqnResult, KeyStyle, HistoryItem, Vars } from './types.ts';
 import { INITIAL_KEY_STYLES } from './keys.ts';
 import { evaluateExpression, findPrecedingOperand, toFraction } from './evaluator.ts';
-import { toLaTeX, formatMath, formatResultNumber } from './display.tsx';
+import { toLaTeX, formatMath, formatResultNumber, SciNotation } from './display.tsx';
+import {
+  DEFAULT_FORMAT,
+  formatEngineering,
+  formatDMS,
+  type DisplayFormat,
+} from './format.ts';
 import {
   deleteCompAtCursor,
   insertCompValue,
@@ -184,6 +190,35 @@ const Calculator: React.FC = () => {
   const [currentSequence, setCurrentSequence] = useState<string[]>([]);
   const [showPane, setShowPane] = useState<boolean>(false);
 
+  // --- Phase 1: SETUP display format, engineering, DMS, hyp menu ---
+  const [displayFormat, setDisplayFormat] = useState<DisplayFormat>(() => {
+    try {
+      const saved = localStorage.getItem('calc_display_format');
+      return saved ? (JSON.parse(saved) as DisplayFormat) : DEFAULT_FORMAT;
+    } catch { return DEFAULT_FORMAT; }
+  });
+  useEffect(() => {
+    localStorage.setItem('calc_display_format', JSON.stringify(displayFormat));
+  }, [displayFormat]);
+
+  // ab/c (mixed) vs d/c (improper) fraction result form.
+  const [mixedFraction, setMixedFraction] = useState<boolean>(() => localStorage.getItem('calc_mixed_frac') === '1');
+  useEffect(() => {
+    localStorage.setItem('calc_mixed_frac', mixedFraction ? '1' : '0');
+  }, [mixedFraction]);
+
+  // SETUP sub-prompt awaiting a digit: Fix 0~9 / Sci 0~9 / Norm 1~2.
+  const [setupPrompt, setSetupPrompt] = useState<null | 'fix' | 'sci' | 'norm'>(null);
+  const [setupPage, setSetupPage] = useState<number>(0);
+
+  // hyp key menu (sinh/cosh/tanh + inverses) overlaid on COMP.
+  const [showHypMenu, setShowHypMenu] = useState<boolean>(false);
+
+  // Engineering-notation offset applied to the shown result (null = off).
+  const [engMode, setEngMode] = useState<number | null>(null);
+  // Sexagesimal (°′″) rendering of the shown result.
+  const [dmsResult, setDmsResult] = useState<boolean>(false);
+
   useEffect(() => {
     const handleResize = () => {
       const vh = window.innerHeight;
@@ -203,6 +238,21 @@ const Calculator: React.FC = () => {
   useEffect(() => { statCursorRef.current = statCursor; }, [statCursor]);
 
   const handleInput = useCallback((val: string) => {
+    if (showHypMenu) {
+      const hypMap: Record<string, string> = {
+        '1': 'sinh(‸)', '2': 'cosh(‸)', '3': 'tanh(‸)',
+        '4': 'sinh⁻¹(‸)', '5': 'cosh⁻¹(‸)', '6': 'tanh⁻¹(‸)',
+      };
+      if (hypMap[val]) {
+        setShowHypMenu(false);
+        setSyntaxError(false);
+        setMathError(false);
+        const next = insertCompValue(currentInput, showingResult, hypMap[val]);
+        setCurrentInput(next.input);
+        setShowingResult(next.showingResult);
+      }
+      return;
+    }
     if (promptVar) {
       if (!isNaN(Number(val)) || val === '.' || val === '-') {
         setPromptValue(prev => {
@@ -280,10 +330,33 @@ const Calculator: React.FC = () => {
       return;
     }
     if (calcMode === 'SETUP') {
-      if (val === '3') setAngleMode('DEG');
-      else if (val === '4') setAngleMode('RAD');
-      else if (val === '5') setAngleMode('GRA');
-      setCalcMode('COMP');
+      // Awaiting the digit for a Fix/Sci/Norm sub-prompt.
+      if (setupPrompt) {
+        const d = parseInt(val, 10);
+        if (!isNaN(d)) {
+          if (setupPrompt === 'fix') setDisplayFormat({ kind: 'fix', digits: Math.min(9, d) });
+          else if (setupPrompt === 'sci') setDisplayFormat({ kind: 'sci', digits: d === 0 ? 10 : Math.min(10, d) });
+          else if (setupPrompt === 'norm') setDisplayFormat({ kind: 'norm', n: d === 2 ? 2 : 1 });
+          setSetupPrompt(null);
+          setSetupPage(0);
+          setCalcMode('COMP');
+        }
+        return;
+      }
+      if (setupPage === 0) {
+        if (val === '3') { setAngleMode('DEG'); setCalcMode('COMP'); }
+        else if (val === '4') { setAngleMode('RAD'); setCalcMode('COMP'); }
+        else if (val === '5') { setAngleMode('GRA'); setCalcMode('COMP'); }
+        else if (val === '6') setSetupPrompt('fix');
+        else if (val === '7') setSetupPrompt('sci');
+        else if (val === '8') setSetupPrompt('norm');
+        else { setCalcMode('COMP'); } // MthIO/LineIO left as display-only for now
+        return;
+      }
+      // Second page: Disp — 1: ab/c (mixed), 2: d/c (improper)
+      if (val === '1') { setMixedFraction(true); setSetupPage(0); setCalcMode('COMP'); }
+      else if (val === '2') { setMixedFraction(false); setSetupPage(0); setCalcMode('COMP'); }
+      else { setSetupPage(0); setCalcMode('COMP'); }
       return;
     }
     if (calcMode === 'EQN_MENU') {
@@ -308,10 +381,12 @@ const Calculator: React.FC = () => {
 
     setSyntaxError(false);
     setMathError(false);
+    setEngMode(null);
+    setDmsResult(false);
     const next = insertCompValue(currentInput, showingResult, val);
     setCurrentInput(next.input);
     setShowingResult(next.showingResult);
-  }, [calcMode, eqnIndex, showingResult, currentInput, promptVar, statType, statFrequencyEnabled, statCursor]);
+  }, [calcMode, eqnIndex, showingResult, currentInput, promptVar, statType, statFrequencyEnabled, statCursor, showHypMenu, setupPrompt, setupPage]);
 
   const handleTemplateKey = useCallback((type: string) => {
     if (type === 'diff') handleInput("diff(‸,x,)");
@@ -346,6 +421,8 @@ const Calculator: React.FC = () => {
   const handleModeSwitch = useCallback(() => {
     if (isShift) {
       setCalcMode('SETUP');
+      setSetupPage(0);
+      setSetupPrompt(null);
       setIsShift(false);
     } else {
       setCalcMode('MENU');
@@ -362,7 +439,7 @@ const Calculator: React.FC = () => {
       s += ')'.repeat(Math.max(0, openCount - closeCount));
       
       const statVars = calculateStatVars(statType, statData);
-      let val = evaluateExpression(s, vars, ans, angleMode, statVars);
+      let val = evaluateExpression(s, vars, ans, angleMode, statVars, displayFormat);
       if (isNaN(val) || !isFinite(val)) {
         console.warn("Evaluation resulted in non-finite value:", val, {
           inputExpression: s,
@@ -394,7 +471,7 @@ const Calculator: React.FC = () => {
       }
       return null;
     }
-  }, [currentInput, vars, ans, angleMode, statType, statData]);
+  }, [currentInput, vars, ans, angleMode, statType, statData, displayFormat]);
 
   const handleCalc = useCallback(() => {
     if (isShift) {
@@ -526,6 +603,8 @@ const Calculator: React.FC = () => {
       setCurrentSequence([]);
       setLastValue(val);
       setShowingResult(true);
+      setEngMode(null);
+      setDmsResult(false);
       setDisplayMode(Number.isInteger(val) ? 'decimal' : 'fraction');
     }
   }, [calcMode, eqnIndex, eqnCoeffs, eqnResultIdx, eqnResults, performEvaluation, toLaTeX, formatMath, promptVar, tackleNextPrompt, statType, statData, statCursor]);
@@ -585,6 +664,11 @@ const Calculator: React.FC = () => {
     setCalcMode('COMP');
     setSyntaxError(false);
     setMathError(false);
+    setShowHypMenu(false);
+    setSetupPrompt(null);
+    setSetupPage(0);
+    setEngMode(null);
+    setDmsResult(false);
   }, [calcMode]);
 
   const handleRight = useCallback(() => {
@@ -616,6 +700,7 @@ const Calculator: React.FC = () => {
   }, [calcMode, showingResult, currentInput]);
 
   const handleDown = useCallback(() => {
+    if (calcMode === 'SETUP') { setSetupPage(p => (p === 0 ? 1 : 0)); return; }
     if (calcMode === 'STAT_DATA') {
       setStatCursor(prev => {
         const nextRow = prev.row + 1;
@@ -639,6 +724,7 @@ const Calculator: React.FC = () => {
   }, [calcMode, eqnResultIdx, eqnResults, currentInput, statCursor, statData]);
 
   const handleUp = useCallback(() => {
+    if (calcMode === 'SETUP') { setSetupPage(p => (p === 0 ? 1 : 0)); return; }
     if (calcMode === 'STAT_DATA') {
       setStatCursor(prev => ({ ...prev, row: Math.max(0, prev.row - 1) }));
       return;
@@ -734,8 +820,16 @@ const Calculator: React.FC = () => {
       setIsShift(false);
     } else {
       if (v === 'A') handleInput('-'); 
-      if (v === 'B') handleInput('°'); 
-      if (v === 'C') handleInput('hyp'); 
+      if (v === 'B') {
+        // °′″ key: toggle a result into sexagesimal, else insert a DMS separator.
+        if (showingResult) setDmsResult(prev => !prev);
+        else handleInput('°');
+      }
+      if (v === 'C') {
+        // hyp key: SHIFT hyp = Abs(, otherwise open the sinh/cosh/tanh menu.
+        if (isShift) { handleInput('abs(‸)'); setIsShift(false); }
+        else setShowHypMenu(true);
+      }
       if (v === 'D') handleTrigRef.current?.('sin', 'D');
       if (v === 'E') handleTrigRef.current?.('cos', 'E');
       if (v === 'F') handleTrigRef.current?.('tan', 'F');
@@ -743,7 +837,7 @@ const Calculator: React.FC = () => {
       if (v === 'Y') toggleSD(); 
       if (v === 'M') handleMemory('plus_minus', 'M'); 
     }
-  }, [isSto, isRcl, isAlpha, currentInput, showingResult, ans, vars, angleMode, handleInput, toggleSD, handleMemory]);
+  }, [isSto, isRcl, isAlpha, isShift, currentInput, showingResult, ans, vars, angleMode, handleInput, toggleSD, handleMemory]);
 
   handleAlphaVarRef.current = handleAlphaVar;
 
@@ -825,6 +919,25 @@ const Calculator: React.FC = () => {
     else if (isAlpha) handleInput('e');
     else handleInput('×10^');
     setIsShift(false); setIsAlpha(false);
+  }, [isShift, isAlpha, handleInput]);
+
+  // ENG: convert the displayed result to engineering notation (exponent a
+  // multiple of 3). ENG grows the mantissa (exponent −3), SHIFT ENG shrinks it.
+  const handleEng = useCallback(() => {
+    if (!showingResult) { setIsShift(false); return; }
+    const shiftUp = isShift;
+    setEngMode(prev => {
+      if (prev === null) return 0; // first press → natural engineering form
+      return shiftUp ? prev + 1 : prev - 1;
+    });
+    setIsShift(false);
+  }, [showingResult, isShift]);
+
+  // "." key: SHIFT . = Ran#, ALPHA . = RanInt#(a,b), otherwise a decimal point.
+  const handleDotKey = useCallback(() => {
+    if (isShift) { handleInput('Ran#'); setIsShift(false); }
+    else if (isAlpha) { handleInput('RanInt(‸,)'); setIsAlpha(false); }
+    else handleInput('.');
   }, [isShift, isAlpha, handleInput]);
 
   const handlePowerKey = useCallback((arg?: any) => {
@@ -957,6 +1070,18 @@ const Calculator: React.FC = () => {
 
   // --- Rendering Helpers ---
   const renderInput = () => {
+    if (showHypMenu) {
+      return (
+        <div className="mode-menu grid grid-cols-3 gap-x-4 gap-y-2 text-[0.95rem]">
+          <div className="mode-item"><span className="mode-num mr-1 text-black/40">1:</span>sinh</div>
+          <div className="mode-item"><span className="mode-num mr-1 text-black/40">2:</span>cosh</div>
+          <div className="mode-item"><span className="mode-num mr-1 text-black/40">3:</span>tanh</div>
+          <div className="mode-item"><span className="mode-num mr-1 text-black/40">4:</span>sinh⁻¹</div>
+          <div className="mode-item"><span className="mode-num mr-1 text-black/40">5:</span>cosh⁻¹</div>
+          <div className="mode-item"><span className="mode-num mr-1 text-black/40">6:</span>tanh⁻¹</div>
+        </div>
+      );
+    }
     if (promptVar) {
       return (
         <div className="flex flex-col">
@@ -1001,6 +1126,19 @@ const Calculator: React.FC = () => {
       return <StatSubMenuScreen statSubMenu={statSubMenu} statType={statType} />;
     }
     if (calcMode === 'SETUP') {
+      if (setupPrompt) {
+        const label = setupPrompt === 'fix' ? 'Fix 0~9?' : setupPrompt === 'sci' ? 'Sci 0~9?' : 'Norm 1~2?';
+        return <div className="mode-menu"><div className="mode-item">{label}</div></div>;
+      }
+      if (setupPage === 1) {
+        return (
+          <div className="mode-menu">
+            <div className="mode-item"><span className="mode-num">1:</span>ab/c</div>
+            <div className="mode-item"><span className="mode-num">2:</span>d/c</div>
+            <div className="mode-item col-span-2 text-black/40 text-[0.75rem]">▲ back</div>
+          </div>
+        );
+      }
       return (
         <div className="mode-menu">
             <div className="mode-item"><span className="mode-num">1:</span>MthIO</div>
@@ -1011,6 +1149,7 @@ const Calculator: React.FC = () => {
             <div className="mode-item"><span className="mode-num">6:</span>Fix</div>
             <div className="mode-item"><span className="mode-num">7:</span>Sci</div>
             <div className="mode-item"><span className="mode-num">8:</span>Norm</div>
+            <div className="mode-item col-span-2 text-black/40 text-[0.75rem]">▼ Disp</div>
         </div>
       );
     }
@@ -1051,10 +1190,38 @@ const Calculator: React.FC = () => {
     }
 
     if (showingResult) {
-      if (displayMode === 'fraction' && !Number.isInteger(ans)) {
+      // Engineering notation view (ENG / SHIFT ENG).
+      if (engMode !== null) {
+        const eng = formatEngineering(ans, engMode);
+        return <div className="decimal-result"><SciNotation mantissa={eng.mantissa} exponent={eng.exponent} /></div>;
+      }
+      // Sexagesimal (°′″) view.
+      if (dmsResult) {
+        const { deg, min, sec } = formatDMS(ans);
+        return (
+          <div className="decimal-result">
+            {deg}<span className="opacity-70 mx-[1px]">°</span>{min}<span className="opacity-70 mx-[1px]">°</span>{sec}<span className="opacity-70 mx-[1px]">°</span>
+          </div>
+        );
+      }
+      // Fractions only exist in Norm; Fix/Sci always show a formatted decimal.
+      if (displayMode === 'fraction' && !Number.isInteger(ans) && displayFormat.kind === 'norm') {
         let f = toFraction(ans);
         if (f.d > 1000000 || f.d === 1) {
-          return <div className="decimal-result">{formatResultNumber(ans)}</div>;
+          return <div className="decimal-result">{formatResultNumber(ans, displayFormat)}</div>;
+        }
+        if (mixedFraction && Math.abs(f.n) > f.d) {
+          const sign = f.n < 0 ? -1 : 1;
+          const an = Math.abs(f.n);
+          const whole = sign * Math.floor(an / f.d);
+          const rem = an % f.d;
+          return (
+            <div className="fraction-result">
+              <span className="res-num mr-1">{whole}</span>
+              <span className="res-num">{rem}</span>
+              <span className="res-den">{f.d}</span>
+            </div>
+          );
         }
         return (
           <div className="fraction-result">
@@ -1063,7 +1230,7 @@ const Calculator: React.FC = () => {
           </div>
         );
       }
-      return <div className="decimal-result">{formatResultNumber(ans)}</div>;
+      return <div className="decimal-result">{formatResultNumber(ans, displayFormat)}</div>;
     }
     
     return <div className="decimal-result">0</div>;
@@ -1320,8 +1487,8 @@ const Calculator: React.FC = () => {
             <div className={`status-item ${angleMode === 'DEG' ? 'active' : 'opacity-10'} text-[6px] outline outline-1 outline-black px-[1px] mx-[1px] leading-none`}>D</div>
             <div className={`status-item ${angleMode === 'RAD' ? 'active' : 'opacity-10'} text-[6px] outline outline-1 outline-black px-[1px] mx-[1px] leading-none`}>R</div>
             <div className={`status-item ${angleMode === 'GRA' ? 'active' : 'opacity-10'} text-[6px] outline outline-1 outline-black px-[1px] mx-[1px] leading-none`}>G</div>
-            <div className={`status-item opacity-10`}>FIX</div>
-            <div className={`status-item opacity-10`}>SCI</div>
+            <div className={`status-item ${displayFormat.kind === 'fix' ? 'active' : 'opacity-10'}`}>FIX</div>
+            <div className={`status-item ${displayFormat.kind === 'sci' ? 'active' : 'opacity-10'}`}>SCI</div>
             <div className={`status-item active`}>Math</div>
             <div className={`status-item ${(calcMode === 'EQN_RESULT' && eqnResultIdx > 0) ? 'active' : 'opacity-10'}`}>▲</div>
             <div className={`status-item ${(calcMode === 'EQN_RESULT' && eqnResultIdx < eqnResults.length - 1) ? 'active' : 'opacity-10'}`}>▼</div>
@@ -1358,7 +1525,7 @@ const Calculator: React.FC = () => {
         {renderMappingKey('tan', withFlash(() => handleTrig('tan', 'F'), 'TAN'), 'sci sr3 sc6')}
 
         {renderMappingKey('rcl', withFlash(() => handleMemory('rcl_sto'), 'RCL'), 'sci sr4 sc1')}
-        {renderMappingKey('eng', withFlash(() => handleInput('ENG'), 'ENG'), 'sci sr4 sc2')}
+        {renderMappingKey('eng', withFlash(handleEng, 'ENG'), 'sci sr4 sc2')}
         {renderMappingKey('paren-open', withFlash(() => handleParentheses('(', ''), '('), 'sci sr4 sc3')}
         {renderMappingKey('paren-close', withFlash(() => handleAlphaVar('X'), ')'), 'sci sr4 sc4')}
         {renderMappingKey('sd', withFlash(() => handleAlphaVar('Y'), 'S⇔D'), 'key-sd')}
@@ -1405,8 +1572,11 @@ const Calculator: React.FC = () => {
         {renderMappingKey('add', withFlash(() => handleOpKey('+', 'pol'), '+'), 'num nr3 nc4')}
         {renderMappingKey('sub', withFlash(() => handleOpKey('-', 'rec'), '-'), 'num nr3 nc5')}
         
-        {renderMappingKey('0', withFlash(() => handleInput('0'), '0'), 'num nr4 nc1')}
-        {renderMappingKey('dot', withFlash(() => handleInput('.'), '.'), 'num nr4 nc2')}
+        {renderMappingKey('0', withFlash(() => {
+          if (isShift) { handleInput('Rnd(‸)'); setIsShift(false); }
+          else handleInput('0');
+        }, '0'), 'num nr4 nc1')}
+        {renderMappingKey('dot', withFlash(handleDotKey, '.'), 'num nr4 nc2')}
         {renderMappingKey('exp', withFlash(handleExpKey, '×10ˣ'), 'num nr4 nc3')}
         {renderMappingKey('ans', withFlash(() => handleInput('Ans'), 'Ans'), 'num nr4 nc4')}
         {renderMappingKey('solve', withFlash(solve, '='), 'num nr4 nc5')}

@@ -1,4 +1,5 @@
 import { parse, type AstNode } from './parser.ts';
+import { DEFAULT_FORMAT, roundToFormat, type DisplayFormat } from './format.ts';
 import type { AngleMode, Vars } from './types.ts';
 
 export const factorial = (n: number): number => {
@@ -31,9 +32,9 @@ export const findPrecedingOperand = (text: string): string => {
         let sub = text.substring(0, i);
         // Greedy stem matching
         const stems = [
-            'sin⁻¹', 'cos⁻¹', 'tan⁻¹', 'sin', 'cos', 'tan', 
+            'sinh⁻¹', 'cosh⁻¹', 'tanh⁻¹', 'sin⁻¹', 'cos⁻¹', 'tan⁻¹', 'sin', 'cos', 'tan',
             'sinh', 'cosh', 'tanh', 'asin', 'acos', 'atan',
-            'sqrt', 'abs', 'frac', 'pwr', 'root', 'sqr', 'cube', 
+            'sqrt', 'abs', 'Rnd', 'frac', 'pwr', 'root', 'sqr', 'cube', 
             'int', 'diff', 'Σ', 'mix', 'nCr', 'nPr', 'RanInt', 
             'log_b', 'log10', 'ln', 'e^', '10^', '__pow', '__factorial', '__yhat', '__xhat', '__xhat1', '__xhat2'
         ];
@@ -61,7 +62,7 @@ export const toFraction = (decimal: number) => {
   return { n: best_n, d: best_d };
 };
 
-export const evaluateExpression = (expr: string, scope: Vars, ans: number, angleMode: AngleMode, statVars: Vars): number => {
+export const evaluateExpression = (expr: string, scope: Vars, ans: number, angleMode: AngleMode, statVars: Vars, displayFormat: DisplayFormat = DEFAULT_FORMAT): number => {
     const toRad = (x: number) => {
     if (angleMode === 'DEG') return x * Math.PI / 180;
     if (angleMode === 'GRA') return x * Math.PI / 200;
@@ -85,6 +86,7 @@ export const evaluateExpression = (expr: string, scope: Vars, ans: number, angle
     __asinh: Math.asinh, __acosh: Math.acosh, __atanh: Math.atanh,
     __sqrt: Math.sqrt, __log: Math.log, __log10: Math.log10, __exp: Math.exp, __pow: Math.pow,
     __abs: Math.abs, Math: Math,
+    __rnd: (x: number) => roundToFormat(x, displayFormat),
     __nthroot: (n: number, x: number) => Math.pow(x, 1 / n),
     __logb: (b: number, x: number) => Math.log(x) / Math.log(b),
     __factorial: factorial,
@@ -307,6 +309,16 @@ export const evaluateExpression = (expr: string, scope: Vars, ans: number, angle
 
   let proc = expr.replace(/[‸⬚]/g, '').normalize('NFD');
 
+  // Sexagesimal (degrees-minutes-seconds) input: d°m°s° → decimal degrees.
+  // The °′″ key emits a single ° between each field, so 2°30°0° means 2°30′00″.
+  // Longest match first so the 2- and 1-field fallbacks don't split a triple.
+  proc = proc
+    .replace(/(\d+(?:\.\d+)?)°(\d+(?:\.\d+)?)°(\d+(?:\.\d+)?)°?/g,
+      (_m, d, mnt, s) => `(${d}+(${mnt})/60+(${s})/3600)`)
+    .replace(/(\d+(?:\.\d+)?)°(\d+(?:\.\d+)?)°?/g,
+      (_m, d, mnt) => `(${d}+(${mnt})/60)`)
+    .replace(/(\d+(?:\.\d+)?)°/g, (_m, d) => `(${d})`);
+
   // Convert statistical power/summation variables FIRST to avoid any word boundary or symbol conflicts with x, y, n, etc.
   proc = proc
     .replace(/Σx²/g, 'stat_sigx2')
@@ -413,6 +425,9 @@ export const evaluateExpression = (expr: string, scope: Vars, ans: number, angle
     { name: 'sin', replace: (args: string[]) => `__sin(${args[0]})` },
     { name: 'cos', replace: (args: string[]) => `__cos(${args[0]})` },
     { name: 'tan', replace: (args: string[]) => `__tan(${args[0]})` },
+    { name: 'sinh⁻¹', replace: (args: string[]) => `__asinh(${args[0]})` },
+    { name: 'cosh⁻¹', replace: (args: string[]) => `__acosh(${args[0]})` },
+    { name: 'tanh⁻¹', replace: (args: string[]) => `__atanh(${args[0]})` },
     { name: 'sinh', replace: (args: string[]) => `__sinh(${args[0]})` },
     { name: 'cosh', replace: (args: string[]) => `__cosh(${args[0]})` },
     { name: 'tanh', replace: (args: string[]) => `__tanh(${args[0]})` },
@@ -429,6 +444,7 @@ export const evaluateExpression = (expr: string, scope: Vars, ans: number, angle
     { name: 'sqr', replace: (args: string[]) => `((${args[0]})**2)` },
     { name: 'cube', replace: (args: string[]) => `((${args[0]})**3)` },
     { name: 'abs', replace: (args: string[]) => `__abs(${args[0]})` },
+    { name: 'Rnd', replace: (args: string[]) => `__rnd(${args[0]})` },
     { name: 'sqrt', replace: (args: string[]) => `__sqrt(${args[0]})` },
   ];
 

@@ -61,8 +61,8 @@ export const INITIAL_KEY_STYLES: Record<string, KeyStyle> = {
   solve: { top: 888, left: 379, width: 75, height: 55 },
 };
 
-export const PATS = ['!', 'sin⁻¹(', 'cos⁻¹(', 'tan⁻¹(', 'sin(', 'cos(', 'tan(', '×10^', 'sqrt(', 'sqr(', 'cube(', 'pwr(', 'root(', 'frac(', 'mix(', 'int(', 'diff(', 'e^(', '10^(', 'log_b(', 'log10(', 'ln(', 'abs(', 'Ans', 'nCr(', 'nPr(', 'Σ(', 'pol(', 'rec(', 'RanInt(', 'Ran#', '^(', 'root(3,'];
+export const PATS = ['!', 'sinh⁻¹(', 'cosh⁻¹(', 'tanh⁻¹(', 'sin⁻¹(', 'cos⁻¹(', 'tan⁻¹(', 'sinh(', 'cosh(', 'tanh(', 'sin(', 'cos(', 'tan(', '×10^', 'sqrt(', 'sqr(', 'cube(', 'pwr(', 'root(', 'frac(', 'mix(', 'int(', 'diff(', 'e^(', '10^(', 'log_b(', 'log10(', 'ln(', 'abs(', 'Rnd(', 'Ans', 'nCr(', 'nPr(', 'Σ(', 'pol(', 'rec(', 'RanInt(', 'Ran#', '^(', 'root(3,'];
 
-export const CURSOR_PATS = ['root(', 'sqrt(', 'sqr(', 'cube(', 'frac(', 'mix(', 'pwr(', 'diff(', 'int(', 'abs(', 'log_b(', 'sin(', 'cos(', 'tan(', 'Σ(', 'nCr(', 'nPr(', 'pow(', 'exp(', 'RanInt(', ','];
+export const CURSOR_PATS = ['root(', 'sqrt(', 'sqr(', 'cube(', 'frac(', 'mix(', 'pwr(', 'diff(', 'int(', 'abs(', 'Rnd(', 'log_b(', 'sinh⁻¹(', 'cosh⁻¹(', 'tanh⁻¹(', 'sinh(', 'cosh(', 'tanh(', 'sin(', 'cos(', 'tan(', 'Σ(', 'nCr(', 'nPr(', 'pow(', 'exp(', 'RanInt(', ','];
 
-export const DELETE_STEMS = ['pwr', 'root', 'abs', 'log10', 'ln', 'sin', 'cos', 'tan', 'sum', 'int', 'fac', 'frac', 'sqrt', 'sqr', 'cube', 'log_b'];
+export const DELETE_STEMS = ['pwr', 'root', 'abs', 'Rnd', 'log10', 'ln', 'sinh⁻¹', 'cosh⁻¹', 'tanh⁻¹', 'sinh', 'cosh', 'tanh', 'sin', 'cos', 'tan', 'sum', 'int', 'fac', 'frac', 'sqrt', 'sqr', 'cube', 'log_b'];

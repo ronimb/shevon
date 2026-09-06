@@ -251,7 +251,7 @@ export const reconstructSequence = (input: string): string[] => {
     const tokens = [
       "sinh⁻¹(", "cosh⁻¹(", "tanh⁻¹(", "sin⁻¹(", "cos⁻¹(", "tan⁻¹(",
       "sinh(", "cosh(", "tanh(", "sin(", "cos(", "tan(",
-      "pwr(", "root(", "sqr(", "cube(", "frac(", "mix(", "diff(", "int(", "abs(", "log_b(", "log10(", "ln(", "Σ(", 
+      "pwr(", "root(", "sqr(", "cube(", "frac(", "mix(", "diff(", "int(", "abs(", "Rnd(", "log_b(", "log10(", "ln(", "Σ(", 
       "RanInt(", "Ran#", "Ans", "e", "π", "°″", "×10^(", "×10^", "nCr(", "nPr(", "root(3,", "^(", "10^(", "e^(",
       "pol(", "rec(", "diff(", "int(", "!", "%", ",", "→", "Abs", "hyp", "°"
     ];
@@ -287,6 +287,7 @@ export const reconstructSequence = (input: string): string[] => {
       'd/dx': ['SHIFT', '∫'],
       'Σ': ['SHIFT', 'log_box'], 
       'log_box': ['log_box'], 
+      'Rnd': ['SHIFT', '0'],
       'Ran#': ['SHIFT', '.'],
       'RanInt': ['ALPHA', '.'],
       'Ans': ['Ans'],
@@ -347,6 +348,7 @@ export const reconstructSequence = (input: string): string[] => {
           else if (t === 'log10(' || t === '10^(') label = '10^';
           else if (t === 'ln(' || t === 'e^(') label = 'e^';
           else if (t === 'abs(') label = 'Abs';
+          else if (t === 'Rnd(') label = 'Rnd';
           else if (t === 'sqrt(') label = '√';
           else if (t === 'root(3,') label = 'root3';
           else if (t === 'root(') label = 'root';

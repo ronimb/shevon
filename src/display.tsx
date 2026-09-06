@@ -1,4 +1,5 @@
 import React from 'react';
+import { DEFAULT_FORMAT, formatForDisplay, type DisplayFormat } from './format.ts';
 
 export const toLaTeX = (expr: string): string => {
   let proc = expr.replace(/[‸⬚]/g, '');
@@ -299,61 +300,24 @@ export const renderMathSymbol = (sym: string): React.ReactNode => {
   return <span>{sym}</span>;
 };
 
-export const formatResultNumber = (n: number | undefined | null): React.ReactNode => {
+export const SciNotation: React.FC<{ mantissa: string; exponent: number }> = ({ mantissa, exponent }) => (
+  <span className="inline-flex items-center font-mono select-all">
+    <span>{mantissa}</span>
+    <span className="text-[0.6em] font-sans mx-0.5 self-center translate-y-[0.05em]">×10</span>
+    <span className="text-[0.8em] self-start relative -top-[0.25em] font-bold">{exponent}</span>
+  </span>
+);
+
+export const formatResultNumber = (
+  n: number | undefined | null,
+  fmt: DisplayFormat = DEFAULT_FORMAT,
+): React.ReactNode => {
     if (n === undefined || n === null || isNaN(n)) return "Error";
     if (!isFinite(n)) return "Error";
-    
-    const absVal = Math.abs(n);
-    if (absVal < 1e-15) {
-      return "0";
+
+    const shown = formatForDisplay(n, fmt);
+    if (shown.type === 'sci') {
+      return <SciNotation mantissa={shown.mantissa} exponent={shown.exponent} />;
     }
-    
-    // Casio typically displays in scientific notation if >= 10^10 or < 10^-9
-    const useSci = absVal >= 1e10 || absVal < 1e-9;
-    
-    if (useSci) {
-      // Format as base ×10^exponent with a 10-digit mantissa
-      const sciStr = n.toExponential(9);
-      const parts = sciStr.split('e');
-      let mantissa = parts[0];
-      const exponent = parts[1];
-      
-      // Trim unnecessary trailing zeros
-      if (mantissa.indexOf('.') !== -1) {
-        mantissa = mantissa.replace(/0+$/, '');
-        if (mantissa.endsWith('.')) {
-          mantissa = mantissa.slice(0, -1);
-        }
-      }
-      
-      const expPower = parseInt(exponent, 10);
-      
-      return (
-        <span className="inline-flex items-center font-mono select-all">
-          <span>{mantissa}</span>
-          <span className="text-[0.6em] font-sans mx-0.5 self-center translate-y-[0.05em]">×10</span>
-          <span className="text-[0.8em] self-start relative -top-[0.25em] font-bold">{expPower}</span>
-        </span>
-      );
-    }
-    
-    // Integer within 10-digit limit
-    if (Number.isInteger(n)) {
-      return <span className="font-mono select-all">{n.toString()}</span>;
-    }
-    
-    // Decimal: format number to fit exactly under the 10-digit total budget
-    const intPartLength = Math.max(1, Math.floor(Math.log10(absVal)) + 1);
-    const maxDecimals = Math.max(0, 10 - intPartLength);
-    
-    const fixedStr = n.toFixed(maxDecimals);
-    let cleanStr = fixedStr;
-    if (cleanStr.indexOf('.') !== -1) {
-      cleanStr = cleanStr.replace(/0+$/, '');
-      if (cleanStr.endsWith('.')) {
-        cleanStr = cleanStr.slice(0, -1);
-      }
-    }
-    
-    return <span className="font-mono select-all">{cleanStr}</span>;
+    return <span className="font-mono select-all">{shown.text}</span>;
 };
