@@ -34,14 +34,14 @@ export default function ShevonRoadmap() {
         </Text>
       </Stack>
 
-      <Callout tone="success" title="Foundation is stable">
-        Phase 0 is done: `App.tsx` is split into a `Calculator.tsx` shell plus
-        `parser` / `evaluator` / `display` / `keys` / `modes`, `new Function`
-        is gone (expressions parse into a typed AST with golden + parser
-        tests), and the AI Studio leftovers — `@google/genai`, `mathjs`,
-        `GEMINI_API_KEY`, `metadata.json` — are removed with the README
-        rewritten. Next: make COMP / SETUP honest before adding MATRIX or
-        CMPLX.
+      <Callout tone="success" title="Phase 1 complete — COMP and SETUP are honest">
+        On top of the Phase 0 foundation (typed-AST engine, no `new Function`,
+        AI-Studio leftovers gone), COMP now behaves like the hardware: SETUP
+        Fix/Sci/Norm with lit indicators, the hyp menu + Abs, Ran#/RanInt#,
+        ENG, sexagesimal °′″, and Rnd( — plus Gauss–Kronrod ∫, central-diff
+        d/dx, ▲/▼ history replay, ERROR ◄/► editing, and SHIFT 9 CLR. 44
+        tests pass. Next: Phase 2 — finish STAT and EQN before opening new
+        modes.
       </Callout>
 
       <Callout tone="info" title="Visual fidelity = all elements present + same behavior">
@@ -260,26 +260,26 @@ export default function ShevonRoadmap() {
           },
           {
             id: "p1-int",
-            status: "pending",
+            status: "completed",
             content:
-              "Replace trapezoid ∫ and forward d/dx with Casio-like Gauss–Kronrod and central difference + tol",
+              "∫ now uses adaptive Gauss–Kronrod (G7–K15) and d/dx a central difference + Richardson; golden tests pin ∫x²=1/3, d/dx x²|₃=6",
           },
           {
             id: "p1-replay",
-            status: "pending",
+            status: "completed",
             content:
-              "LCD history replay with ▲/▼ in COMP; keep the side pane as an extra",
+              "LCD history replay with ▲/▼ in COMP (▲ recalls previous, ▼ walks back to a live line); side pane kept as an extra",
           },
           {
             id: "p1-errors",
-            status: "pending",
+            status: "completed",
             content:
-              "Math/Syntax ERROR: left/right jump to the bad token; AC clears; ranges from E-38",
+              "Math/Syntax ERROR: ◄/► return to the expression for editing, AC clears; results beyond ±10¹⁰⁰ raise Math ERROR",
           },
           {
             id: "p1-clr",
-            status: "pending",
-            content: "SHIFT 9 CLR: Setup / Memory / All",
+            status: "completed",
+            content: "SHIFT 9 CLR menu: 1:Setup 2:Memory 3:All",
           },
         ]}
         onTodoClick={(todo) => start(`Phase 1: ${todo.content}`)}

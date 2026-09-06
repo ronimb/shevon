@@ -2,6 +2,7 @@ export type CalcMode =
   | 'COMP'
   | 'MENU'
   | 'SETUP'
+  | 'CLR_MENU'
   | 'EQN_MENU'
   | 'EQN_QUAD'
   | 'EQN_RESULT'

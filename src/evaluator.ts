@@ -178,16 +178,74 @@ export const evaluateExpression = (expr: string, scope: Vars, ans: number, angle
        if (t === '_+CX2') return a + b * x + c * x * x;
        return 0;
     },
+    // Adaptive Gauss–Kronrod (G7–K15), the same family the fx-991ES PLUS uses,
+    // so ∫ matches the hardware to displayed precision instead of the old
+    // fixed-step trapezoid.
     __int: (f: (v: number) => number, a: number, b: number) => {
-      const n = 100;
-      const h = (b - a) / n;
-      let res = (f(a) + f(b)) / 2;
-      for (let i = 1; i < n; i++) res += f(a + i * h);
-      return res * h;
+      if (a === b) return 0;
+      const sign = b < a ? -1 : 1;
+      const lo = Math.min(a, b);
+      const hi = Math.max(a, b);
+
+      const XGK = [
+        0.991455371120813, 0.949107912342759, 0.864864423359769,
+        0.741531185599394, 0.586087235467691, 0.405845151377397,
+        0.207784955007898, 0.0,
+      ];
+      const WGK = [
+        0.022935322010529, 0.063092092629979, 0.104790010322250,
+        0.140653259715525, 0.169004726639267, 0.190350578064785,
+        0.204432940075298, 0.209482141084728,
+      ];
+      const WG = [
+        0.129484966168870, 0.279705391489277,
+        0.381830050505119, 0.417959183673469,
+      ];
+
+      const gk15 = (lo2: number, hi2: number) => {
+        const center = 0.5 * (lo2 + hi2);
+        const halfLength = 0.5 * (hi2 - lo2);
+        const fc = f(center);
+        let resGauss = WG[3] * fc;
+        let resKronrod = WGK[7] * fc;
+        for (let j = 0; j < 3; j++) {
+          const jtw = 2 * j + 1;
+          const x = halfLength * XGK[jtw];
+          const fsum = f(center - x) + f(center + x);
+          resGauss += WG[j] * fsum;
+          resKronrod += WGK[jtw] * fsum;
+        }
+        for (let j = 0; j < 4; j++) {
+          const jtwm = 2 * j;
+          const x = halfLength * XGK[jtwm];
+          resKronrod += WGK[jtwm] * (f(center - x) + f(center + x));
+        }
+        return {
+          integral: resKronrod * halfLength,
+          err: Math.abs((resKronrod - resGauss) * halfLength),
+        };
+      };
+
+      const adaptive = (lo2: number, hi2: number, tol: number, depth: number): number => {
+        const { integral, err } = gk15(lo2, hi2);
+        if (err < tol || depth <= 0) return integral;
+        const mid = 0.5 * (lo2 + hi2);
+        return (
+          adaptive(lo2, mid, tol / 2, depth - 1) +
+          adaptive(mid, hi2, tol / 2, depth - 1)
+        );
+      };
+
+      return sign * adaptive(lo, hi, 1e-11, 50);
     },
+    // Central difference with one Richardson extrapolation (O(h^4)), replacing
+    // the old forward difference so d/dx is symmetric and accurate to display.
     __diff: (f: (v: number) => number, p: number) => {
-      const h = 1e-7;
-      return (f(p + h) - f(p)) / h;
+      const scale = Math.abs(p) > 1 ? Math.abs(p) : 1;
+      const h = 1e-4 * scale;
+      const d1 = (f(p + h) - f(p - h)) / (2 * h);
+      const d2 = (f(p + h / 2) - f(p - h / 2)) / h;
+      return (4 * d2 - d1) / 3;
     },
     __sum: (f: (v: number) => number, start: number, end: number) => {
       let t = 0;

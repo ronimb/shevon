@@ -136,3 +136,37 @@ describe('Phase 1 — display formatting', () => {
     expect(formatDMS(1.508333333)).toEqual({ deg: 1, min: 30, sec: '30' });
   });
 });
+
+describe('Phase 1 — Casio-accurate numerics', () => {
+  it('∫ (Gauss–Kronrod): ∫₀¹ x² dx = 1/3', () => {
+    expect(evalComp('int(sqr(x),0,1)')).toBeCloseTo(1 / 3, 9);
+  });
+
+  it('∫ ₀¹ x dx = 1/2', () => {
+    expect(evalComp('int(x,0,1)')).toBeCloseTo(0.5, 10);
+  });
+
+  it('∫ ₁ᵉ (1/x) dx = 1', () => {
+    expect(evalComp('int(frac(1,x),1,e)')).toBeCloseTo(1, 9);
+  });
+
+  it('∫ handles reversed limits with a sign flip', () => {
+    expect(evalComp('int(sqr(x),1,0)')).toBeCloseTo(-1 / 3, 9);
+  });
+
+  it('d/dx (central difference): d/dx x² at 3 = 6', () => {
+    expect(evalComp('diff(sqr(x),x,3)')).toBeCloseTo(6, 7);
+  });
+
+  it('d/dx x³ at 2 = 12', () => {
+    expect(evalComp('diff(cube(x),x,2)')).toBeCloseTo(12, 7);
+  });
+
+  it('d/dx (1/x) at 2 = -1/4', () => {
+    expect(evalComp('diff(frac(1,x),x,2)')).toBeCloseTo(-0.25, 7);
+  });
+
+  it('overflow beyond ±10¹⁰⁰ is out of Casio range', () => {
+    expect(Math.abs(evalComp('pwr(10,150)'))).toBeGreaterThanOrEqual(1e100);
+  });
+});

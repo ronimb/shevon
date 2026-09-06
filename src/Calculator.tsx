@@ -218,6 +218,8 @@ const Calculator: React.FC = () => {
   const [engMode, setEngMode] = useState<number | null>(null);
   // Sexagesimal (°′″) rendering of the shown result.
   const [dmsResult, setDmsResult] = useState<boolean>(false);
+  // LCD history replay: index into `history` currently recalled (-1 = live).
+  const [replayIndex, setReplayIndex] = useState<number>(-1);
 
   useEffect(() => {
     const handleResize = () => {
@@ -359,6 +361,27 @@ const Calculator: React.FC = () => {
       else { setSetupPage(0); setCalcMode('COMP'); }
       return;
     }
+    if (calcMode === 'CLR_MENU') {
+      const resetSetup = () => {
+        setDisplayFormat(DEFAULT_FORMAT);
+        setAngleMode('DEG');
+        setMixedFraction(false);
+      };
+      const resetMemory = () => {
+        setVars({ A: 0, B: 0, C: 0, D: 0, E: 0, F: 0, X: 0, Y: 0, M: 0 });
+        setAns(0);
+        setHistory([]);
+      };
+      if (val === '1') resetSetup();
+      else if (val === '2') resetMemory();
+      else if (val === '3') { resetSetup(); resetMemory(); }
+      else return; // ignore other keys; AC exits
+      setCurrentInput('‸');
+      setShowingResult(false);
+      setCurrentSequence([]);
+      setCalcMode('COMP');
+      return;
+    }
     if (calcMode === 'EQN_MENU') {
       if (val === '3') {
         setCalcMode('EQN_QUAD');
@@ -383,6 +406,7 @@ const Calculator: React.FC = () => {
     setMathError(false);
     setEngMode(null);
     setDmsResult(false);
+    setReplayIndex(-1);
     const next = insertCompValue(currentInput, showingResult, val);
     setCurrentInput(next.input);
     setShowingResult(next.showingResult);
@@ -440,7 +464,7 @@ const Calculator: React.FC = () => {
       
       const statVars = calculateStatVars(statType, statData);
       let val = evaluateExpression(s, vars, ans, angleMode, statVars, displayFormat);
-      if (isNaN(val) || !isFinite(val)) {
+      if (isNaN(val) || !isFinite(val) || Math.abs(val) >= 1e100) {
         console.warn("Evaluation resulted in non-finite value:", val, {
           inputExpression: s,
           vars,
@@ -605,6 +629,7 @@ const Calculator: React.FC = () => {
       setShowingResult(true);
       setEngMode(null);
       setDmsResult(false);
+      setReplayIndex(-1);
       setDisplayMode(Number.isInteger(val) ? 'decimal' : 'fraction');
     }
   }, [calcMode, eqnIndex, eqnCoeffs, eqnResultIdx, eqnResults, performEvaluation, toLaTeX, formatMath, promptVar, tackleNextPrompt, statType, statData, statCursor]);
@@ -618,6 +643,7 @@ const Calculator: React.FC = () => {
       setPromptValue(prev => prev.length > 1 ? prev.slice(0, -1) : "0");
       return;
     }
+    setReplayIndex(-1); // editing exits history replay
     if (calcMode === 'STAT_DATA') {
       setStatData(prev => applyStatDelete(prev, statCursor.row, statCursor.col, statType, statFrequencyEnabled));
       return;
@@ -669,9 +695,12 @@ const Calculator: React.FC = () => {
     setSetupPage(0);
     setEngMode(null);
     setDmsResult(false);
+    setReplayIndex(-1);
   }, [calcMode]);
 
   const handleRight = useCallback(() => {
+    // After an error, ◄/► dismiss it and return to the expression for editing.
+    if (syntaxError || mathError) { setSyntaxError(false); setMathError(false); return; }
     if (calcMode === 'STAT_DATA') {
       const isTwoVar = statType !== '1-VAR';
       const maxCol = (isTwoVar ? 1 : 0) + (statFrequencyEnabled ? 1 : 0);
@@ -684,9 +713,11 @@ const Calculator: React.FC = () => {
     }
     if (showingResult) { setShowingResult(false); return; }
     setCurrentInput(moveCompCursorRight(currentInput));
-  }, [calcMode, showingResult, currentInput, statType, statFrequencyEnabled]);
+  }, [calcMode, showingResult, currentInput, statType, statFrequencyEnabled, syntaxError, mathError]);
 
   const handleLeft = useCallback(() => {
+    // After an error, ◄/► dismiss it and return to the expression for editing.
+    if (syntaxError || mathError) { setSyntaxError(false); setMathError(false); return; }
     if (calcMode === 'STAT_DATA') {
       setStatCursor(prev => ({ ...prev, col: Math.max(0, prev.col - 1) }));
       return;
@@ -697,10 +728,24 @@ const Calculator: React.FC = () => {
     }
     if (showingResult) { setShowingResult(false); return; }
     setCurrentInput(moveCompCursorLeft(currentInput));
-  }, [calcMode, showingResult, currentInput]);
+  }, [calcMode, showingResult, currentInput, syntaxError, mathError]);
 
   const handleDown = useCallback(() => {
     if (calcMode === 'SETUP') { setSetupPage(p => (p === 0 ? 1 : 0)); return; }
+    // LCD history replay: ▼ walks back toward the newest entry / live line.
+    if (calcMode === 'COMP' && replayIndex >= 0) {
+      const idx = replayIndex - 1;
+      if (idx < 0) {
+        setReplayIndex(-1);
+        setCurrentInput('‸');
+        setCurrentSequence([]);
+      } else {
+        setReplayIndex(idx);
+        setCurrentInput(history[idx].rawInput + '‸');
+        setCurrentSequence([...history[idx].sequence]);
+      }
+      return;
+    }
     if (calcMode === 'STAT_DATA') {
       setStatCursor(prev => {
         const nextRow = prev.row + 1;
@@ -721,10 +766,26 @@ const Calculator: React.FC = () => {
       return;
     }
     setCurrentInput(moveCompCursorDown(currentInput));
-  }, [calcMode, eqnResultIdx, eqnResults, currentInput, statCursor, statData]);
+  }, [calcMode, eqnResultIdx, eqnResults, currentInput, statCursor, statData, replayIndex, history]);
 
   const handleUp = useCallback(() => {
     if (calcMode === 'SETUP') { setSetupPage(p => (p === 0 ? 1 : 0)); return; }
+    // LCD history replay: ▲ recalls the previous calculation onto the line.
+    if (calcMode === 'COMP' && (showingResult || replayIndex >= 0) && history.length > 0) {
+      const idx = replayIndex < 0 ? 0 : Math.min(history.length - 1, replayIndex + 1);
+      const item = history[idx];
+      if (item) {
+        setReplayIndex(idx);
+        setShowingResult(false);
+        setSyntaxError(false);
+        setMathError(false);
+        setEngMode(null);
+        setDmsResult(false);
+        setCurrentInput(item.rawInput + '‸');
+        setCurrentSequence([...item.sequence]);
+      }
+      return;
+    }
     if (calcMode === 'STAT_DATA') {
       setStatCursor(prev => ({ ...prev, row: Math.max(0, prev.row - 1) }));
       return;
@@ -736,7 +797,7 @@ const Calculator: React.FC = () => {
       return;
     }
     setCurrentInput(moveCompCursorUp(currentInput));
-  }, [calcMode, eqnResultIdx, currentInput]);
+  }, [calcMode, eqnResultIdx, currentInput, showingResult, replayIndex, history]);
 
   const toggleSD = useCallback(() => {
     if (!showingResult) return;
@@ -1153,6 +1214,15 @@ const Calculator: React.FC = () => {
         </div>
       );
     }
+    if (calcMode === 'CLR_MENU') {
+      return (
+        <div className="mode-menu">
+            <div className="mode-item"><span className="mode-num">1:</span>Setup</div>
+            <div className="mode-item"><span className="mode-num">2:</span>Memory</div>
+            <div className="mode-item"><span className="mode-num">3:</span>All</div>
+        </div>
+      );
+    }
     if (calcMode === 'EQN_MENU') {
       return <EqnMenuScreen />;
     }
@@ -1175,7 +1245,7 @@ const Calculator: React.FC = () => {
         </div>
       );
     }
-    if (calcMode === 'MENU' || calcMode === 'EQN_MENU' || calcMode === 'EQN_QUAD') return null;
+    if (calcMode === 'MENU' || calcMode === 'CLR_MENU' || calcMode === 'EQN_MENU' || calcMode === 'EQN_QUAD') return null;
     
     if (syntaxError) {
       return <div className="decimal-result error">Syntax ERROR</div>;
@@ -1549,7 +1619,10 @@ const Calculator: React.FC = () => {
 
         {renderMappingKey('7', withFlash(() => handleInput('7'), '7'), 'num nr1 nc1')}
         {renderMappingKey('8', withFlash(() => handleInput('8'), '8'), 'num nr1 nc2')}
-        {renderMappingKey('9', withFlash(() => handleInput('9'), '9'), 'num nr1 nc3')}
+        {renderMappingKey('9', withFlash(() => {
+          if (isShift) { setCalcMode('CLR_MENU'); setIsShift(false); }
+          else handleInput('9');
+        }, '9'), 'num nr1 nc3')}
         {renderMappingKey('del', withFlash(del, 'DEL'), 'num nr1 nc4')}
         {renderMappingKey('ac', withFlash(clearAll, 'AC'), 'num nr1 nc5')}
         
@@ -1636,6 +1709,7 @@ const Calculator: React.FC = () => {
                                    setCurrentInput(item.rawInput + "‸");
                                    setCurrentSequence([...item.sequence]);
                                    setShowingResult(false);
+                                   setReplayIndex(-1);
                                  }}
                                  className="text-[9px] text-blue-400/40 hover:text-blue-400 transition-colors uppercase font-bold tracking-widest cursor-pointer"
                                >
