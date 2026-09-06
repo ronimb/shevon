@@ -83,7 +83,7 @@ export default function ShevonRoadmap() {
         todos={[
           {
             id: "p0-split",
-            status: "pending",
+            status: "completed",
             content:
               "Split App.tsx: evaluator, formatMath/toLaTeX, key map, COMP handlers, STAT, EQN, Calculator shell",
           },
@@ -95,7 +95,7 @@ export default function ShevonRoadmap() {
           },
           {
             id: "p0-tests",
-            status: "pending",
+            status: "completed",
             content:
               "Golden tests from the manual: sin 30=0.5, 2/3+1/2=7/6, nPr/nCr samples, STAT mean/σx sample on E-24",
           },

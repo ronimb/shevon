@@ -132,7 +132,7 @@ const FEATURES: Feature[] = [
   { area: "Platform", name: "PC keyboard", manual: "—", status: "partial", inCode: "Enter, arrows, Shift/Alt, S/C/T/L/R/Q/A", gap: "Letter keys steal typing; Shift is hold vs toggle mismatch" },
   { area: "Platform", name: "History / LaTeX pane", manual: "—", status: "done", inCode: "50 items, Load, key-sequence reconstruction", gap: "Not Casio behavior; keep as extra" },
   { area: "Platform", name: "Electron + Pages + PWA", manual: "—", status: "partial", inCode: "Scripts and workflow present", gap: "README still AI Studio; unused Gemini key" },
-  { area: "Platform", name: "Tests", manual: "E-16 examples", status: "missing", inCode: "None", gap: "Golden tests from every sample operation in the PDF" },
+  { area: "Platform", name: "Tests", manual: "E-16 examples", status: "partial", inCode: "src/casio-manual.golden.test.ts: sin 30, 2/3+1/2, nPr/nCr, STAT E-24 mean/σx", gap: "Remaining numbered sample operations in the PDF" },
 ];
 
 const AREAS: Array<Area | "All"> = [

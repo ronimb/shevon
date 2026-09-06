@@ -43,8 +43,8 @@ export default function ShevonStatus() {
       <Grid columns={4} gap={16}>
         <Stat value="~45%" label="Manual coverage" tone="warning" />
         <Stat value="3 / 8" label="Modes with real logic" />
-        <Stat value="~3,300" label="Lines in App.tsx" />
-        <Stat value="0" label="Automated tests" tone="danger" />
+        <Stat value="AST" label="Engine (no new Function)" tone="success" />
+        <Stat value="22" label="Tests (6 golden + 16 parser)" tone="success" />
       </Grid>
 
       <Stack gap={8}>
@@ -53,8 +53,9 @@ export default function ShevonStatus() {
           A photoreal overlay of a Casio scientific calculator. Transparent
           hitboxes sit on `src/calculator_new.png`. The LCD is a custom
           Natural-V.P.A.M. renderer (HTML templates for fractions, roots,
-          integrals, sums). Evaluation rewrites the internal expression into
-          JavaScript and runs it with `new Function`.
+          integrals, sums). The template language is lowered to a canonical
+          form, parsed into a typed AST (`src/parser.ts`), and walked by the
+          evaluator — no `new Function`, no code generation.
         </Text>
         <Text tone="secondary">
           COMP is usable for everyday scientific work. STAT is the next most
@@ -86,8 +87,23 @@ export default function ShevonStatus() {
         rows={[
           [
             "src/App.tsx",
-            "Entire product",
-            "Types, parser, STAT/EQN, LCD, keys, history pane, keyboard, debug overlay",
+            "Entry",
+            "Thin re-export of Calculator.tsx after the Phase 0 split",
+          ],
+          [
+            "src/Calculator.tsx",
+            "UI shell",
+            "COMP/STAT/EQN handlers, LCD, keys, history pane, keyboard, debug overlay",
+          ],
+          [
+            "src/parser.ts + src/evaluator.ts",
+            "Expression engine",
+            "Tokenizer + recursive-descent AST parser; evaluator lowers the template IR and walks the AST (no new Function)",
+          ],
+          [
+            "src/display.tsx, keys.ts, modes/",
+            "Display, key maps, modes",
+            "formatMath / toLaTeX, PATS / CURSOR_PATS, COMP / STAT / EQN helpers",
           ],
           [
             "src/index.css",
@@ -117,7 +133,7 @@ export default function ShevonStatus() {
           [
             "package.json",
             "Scripts + deps",
-            "mathjs and @google/genai are installed but unused",
+            "mathjs and @google/genai still installed but unused — engine uses a custom AST, not mathjs",
           ],
           [
             ".github/workflows/deploy.yml",
@@ -181,24 +197,20 @@ export default function ShevonStatus() {
         </Card>
       </Grid>
 
+      <Callout tone="success" title="Resolved this pass">
+        App.tsx split into evaluator / display / keys / modes; `new Function`
+        replaced with a tokenizer + recursive-descent AST parser; golden tests
+        from the manual plus parser unit tests (22 total) are green.
+      </Callout>
+
       <H2>Structural risks</H2>
       <Table
         headers={["Risk", "Why it matters", "Severity"]}
-        rowTone={["danger", "warning", "warning", "warning", "info"]}
+        rowTone={["warning", "warning", "info"]}
         rows={[
           [
-            "new Function evaluation",
-            "String-rewritten JS is hard to test, easy to get wrong on precedence, and not Casio-accurate",
-            "High",
-          ],
-          [
-            "One-file monolith",
-            "Modes, parser, and UI share one 3,300-line component — every feature change collides",
-            "High",
-          ],
-          [
             "Unused mathjs / Gemini SDK",
-            "Dead AI Studio leftovers; mathjs was likely intended as the real engine",
+            "Dead AI Studio leftovers; engine now uses a custom AST, so mathjs can be dropped outright",
             "Medium",
           ],
           [
@@ -207,9 +219,38 @@ export default function ShevonStatus() {
             "Medium",
           ],
           [
-            "No golden tests",
-            "The manual is full of sample operations that should be the regression suite",
-            "High",
+            "Numeric methods not Casio-accurate",
+            "∫ uses a fixed 100-step trapezoid and d/dx a one-sided difference; no exact/natural result forms yet",
+            "Medium",
+          ],
+        ]}
+        striped
+      />
+
+      <H2>Next steps</H2>
+      <Table
+        headers={["Next", "Detail", "Phase"]}
+        columnAlign={["left", "left", "left"]}
+        rows={[
+          [
+            "Clean AI Studio leftovers",
+            "Remove @google/genai + mathjs, drop GEMINI_API_KEY from vite.config.ts, rewrite the README",
+            "Phase 0",
+          ],
+          [
+            "Make COMP / SETUP honest",
+            "SETUP Fix/Sci/Norm, hyp menu, Ran#/RanInt, ENG, °′″, Rnd(, and Math/Syntax ERROR jumps",
+            "Phase 1",
+          ],
+          [
+            "Casio-accurate numeric methods",
+            "Swap trapezoid ∫ for Gauss–Kronrod and d/dx for a central difference with tolerance",
+            "Phase 1",
+          ],
+          [
+            "Exact result forms",
+            "Now that intermediate forms are inspectable, surface n√m, p/q·π, and mixed fractions",
+            "Phase 4",
           ],
         ]}
         striped
