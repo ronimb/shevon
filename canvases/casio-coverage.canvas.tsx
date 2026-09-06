@@ -128,11 +128,11 @@ const FEATURES: Feature[] = [
   { area: "Errors", name: "Variable / Can’t Solve / Time Out", manual: "E-41", status: "missing", inCode: "SOLVE fails as Syntax ERROR", gap: "Proper SOLVE and ∫/d/dx diagnostics" },
   { area: "Errors", name: "Calculation range ±1×10^99", manual: "E-38", status: "missing", inCode: "IEEE float; factorial to 170", gap: "Per-function ranges from E-38–39" },
 
-  { area: "Platform", name: "Photo overlay + hitboxes", manual: "—", status: "done", inCode: "Absolute keys; triple-click calibration", gap: "Confirm calculator_new.png is in git" },
+  { area: "Platform", name: "Photo overlay + hitboxes", manual: "—", status: "done", inCode: "Absolute keys; triple-click calibration; calculator_new.png committed", gap: "" },
   { area: "Platform", name: "PC keyboard", manual: "—", status: "partial", inCode: "Enter, arrows, Shift/Alt, S/C/T/L/R/Q/A", gap: "Letter keys steal typing; Shift is hold vs toggle mismatch" },
   { area: "Platform", name: "History / LaTeX pane", manual: "—", status: "done", inCode: "50 items, Load, key-sequence reconstruction", gap: "Not Casio behavior; keep as extra" },
-  { area: "Platform", name: "Electron + Pages + PWA", manual: "—", status: "partial", inCode: "Scripts and workflow present", gap: "README still AI Studio; unused Gemini key" },
-  { area: "Platform", name: "Tests", manual: "E-16 examples", status: "partial", inCode: "src/casio-manual.golden.test.ts: sin 30, 2/3+1/2, nPr/nCr, STAT E-24 mean/σx", gap: "Remaining numbered sample operations in the PDF" },
+  { area: "Platform", name: "Electron + Pages + PWA", manual: "—", status: "partial", inCode: "Scripts and workflow present; README rewritten; Gemini/mathjs deps removed", gap: "Verify portable exe, Pages deploy, and PWA install end-to-end" },
+  { area: "Platform", name: "Tests", manual: "E-16 examples", status: "partial", inCode: "6 golden (sin 30, 2/3+1/2, nPr/nCr, STAT E-24 mean/σx) + 16 parser = 22", gap: "Remaining numbered sample operations in the PDF" },
 ];
 
 const AREAS: Array<Area | "All"> = [
@@ -197,9 +197,9 @@ export default function CasioCoverage() {
       <Stack gap={8}>
         <H1>Casio fx-991ES PLUS coverage</H1>
         <Text tone="secondary">
-          Feature-by-feature map of the official user guide against
-          `src/App.tsx`. Status is about behavior, not whether a menu label
-          exists.
+          Feature-by-feature map of the official user guide against the
+          `Calculator.tsx` shell and the `parser` / `evaluator` engine.
+          Status is about behavior, not whether a menu label exists.
         </Text>
       </Stack>
 
@@ -326,9 +326,10 @@ export default function CasioCoverage() {
         <Stack gap={8}>
           <Text>
             Internal form is a string with a `‸` cursor. Templates look like
-            `frac(1,2)`, `int(ln(X),1,e,x)`, `Σ(X+1,x,1,5)`. `evaluateExpression`
-            rewrites those to JS helpers (`__sin`, `__int`, `__ncr`, …),
-            injects implicit `*`, then `new Function(...)`.
+            `frac(1,2)`, `int(ln(X),1,e,x)`, `Σ(X+1,x,1,5)`. The evaluator
+            lowers the template IR to a canonical form, `src/parser.ts`
+            tokenizes and parses it into a typed AST, and the evaluator walks
+            that AST — no `new Function`, no code generation.
           </Text>
           <Text tone="secondary">
             Integration is trapezoidal with 100 strips, not Gauss–Kronrod.

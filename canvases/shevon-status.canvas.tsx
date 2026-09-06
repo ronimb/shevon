@@ -33,11 +33,12 @@ export default function ShevonStatus() {
         </Text>
       </Stack>
 
-      <Callout tone="warning" title="Gemini transcript was not readable">
-        The share link requires a Google sign-in wall, so this kickoff is
-        based on the current repo plus the Casio manual — not the original
-        Gemini chat. If you can export that transcript, we can fold its
-        intent and leftover decisions into these canvases.
+      <Callout tone="success" title="Phase 0 landed">
+        The foundation is now Cursor-ready: `App.tsx` is split into a
+        `Calculator.tsx` shell plus `parser` / `evaluator` / `display` /
+        `keys` / `modes`, `new Function` is replaced by a typed AST, and the
+        AI Studio leftovers (`@google/genai`, `mathjs`, `GEMINI_API_KEY`,
+        `metadata.json`) are gone. README is rewritten. 22 tests are green.
       </Callout>
 
       <Grid columns={4} gap={16}>
@@ -93,7 +94,7 @@ export default function ShevonStatus() {
           [
             "src/Calculator.tsx",
             "UI shell",
-            "COMP/STAT/EQN handlers, LCD, keys, history pane, keyboard, debug overlay",
+            "~1.6k lines: COMP/STAT/EQN handlers, LCD, keys, history pane, keyboard, debug overlay — the remaining monolith",
           ],
           [
             "src/parser.ts + src/evaluator.ts",
@@ -101,9 +102,9 @@ export default function ShevonStatus() {
             "Tokenizer + recursive-descent AST parser; evaluator lowers the template IR and walks the AST (no new Function)",
           ],
           [
-            "src/display.tsx, keys.ts, modes/",
-            "Display, key maps, modes",
-            "formatMath / toLaTeX, PATS / CURSOR_PATS, COMP / STAT / EQN helpers",
+            "src/display.tsx, keys.ts, types.ts, modes/",
+            "Display, key maps, types, modes",
+            "formatMath / toLaTeX, PATS / CURSOR_PATS, shared types, COMP / STAT / EQN helpers",
           ],
           [
             "src/index.css",
@@ -118,7 +119,7 @@ export default function ShevonStatus() {
           [
             "src/calculator_new.png",
             "Hardware faceplate",
-            "Imported; not visible to workspace search — confirm it is committed",
+            "Committed under src/; Gemini sparkle removed from the plate",
           ],
           [
             "electron-main.cjs",
@@ -128,12 +129,12 @@ export default function ShevonStatus() {
           [
             "vite.config.ts",
             "Build",
-            "Still injects GEMINI_API_KEY from AI Studio",
+            "React + Tailwind plugins; GEMINI_API_KEY injection removed",
           ],
           [
             "package.json",
             "Scripts + deps",
-            "mathjs and @google/genai still installed but unused — engine uses a custom AST, not mathjs",
+            "AI Studio deps dropped: no mathjs, no @google/genai — engine is a custom AST",
           ],
           [
             ".github/workflows/deploy.yml",
@@ -143,7 +144,7 @@ export default function ShevonStatus() {
           [
             "README.md",
             "Docs",
-            "Still the AI Studio boilerplate — not this calculator",
+            "Rewritten for this calculator: web/electron run, PDF location, unimplemented list",
           ],
           [
             "fx-570_991ES_PLUS_EN.pdf",
@@ -184,7 +185,7 @@ export default function ShevonStatus() {
             <Stack gap={8}>
               <Text>
                 All eight STAT regression types, data editor, Sum / Var /
-                MinMax / Reg recall, and estimated x̂ / ŷ in the evaluator.
+                MinMax / Reg recall, and estimated x̂ / ŷ in the evaluator.
               </Text>
               <Text tone="secondary">
                 EQN quadratic coefficient editor and real-root display.
@@ -197,10 +198,12 @@ export default function ShevonStatus() {
         </Card>
       </Grid>
 
-      <Callout tone="success" title="Resolved this pass">
-        App.tsx split into evaluator / display / keys / modes; `new Function`
-        replaced with a tokenizer + recursive-descent AST parser; golden tests
-        from the manual plus parser unit tests (22 total) are green.
+      <Callout tone="success" title="Resolved recently">
+        Two commits landed after the canvases were first written: the AST
+        parser replaced `new Function`, and the AI Studio cleanup removed the
+        Gemini/mathjs dependencies, the `GEMINI_API_KEY` build injection, and
+        `metadata.json`, and rewrote the README. Golden + parser tests
+        (22 total) are green.
       </Callout>
 
       <H2>Structural risks</H2>
@@ -209,8 +212,8 @@ export default function ShevonStatus() {
         rowTone={["warning", "warning", "info"]}
         rows={[
           [
-            "Unused mathjs / Gemini SDK",
-            "Dead AI Studio leftovers; engine now uses a custom AST, so mathjs can be dropped outright",
+            "Calculator.tsx is still a monolith",
+            "Extracting the engine/modes helped, but ~1.6k lines of UI shell still hold COMP/STAT/EQN, LCD, keys, and history in one file",
             "Medium",
           ],
           [
@@ -233,11 +236,6 @@ export default function ShevonStatus() {
         columnAlign={["left", "left", "left"]}
         rows={[
           [
-            "Clean AI Studio leftovers",
-            "Remove @google/genai + mathjs, drop GEMINI_API_KEY from vite.config.ts, rewrite the README",
-            "Phase 0",
-          ],
-          [
             "Make COMP / SETUP honest",
             "SETUP Fix/Sci/Norm, hyp menu, Ran#/RanInt, ENG, °′″, Rnd(, and Math/Syntax ERROR jumps",
             "Phase 1",
@@ -246,6 +244,11 @@ export default function ShevonStatus() {
             "Casio-accurate numeric methods",
             "Swap trapezoid ∫ for Gauss–Kronrod and d/dx for a central difference with tolerance",
             "Phase 1",
+          ],
+          [
+            "Finish STAT / EQN",
+            "FREQ toggle, Dist P/Q/R, editor Ins/Del, 2-/3-unknown and cubic EQN, complex roots, SOLVE UX",
+            "Phase 2",
           ],
           [
             "Exact result forms",
@@ -297,11 +300,11 @@ export default function ShevonStatus() {
           onClick={() =>
             dispatch({
               type: "openFile",
-              path: "src/App.tsx",
+              path: "src/Calculator.tsx",
             })
           }
         >
-          Open App.tsx
+          Open Calculator.tsx
         </Pill>
       </Row>
     </Stack>
