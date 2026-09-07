@@ -27,33 +27,31 @@ export default function ShevonRoadmap() {
       <Stack gap={8}>
         <H1>Roadmap and action items</H1>
         <Text tone="secondary">
-          Concrete work after the Gemini → Cursor move. The goal is a
-          Casio-accurate fx-991ES PLUS emulator, not another generic
-          scientific calculator. Click a task to open a new chat with that
-          item already mentioned.
+          Living backlog for a Casio-accurate fx-991ES PLUS emulator.
+          Click a task to open a new chat with that item already mentioned.
+          Status below is from the code as of this rewrite, not from older
+          kickoff notes.
         </Text>
       </Stack>
 
-      <Callout tone="success" title="Phase 1 complete — COMP and SETUP are honest">
-        On top of the Phase 0 foundation (typed-AST engine, no `new Function`,
-        AI-Studio leftovers gone), COMP now behaves like the hardware: SETUP
-        Fix/Sci/Norm with lit indicators, the hyp menu + Abs, Ran#/RanInt#,
-        ENG, sexagesimal °′″, and Rnd( — plus Gauss–Kronrod ∫, central-diff
-        d/dx, ▲/▼ history replay, ERROR ◄/► editing, and SHIFT 9 CLR. 44
-        tests pass. Next: Phase 2 — finish STAT and EQN before opening new
-        modes.
+      <Callout tone="warning" title="Phase 1 is mostly done — next is visual parity on shipped screens, then STAT/EQN">
+        COMP and SETUP Fix/Sci/Norm behave: hyp menu + Abs, ENG, Rnd(,
+        Gauss–Kronrod ∫, central-diff d/dx, ▲/▼ replay, CLR, 44 tests.
+        Still open in Phase 1: LineIO, Ran# 3-digit, DMS °′″ glyphs, ERROR
+        jump-to-token. Visual fidelity of already-shipped templates is not
+        signed off — ∫ currently puts a/b to the left of the sign. Do that
+        pass before opening new modes.
       </Callout>
 
-      <Callout tone="info" title="Visual fidelity = all elements present + same behavior">
-        Not pixel-perfect mimicry — browser fonts and our own HTML rendering
-        are fine, and we can lean on our technical advantages as long as we
-        stay stylistically close to the hardware (today's look is a good
-        proxy). The bar for every feature: each visual element the real
-        fx-991ES PLUS shows is present, in the hardware's position/role, and
-        behaves the same. Example: the EQN quadratic editor must show the
-        a / b / c coefficient labels and put the active number entry at the
-        bottom-left like the real unit — not an unlabeled boxed grid. This
-        applies to all modes and all phases, not just Phase 4.
+      <Callout tone="info" title="Visual fidelity = same elements, relative layout, same behavior">
+        Every element on the physical calculator screen must be present in
+        the simulator, in the same relative location (e.g. “a” above the
+        blank square in the quadratic solver) — not the same pixel
+        coordinates. Browser fonts, symbols, and HTML objects are the
+        intended LCD. Each element must appear at the same time and
+        take/show the same input and output. Applies to already-shipped
+        screens as well as new work. Known miss: ∫ should be b above / a
+        below the symbol, then f(x)dx to the right.
       </Callout>
 
       <Row gap={8} wrap>
@@ -61,100 +59,102 @@ export default function ShevonRoadmap() {
           variant="primary"
           onClick={() =>
             start(
-              "Start Phase 1: make COMP and SETUP honest. Implement SETUP Fix/Sci/Norm with FIX/SCI indicators, the hyp menu (SHIFT hyp = Abs), Ran#/RanInt#, ENG shift, sexagesimal °′″, and Rnd( — never dump the literal letters ENG or hyp onto the LCD.",
+              "Fix already-shipped Natural Display templates to the visual-fidelity bar (same elements, same relative locations, browser fonts OK). Start with ∫: Casio is ∫ with b above / a below the symbol, then f(x)dx to the right — the simulator currently puts a/b to the left of ∫. Then check d/dx, Σ, frac, mix, √/ⁿ√, log_b, abs, nPr/nCr against the manual figures.",
             )
           }
         >
-          Start Phase 1
+          Fix ∫ layout, then audit COMP templates
         </Button>
         <Button
           variant="secondary"
           onClick={() =>
             start(
-              "Replace the trapezoid ∫ (n=100) with Gauss–Kronrod and the forward-difference d/dx with a central difference plus tolerance, so numeric methods match the Casio to displayed precision. Add golden tests from the manual.",
+              "Close Phase 1 leftovers: make Ran# a Casio 3-digit value in [0,1); implement LineIO (or show not-yet instead of a silent no-op); show ° ′ ″ glyphs instead of ° for all three DMS parts; make ERROR ◄/► jump to the bad token (E-40) instead of only clearing the error.",
             )
           }
         >
-          Casio-accurate numerics
+          Phase 1 leftovers
         </Button>
         <Button
           variant="ghost"
           onClick={() =>
             start(
-              "Finish STAT and EQN: SETUP STAT FREQ ON/OFF with row caps, editor Ins/Del-A, 1-VAR distributions (P/Q/R and 't), keep STAT active when recalling vars, and add 2-/3-unknown linear + cubic EQN with complex quadratic roots.",
+              "Start Phase 2: finish STAT and EQN. SETUP STAT FREQ ON/OFF with row caps, editor Ins/Del-A, 1-VAR Dist P/Q/R and 't, stay in STAT when recalling vars, 2-/3-unknown linear + cubic EQN with complex quadratic roots, and SOLVE UX. Also add EQN a / b / c coefficient labels (relative layout).",
             )
           }
         >
-          Finish STAT / EQN
+          Start Phase 2 — STAT / EQN
         </Button>
       </Row>
 
-      <H2>Cross-cutting — match the hardware's elements and behavior in every feature</H2>
+      <H2>Cross-cutting — same elements, relative layout, same behavior</H2>
       <Text>
-        Runs alongside every phase. Not pixel-perfect mimicry — our fonts and
-        HTML rendering are fine, and we can use technical advantages (show more
-        at once, cleaner layout) while staying stylistically close (today's
-        look is a good proxy). The bar: every element the real unit shows is
-        present and in a sensible place, and each feature behaves functionally
-        the same. Use the manual figures and a photo as the element/behavior
-        checklist, not a pixel reference.
+        Runs alongside every phase, including a pass over screens that
+        already exist. A feature is not done until this check passes.
+        Browser fonts and HTML are the intended LCD — not a pixelated copy.
       </Text>
       <TodoListCard
         defaultExpanded
         todos={[
           {
+            id: "vis-existing",
+            status: "pending",
+            content:
+              "NEXT: audit already-shipped Natural Display templates (∫, d/dx, Σ, frac, mix, √/ⁿ√, log_b, abs, nPr/nCr). Known miss: ∫ puts a/b left of the sign; Casio is ∫ with b above / a below the symbol, then f(x)dx to the right",
+          },
+          {
             id: "vis-elements",
             status: "pending",
             content:
-              "Audit each screen against the hardware and add any missing elements — e.g. EQN's a / b / c coefficient labels, mode/menu captions, dual-line answers — even if styled our own way",
+              "Audit remaining existing screens: EQN quadratic has no a / b / c labels on the coefficient cells; STAT Dist submenu is empty; dual-line answers (Pol/Rec)",
           },
           {
             id: "vis-placement",
             status: "pending",
             content:
-              "Put entry and answer in the hardware's position/role — e.g. EQN quadratic: active number entry at the bottom-left, coefficients in a labeled a / b / c layout",
+              "Keep relative layout vs the hardware — e.g. EQN: “a” above its blank square; ∫: b above / a below the symbol with f(x)dx to the right. Exact coordinates are not required",
           },
           {
             id: "vis-indicators",
             status: "pending",
             content:
-              "All status indicators present and lit when the unit lights them: S / A (SHIFT/ALPHA), M, STO, RCL, STAT, CMPLX, D/R/G, FIX/SCI, Disp, ◀▶▲▼ (roughly matching positions; our styling is fine)",
+              "S / A / M / STO / RCL / STAT / D/R/G / FIX / SCI already light. Remaining: CMPLX/MAT/VCT when those modes exist; Disp; ◀▶; ▲/▼ for COMP replay as well as EQN",
           },
           {
             id: "vis-menus",
             status: "pending",
             content:
-              "Every MODE / SETUP / STAT-type / EQN / distribution menu shows the same options and captions the hardware does — never a placeholder or a silent COMP fallback",
+              "MODE 2/4/6/7/8 still silently return to COMP — show a clear not-yet (or implement). SETUP LineIO is a no-op. Dist listed with no options",
           },
           {
             id: "vis-cursor",
             status: "pending",
             content:
-              "Show where the next character lands — a caret in the active field (COMP already uses ‸; extend to the EQN/STAT editor cells). A shaded box alone is not enough",
+              "COMP already shows ‸. Extend a caret to EQN/STAT editor cells — a shaded box alone is not enough",
           },
           {
             id: "vis-result",
             status: "pending",
             content:
-              "Offer the same result forms the unit can — S⇔D fraction/surd/π, complex a+bi, ×10ⁿ scientific, dual-line Pol/Rec r,θ — glyphs may be our fonts",
+              "Fix/Sci/Norm, ENG, mixed fractions, and S⇔D continued-fraction exist. Still missing: n√m / p/q·π exact forms, dual-line Pol/Rec r,θ",
           },
           {
             id: "vis-errors",
             status: "pending",
             content:
-              "Error screens carry the same elements/behavior (Math / Syntax / Stack / Argument ERROR) with the ◀▶ jump-to-token behavior from E-40",
+              "Math / Syntax ERROR strings exist; ±10¹⁰⁰ raises Math ERROR. ◄/► only clear the error — E-40 jump-to-token is not implemented. No Stack / Argument / Time Out screens",
           },
           {
             id: "vis-no-literal",
-            status: "pending",
+            status: "completed",
             content:
-              "Never show literal function text (ENG, hyp) where the hardware shows a symbol or opens a menu",
+              "ENG shifts the result; hyp opens a menu; SHIFT hyp is Abs — no literal ENG/hyp dumped onto the LCD",
           },
           {
             id: "vis-checklist",
             status: "pending",
             content:
-              "Definition of done per feature: an element + behavior parity check vs the manual figure — same elements, same placement/role, same behavior; pixel-exactness not required",
+              "Definition of done (new and already-shipped): vs the manual figure — same elements, same relative locations, same timing/I/O; browser fonts/HTML are fine. COMP ∫ must pass before treating Phase 1 as visually done",
           },
         ]}
         onTodoClick={(todo) => start(`Visual parity: ${todo.content}`)}
@@ -162,11 +162,10 @@ export default function ShevonRoadmap() {
 
       <H2>Phase 0 — Cursor-ready foundation</H2>
       <Text>
-        Goal: the repo is understandable, testable, and honest about what
-        it is. Complete — one small console cleanup remains.
+        Done. One leftover: ungated console output from LCD calibration
+        export and evaluator warnings.
       </Text>
       <TodoListCard
-        defaultExpanded
         todos={[
           {
             id: "p0-split",
@@ -178,103 +177,110 @@ export default function ShevonRoadmap() {
             id: "p0-engine",
             status: "completed",
             content:
-              "Stop evaluating via new Function; parse into a typed AST (src/parser.ts) and walk it (src/evaluator.ts) so tests can assert intermediate forms",
+              "Typed AST (src/parser.ts) walked by src/evaluator.ts — no new Function",
           },
           {
             id: "p0-tests",
             status: "completed",
             content:
-              "Golden tests from the manual: sin 30=0.5, 2/3+1/2=7/6, nPr/nCr samples, STAT mean/σx on E-24 (6 golden + 16 parser = 22)",
+              "Suite grew with Phase 1: 28 golden + 16 parser = 44 tests",
           },
           {
             id: "p0-readme",
             status: "completed",
             content:
-              "Replace AI Studio README with how to run web / electron, where the PDF lives, and what is unimplemented",
+              "README covers web / electron, PDF location, and the current unimplemented list",
           },
           {
             id: "p0-deps",
             status: "completed",
             content:
-              "Removed @google/genai + mathjs and the GEMINI_API_KEY injection from vite.config.ts; deleted metadata.json",
+              "Removed @google/genai + mathjs and GEMINI_API_KEY injection; deleted metadata.json",
           },
           {
             id: "p0-asset",
             status: "completed",
             content:
-              "calculator_new.png committed under src/ and loading; Casio PDF stays gitignored",
+              "calculator_new.png committed under src/; Casio PDF stays gitignored",
           },
           {
             id: "p0-console",
             status: "pending",
             content:
-              "Remove the remaining console.log of expressions; keep any diagnostics behind a debug flag",
+              "Gate remaining console.log (LCD calibration CSS export) and evaluator console.warn behind a debug flag",
           },
         ]}
         onTodoClick={(todo) => start(`Phase 0: ${todo.content}`)}
       />
 
-      <H2>Phase 1 — Make COMP and SETUP honest</H2>
+      <H2>Phase 1 — COMP and SETUP</H2>
       <Text>
-        Goal: every key on the faceplate that belongs to COMP does the
-        Casio thing, or is explicitly disabled — never dump the letters
-        ENG or hyp onto the LCD.
+        Core COMP keys and SETUP Fix/Sci/Norm are in the code. The pending
+        items below are the real leftovers — not a second copy of work that
+        already landed.
       </Text>
       <TodoListCard
         defaultExpanded
         todos={[
           {
             id: "p1-setup",
+            status: "completed",
+            content:
+              "SETUP Fix 0–9 / Sci 1–10 / Norm 1/2 with FIX/SCI indicators; ab/c vs d/c mixed-fraction toggle",
+          },
+          {
+            id: "p1-lineio",
             status: "pending",
             content:
-              "Implement SETUP: LineIO, Fix 0–9, Sci 1–10, Norm 1/2, ab/c vs d/c; light FIX/SCI indicators",
+              "LineIO (SETUP 2) is a no-op that returns to COMP — implement overwrite-cursor LineIO or show not-yet",
           },
           {
             id: "p1-hyp",
-            status: "pending",
+            status: "completed",
             content:
-              "hyp key opens sinh/cosh/tanh menu; SHIFT hyp is Abs; wire inverse hyp",
+              "hyp opens sinh/cosh/tanh + inverses; SHIFT hyp is Abs",
           },
           {
             id: "p1-rand",
             status: "pending",
             content:
-              "SHIFT . = Ran# (3-digit < 1); ALPHA . = RanInt#(a,b)",
+              "SHIFT . / ALPHA . are wired, but Ran# is Math.random() — Casio is a 3-digit value in [0,1) (0.000–0.999)",
           },
           {
             id: "p1-eng",
-            status: "pending",
+            status: "completed",
             content:
-              "ENG / SHIFT ENG shift the displayed result into engineering exponents",
+              "ENG / SHIFT ENG shift the displayed result into engineering exponents — no literal ENG text",
           },
           {
             id: "p1-dms",
             status: "pending",
             content:
-              "Sexagesimal input ° ′ ″ and toggle with the °′″ key",
+              "Sexagesimal input and result toggle work, but all three parts display as ° — use ° ′ ″ glyphs",
           },
           {
             id: "p1-rnd",
-            status: "pending",
-            content: "Rnd( according to current Fix/Sci/Norm, including the 10÷3×3 example",
+            status: "completed",
+            content:
+              "Rnd( follows current Fix/Sci/Norm, including the Fix-3 10÷3×3 golden",
           },
           {
             id: "p1-int",
             status: "completed",
             content:
-              "∫ now uses adaptive Gauss–Kronrod (G7–K15) and d/dx a central difference + Richardson; golden tests pin ∫x²=1/3, d/dx x²|₃=6",
+              "∫ Gauss–Kronrod (G7–K15) and d/dx central difference + Richardson; goldens pin ∫x²=1/3, d/dx x²|₃=6. Visual layout of ∫ is still wrong — see vis-existing",
           },
           {
             id: "p1-replay",
             status: "completed",
             content:
-              "LCD history replay with ▲/▼ in COMP (▲ recalls previous, ▼ walks back to a live line); side pane kept as an extra",
+              "LCD history replay with ▲/▼ in COMP; side pane kept as an extra",
           },
           {
             id: "p1-errors",
-            status: "completed",
+            status: "pending",
             content:
-              "Math/Syntax ERROR: ◄/► return to the expression for editing, AC clears; results beyond ±10¹⁰⁰ raise Math ERROR",
+              "Math/Syntax ERROR strings and ±10¹⁰⁰ Math ERROR exist. ◄/► only clear the error — implement E-40 jump-to-token, then AC to clear",
           },
           {
             id: "p1-clr",
@@ -287,8 +293,9 @@ export default function ShevonRoadmap() {
 
       <H2>Phase 2 — Finish STAT and EQN</H2>
       <Text>
-        These modes already have UI. Close the behavioral gaps before
-        opening new modes.
+        These modes already have UI. Close the behavioral and layout gaps
+        before opening new modes. Quadratic EQN runs (real roots only) with
+        unlabeled coefficient cells.
       </Text>
       <TodoListCard
         defaultExpanded
@@ -296,39 +303,50 @@ export default function ShevonRoadmap() {
           {
             id: "p2-freq",
             status: "pending",
-            content: "SETUP STAT FREQ ON/OFF; editor row limits 80 / 40 / 26",
+            content:
+              "SETUP STAT FREQ ON/OFF — the flag exists but is never set; editor row limits 80 / 40 / 26",
           },
           {
             id: "p2-edit",
             status: "pending",
-            content: "STAT Edit Ins and Del-A; DEL deletes a line in the editor",
+            content:
+              "STAT Edit Ins and Del-A; DEL currently edits the cell value, not the line",
           },
           {
             id: "p2-dist",
             status: "pending",
-            content: "1-VAR Dist: P( Q( R( and normalized variate 't",
+            content:
+              "1-VAR Dist: P( Q( R( and normalized variate 't — menu row 5 is empty",
           },
           {
             id: "p2-stat-mode",
             status: "pending",
             content:
-              "Stay in STAT when recalling variables instead of silently jumping to COMP",
+              "Stay in STAT when recalling variables — insertStatVar currently jumps to COMP",
+          },
+          {
+            id: "p2-eqn-labels",
+            status: "pending",
+            content:
+              "EQN quadratic editor: show a / b / c in the same relative layout as the hardware (label above each blank), not an unlabeled row of cells",
           },
           {
             id: "p2-eqn-linear",
             status: "pending",
-            content: "EQN 2-unknown and 3-unknown linear systems",
+            content:
+              "EQN 2-unknown and 3-unknown linear systems — menu text only today",
           },
           {
             id: "p2-eqn-cubic",
             status: "pending",
-            content: "EQN cubic; quadratic complex roots in Natural Display",
+            content:
+              "EQN cubic; quadratic complex roots in Natural Display (negative disc currently says “No real solutions”)",
           },
           {
             id: "p2-solve",
             status: "pending",
             content:
-              "SOLVE: prompt remaining variables, initial X, L−R residual, Continue screen",
+              "SOLVE: prompt remaining variables, initial X, L−R residual, Continue — Newton–Raphson on X exists, failures show as Syntax ERROR",
           },
         ]}
         onTodoClick={(todo) => start(`Phase 2: ${todo.content}`)}
@@ -336,11 +354,11 @@ export default function ShevonRoadmap() {
 
       <H2>Phase 3 — Remaining Casio modes</H2>
       <Text>
-        One mode per slice, each with manual sample operations as tests
-        before considering it done.
+        Menu rows 2/4/6/7/8 still fall through to COMP. One mode per slice,
+        each with manual sample operations as tests, plus the visual-fidelity
+        check.
       </Text>
       <TodoListCard
-        defaultExpanded
         todos={[
           {
             id: "p3-cmplx",
@@ -376,21 +394,20 @@ export default function ShevonRoadmap() {
         onTodoClick={(todo) => start(`Phase 3: ${todo.content}`)}
       />
 
-      <H2>Phase 4 — Fidelity and packaging</H2>
+      <H2>Phase 4 — Exact results and packaging</H2>
       <TodoListCard
-        defaultExpanded
         todos={[
           {
             id: "p4-exact",
             status: "pending",
             content:
-              "Natural result forms: n√m, p/q π, mixed fractions — not just continued-fraction decimals",
+              "Natural result forms: n√m, p/q π — continued-fraction decimals and mixed fractions already exist",
           },
           {
             id: "p4-samples",
             status: "pending",
             content:
-              "Automate every numbered sample operation in the PDF as a regression suite",
+              "44 tests cover a subset of the manual — automate the remaining numbered sample operations",
           },
           {
             id: "p4-packaging",
@@ -402,7 +419,7 @@ export default function ShevonRoadmap() {
         onTodoClick={(todo) => start(`Phase 4: ${todo.content}`)}
       />
 
-      <H2>Suggested next sprint (this week)</H2>
+      <H2>Suggested next sprint</H2>
       <GridLike />
     </Stack>
   );
@@ -414,58 +431,60 @@ function GridLike() {
     <Stack gap={16}>
       <Card>
         <CardHeader trailing={<Pill size="sm" active>1</Pill>}>
-          Fix lying keys
+          Fix shipped COMP templates
         </CardHeader>
         <CardBody>
           <Stack gap={10}>
             <Text>
-              ENG, hyp, Ran#/RanInt, Abs, SETUP Fix/Sci/Norm, and MODE
-              2/4/6/7/8 currently look like Casio and then fail. Either
-              implement them or show a clear “not yet” on the LCD — do not
-              insert the letters ENG into the expression.
+              Start with ∫ relative layout (b above / a below the symbol,
+              f(x)dx to the right), then the rest of the Natural Display
+              templates. This is the visual-fidelity gate for work that
+              already shipped.
             </Text>
             <Button
               variant="secondary"
               onClick={() =>
                 dispatch({
                   type: "openFile",
-                  path: "canvases/casio-coverage.canvas.tsx",
+                  path: "src/display.tsx",
                 })
               }
             >
-              Open coverage
+              Open display.tsx
             </Button>
           </Stack>
         </CardBody>
       </Card>
       <Card>
         <CardHeader trailing={<Pill size="sm" active>2</Pill>}>
-          Make SETUP real
+          Close Phase 1 leftovers
         </CardHeader>
         <CardBody>
           <Text>
-            Fix/Sci/Norm is the unlock for Rnd(, engineering notation, and
-            Casio-accurate result formatting. Wire the SETUP pages and light
-            the FIX/SCI indicators before touching new modes.
+            Ran# 3-digit, LineIO honesty, DMS °′″ glyphs, and ERROR
+            jump-to-token. Do not re-do hyp / ENG / Fix / Rnd / numerics —
+            those are already in the code.
           </Text>
         </CardBody>
       </Card>
       <Card>
         <CardHeader trailing={<Pill size="sm" active>3</Pill>}>
-          Trust the numerics
+          Phase 2 — STAT then EQN
         </CardHeader>
         <CardBody>
           <Text>
-            Swap the trapezoid ∫ and forward d/dx for Gauss–Kronrod and a
-            central difference with tolerance, then pin them with golden
-            tests from the manual so ∫ and d/dx match the hardware.
+            FREQ SETUP, stay-in-STAT, Dist, then EQN a/b/c labels plus
+            2-/3-unknown and cubic. MODE 2/4/6/7/8 stay “not yet” until
+            Phase 3.
           </Text>
         </CardBody>
       </Card>
       <H3>Out of scope until Phase 3</H3>
+      <Text tone="secondary">MATRIX, VECTOR, TABLE, CONST, CONV, CMPLX, BASE-N.</Text>
+      <H3>Permanently out of scope</H3>
       <Text tone="secondary">
-        MATRIX, VECTOR, TABLE, CONST, CONV, and a pixel-perfect LCD font.
-        Hardware items (battery, contrast, auto power-off) stay skipped.
+        Hardware items (battery, contrast, auto power-off). A custom
+        pixelated LCD font — browser fonts and HTML are the display.
       </Text>
     </Stack>
   );

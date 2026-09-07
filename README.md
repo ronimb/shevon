@@ -1,14 +1,18 @@
 # Shevon — Casio fx-991ES PLUS emulator
 
-A high-fidelity, photo-realistic emulator of the Casio **fx-991ES PLUS**
+A photo-realistic overlay emulator of the Casio **fx-991ES PLUS**
 scientific calculator. The UI is an overlay: absolutely-positioned key
-hitboxes sit on top of `src/calculator_new.png`, and the LCD is rendered as a
-custom Natural-V.P.A.M. display. Expressions are parsed into a typed AST
-(`src/parser.ts`) and evaluated by a custom engine (`src/evaluator.ts`) — there
-is no `eval`/`new Function` and no third-party math library.
+hitboxes sit on top of `src/calculator_new.png`, and the LCD is rendered with
+standard browser fonts and HTML (fractions, roots, and so on) — a close-enough
+approximation, not a pixel-perfect or pixelated copy of the hardware display.
+Visual fidelity means every on-screen element is present in the same relative
+location and behaves the same (same timing, input, and output); exact
+coordinates are not required.
 
-The goal is Casio accuracy, not a generic scientific calculator: behavior is
-checked against the official manual (`fx-570_991ES_PLUS_EN.pdf`).
+Expressions are parsed into a typed AST (`src/parser.ts`) and evaluated by a
+custom engine (`src/evaluator.ts`) — there is no `eval`/`new Function` and no
+third-party math library. Behavior is checked against the official manual
+(`fx-570_991ES_PLUS_EN.pdf`).
 
 ## Prerequisites
 
@@ -48,14 +52,16 @@ references (e.g. `E-16`) appear throughout the code and tests.
 
 ## Status / what is unimplemented
 
-COMP mode, STAT, and EQN are the most complete. Several faceplate keys and
-modes are still stubbed or intentionally disabled rather than faked. Not yet
-implemented (or only partial):
+COMP is the most complete mode. STAT and EQN have working cores with UX
+gaps. Visual fidelity of already-shipped templates is not fully audited.
 
-- **SETUP**: LineIO, Fix/Sci/Norm, `ab/c` vs `d/c`
-- **COMP keys**: `hyp` menu, `Ran#`/`RanInt#`, `ENG`, sexagesimal `° ′ ″`, `Rnd(`
-- **STAT/EQN**: FREQ toggle, editor Ins/Del, 1-VAR distributions, cubic/complex EQN roots, SOLVE
-- **Other modes**: CMPLX, BASE-N, MATRIX, VECTOR, TABLE, CONST, CONV
+Remaining:
+
+- **Visual**: existing Natural Display templates (known miss: ∫ puts a/b to the left of the sign; Casio is b above / a below the symbol, then f(x)dx to the right)
+- **SETUP leftovers**: LineIO (menu item is a no-op)
+- **COMP leftovers**: Ran# is not Casio 3-digit; DMS displays ° for minutes/seconds; ERROR ◄/► does not jump to the bad token
+- **STAT/EQN**: FREQ toggle, editor Ins/Del, 1-VAR Dist, stay in STAT on recall, EQN a/b/c labels, 2-/3-unknown and cubic EQN, SOLVE UX
+- **Other modes**: CMPLX, BASE-N, MATRIX, VECTOR, TABLE, CONST, CONV (menu rows fall through to COMP)
 
 See `canvases/casio-coverage.canvas.tsx` and `canvases/shevon-roadmap.canvas.tsx`
 for the full coverage map and backlog.

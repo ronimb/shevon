@@ -33,28 +33,31 @@ export default function ShevonStatus() {
         </Text>
       </Stack>
 
-      <Callout tone="success" title="Phase 0 landed">
-        The foundation is now Cursor-ready: `App.tsx` is split into a
-        `Calculator.tsx` shell plus `parser` / `evaluator` / `display` /
-        `keys` / `modes`, `new Function` is replaced by a typed AST, and the
-        AI Studio leftovers (`@google/genai`, `mathjs`, `GEMINI_API_KEY`,
-        `metadata.json`) are gone. README is rewritten. 22 tests are green.
+      <Callout tone="success" title="Phase 0 and most of Phase 1 landed">
+        Foundation is Cursor-ready (typed AST, no `new Function`, AI Studio
+        leftovers gone). COMP now has SETUP Fix/Sci/Norm, hyp + Abs, ENG,
+        Rnd(, Gauss–Kronrod ∫, central-diff d/dx, replay, and CLR. 44 tests
+        are green. Next: visual parity on shipped templates (∫ layout), then
+        Phase 1 leftovers, then STAT/EQN.
       </Callout>
 
       <Grid columns={4} gap={16}>
-        <Stat value="~45%" label="Manual coverage" tone="warning" />
+        <Stat value="~55%" label="Manual coverage" tone="warning" />
         <Stat value="3 / 8" label="Modes with real logic" />
         <Stat value="AST" label="Engine (no new Function)" tone="success" />
-        <Stat value="22" label="Tests (6 golden + 16 parser)" tone="success" />
+        <Stat value="44" label="Tests (28 golden + 16 parser)" tone="success" />
       </Grid>
 
       <Stack gap={8}>
         <H2>What this project is</H2>
         <Text>
           A photoreal overlay of a Casio scientific calculator. Transparent
-          hitboxes sit on `src/calculator_new.png`. The LCD is a custom
-          Natural-V.P.A.M. renderer (HTML templates for fractions, roots,
-          integrals, sums). The template language is lowered to a canonical
+          hitboxes sit on `src/calculator_new.png`. The LCD uses standard
+          browser fonts and HTML templates (fractions, roots, integrals,
+          sums) — that close-enough look is the intended visual fidelity,
+          not a 1:1 pixelated copy. Elements must be present in the same
+          relative locations and behave the same; exact coordinates are
+          not required. The template language is lowered to a canonical
           form, parsed into a typed AST (`src/parser.ts`), and walked by the
           evaluator — no `new Function`, no code generation.
         </Text>
@@ -70,10 +73,10 @@ export default function ShevonStatus() {
         topLeftLabel="Mode completeness (weighted 0–100 per Casio mode)"
         topRightLabel="COMP + STAT carry almost all of the working product"
         segments={[
-          { id: "COMP", value: 80, color: "green" },
+          { id: "COMP", value: 85, color: "green" },
           { id: "STAT", value: 70, color: "blue" },
           { id: "EQN", value: 25, color: "yellow" },
-          { id: "SETUP", value: 20, color: "orange" },
+          { id: "SETUP", value: 70, color: "orange" },
           { id: "CMPLX", value: 2, color: "gray" },
           { id: "BASE-N", value: 2, color: "gray" },
           { id: "MATRIX", value: 2, color: "gray" },
@@ -199,17 +202,16 @@ export default function ShevonStatus() {
       </Grid>
 
       <Callout tone="success" title="Resolved recently">
-        Two commits landed after the canvases were first written: the AST
-        parser replaced `new Function`, and the AI Studio cleanup removed the
-        Gemini/mathjs dependencies, the `GEMINI_API_KEY` build injection, and
-        `metadata.json`, and rewrote the README. Golden + parser tests
-        (22 total) are green.
+        Phase 1 COMP/SETUP work landed on top of the AST engine: Fix/Sci/Norm,
+        hyp + Abs, ENG, Rnd(, Gauss–Kronrod ∫, central-diff d/dx, LCD replay,
+        CLR. Golden + parser tests are 44 and green. Visual layout of ∫ and
+        several Phase 1 leftovers are still open.
       </Callout>
 
       <H2>Structural risks</H2>
       <Table
         headers={["Risk", "Why it matters", "Severity"]}
-        rowTone={["warning", "warning", "info"]}
+        rowTone={["warning", "warning", "warning"]}
         rows={[
           [
             "Calculator.tsx is still a monolith",
@@ -218,12 +220,12 @@ export default function ShevonStatus() {
           ],
           [
             "Menu items that do nothing",
-            "MODE 2/4/6/7/8 and SETUP Fix/Sci/Norm look real, then silently return to COMP",
+            "MODE 2/4/6/7/8 and SETUP LineIO look real, then silently return to COMP",
             "Medium",
           ],
           [
-            "Numeric methods not Casio-accurate",
-            "∫ uses a fixed 100-step trapezoid and d/dx a one-sided difference; no exact/natural result forms yet",
+            "Shipped templates fail visual fidelity",
+            "∫ places a/b to the left of the sign; EQN quadratic cells have no a/b/c labels",
             "Medium",
           ],
         ]}
@@ -236,23 +238,23 @@ export default function ShevonStatus() {
         columnAlign={["left", "left", "left"]}
         rows={[
           [
-            "Make COMP / SETUP honest",
-            "SETUP Fix/Sci/Norm, hyp menu, Ran#/RanInt, ENG, °′″, Rnd(, and Math/Syntax ERROR jumps",
-            "Phase 1",
+            "Fix shipped COMP templates",
+            "∫ relative layout (b above / a below the symbol, f(x)dx to the right), then d/dx, Σ, frac, roots",
+            "Now",
           ],
           [
-            "Casio-accurate numeric methods",
-            "Swap trapezoid ∫ for Gauss–Kronrod and d/dx for a central difference with tolerance",
+            "Phase 1 leftovers",
+            "Ran# 3-digit, LineIO honesty, DMS °′″ glyphs, ERROR ◄/► jump-to-token",
             "Phase 1",
           ],
           [
             "Finish STAT / EQN",
-            "FREQ toggle, Dist P/Q/R, editor Ins/Del, 2-/3-unknown and cubic EQN, complex roots, SOLVE UX",
+            "FREQ toggle, Dist P/Q/R, editor Ins/Del, stay-in-STAT, a/b/c labels, 2-/3-unknown and cubic EQN, SOLVE UX",
             "Phase 2",
           ],
           [
             "Exact result forms",
-            "Now that intermediate forms are inspectable, surface n√m, p/q·π, and mixed fractions",
+            "Surface n√m and p/q·π; mixed fractions already exist via SETUP",
             "Phase 4",
           ],
         ]}
