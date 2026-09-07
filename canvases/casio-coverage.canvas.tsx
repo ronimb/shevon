@@ -74,7 +74,7 @@ const FEATURES: Feature[] = [
   { area: "Input", name: "Calculation history replay", manual: "E-12", status: "done", inCode: "LCD ▲/▼ replayIndex in COMP; side pane kept as extra", gap: "" },
 
   { area: "Memory", name: "Ans", manual: "E-12", status: "done", inCode: "ans state; persisted localStorage", gap: "" },
-  { area: "Memory", name: "Variables A–F, X, Y", manual: "E-13", status: "done", inCode: "ALPHA + keys; STO/RCL; persisted", gap: "" },
+  { area: "Memory", name: "Variables A–F, X, Y", manual: "E-13", status: "partial", inCode: "STO writes vars; RCL/ALPHA insert the letter; persisted", gap: "RCL A/B/C then = is Math ERROR: calculateStatVars(null) injects A/B/C=NaN and evaluator spreads that over user memory. D/E/F/X/Y likely OK. RCL does not show the value until =" },
   { area: "Memory", name: "Independent M", manual: "E-13", status: "done", inCode: "M+ / SHIFT M−; M indicator", gap: "" },
   { area: "Memory", name: "CLR Setup / Memory / All", manual: "E-2, E-13", status: "done", inCode: "SHIFT 9 CLR_MENU 1/2/3", gap: "" },
 
@@ -132,7 +132,7 @@ const FEATURES: Feature[] = [
   { area: "Platform", name: "PC keyboard", manual: "—", status: "partial", inCode: "Enter, arrows, Shift/Alt, S/C/T/L/R/Q/A", gap: "Letter keys steal typing; Shift is hold vs toggle mismatch" },
   { area: "Platform", name: "History / LaTeX pane", manual: "—", status: "done", inCode: "50 items, Load, key-sequence reconstruction", gap: "Not Casio behavior; keep as extra" },
   { area: "Platform", name: "Electron + Pages + PWA", manual: "—", status: "partial", inCode: "Scripts and workflow present; README rewritten; Gemini/mathjs deps removed", gap: "Verify portable exe, Pages deploy, and PWA install end-to-end" },
-  { area: "Platform", name: "Tests", manual: "E-16 examples", status: "partial", inCode: "28 golden + 16 parser = 44", gap: "Remaining numbered sample operations in the PDF" },
+  { area: "Platform", name: "Tests", manual: "E-16 examples", status: "partial", inCode: "28 golden + 16 parser = 44", gap: "Goldens pass empty statVars so they miss A/B/C NaN overlay; remaining PDF samples" },
 ];
 
 const AREAS: Array<Area | "All"> = [
@@ -329,7 +329,10 @@ export default function CasioCoverage() {
             `frac(1,2)`, `int(ln(X),1,e,x)`, `Σ(X+1,x,1,5)`. The evaluator
             lowers the template IR to a canonical form, `src/parser.ts`
             tokenizes and parses it into a typed AST, and the evaluator walks
-            that AST — no `new Function`, no code generation.
+            that AST — no `new Function`, no code generation. Env merge is
+            Ans, then user vars, then statVars, then constants. STAT keys
+            A/B/C win, so COMP memory A/B/C is masked even when STAT was
+            never opened.
           </Text>
           <Text tone="secondary">
             Integration is adaptive Gauss–Kronrod (G7–K15). Differentiation

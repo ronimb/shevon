@@ -287,6 +287,12 @@ export default function ShevonRoadmap() {
             status: "completed",
             content: "SHIFT 9 CLR menu: 1:Setup 2:Memory 3:All",
           },
+          {
+            id: "p1-vars-sto",
+            status: "pending",
+            content:
+              "BUG: 8 SHIFT STO A looks stored (8→A) but RCL A then = is Math ERROR. Root cause: calculateStatVars(null) returns A/B/C=NaN (NaN-delete only runs when statType is set); evaluateExpression spreads statVars over user vars so stored A is overwritten. Fix env merge / stop emitting NaN A/B/C in COMP. Goldens pass an empty statVars object so they miss this. D/E/F/X/Y likely still work",
+          },
         ]}
         onTodoClick={(todo) => start(`Phase 1: ${todo.content}`)}
       />

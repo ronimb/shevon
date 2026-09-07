@@ -173,9 +173,10 @@ export default function ShevonStatus() {
                 walks templates. DEL is atomic on function stems.
               </Text>
               <Text tone="secondary">
-                Ans, A–F / X / Y, independent M, STO/RCL, S⇔D
-                fraction/decimal toggle, DEG/RAD/GRA, CALC prompts, SOLVE
-                via Newton–Raphson, percent, nPr/nCr, Pol/Rec, π and e.
+                Ans, independent M, STO/RCL for D/E/F/X/Y (A/B/C recall is
+                broken — STAT NaN overlay), S⇔D fraction/decimal toggle,
+                DEG/RAD/GRA, CALC prompts, SOLVE via Newton–Raphson, percent,
+                nPr/nCr, Pol/Rec, π and e.
               </Text>
             </Stack>
           </CardBody>
@@ -211,7 +212,7 @@ export default function ShevonStatus() {
       <H2>Structural risks</H2>
       <Table
         headers={["Risk", "Why it matters", "Severity"]}
-        rowTone={["warning", "warning", "warning"]}
+        rowTone={["warning", "warning", "warning", "danger"]}
         rows={[
           [
             "Calculator.tsx is still a monolith",
@@ -228,6 +229,11 @@ export default function ShevonStatus() {
             "∫ places a/b to the left of the sign; EQN quadratic cells have no a/b/c labels",
             "Medium",
           ],
+          [
+            "STO A/B/C then RCL is Math ERROR",
+            "STO writes vars.A=8; eval env is user vars then statVars, and calculateStatVars(null) injects A/B/C=NaN, masking memory. Reproduced: 8 SHIFT STO A, then RCL A =",
+            "High",
+          ],
         ]}
         striped
       />
@@ -237,6 +243,11 @@ export default function ShevonStatus() {
         headers={["Next", "Detail", "Phase"]}
         columnAlign={["left", "left", "left"]}
         rows={[
+          [
+            "Fix STO A/B/C recall",
+            "calculateStatVars(null) NaN overlay masks user A/B/C; RCL A = is Math ERROR",
+            "Now",
+          ],
           [
             "Fix shipped COMP templates",
             "∫ relative layout (b above / a below the symbol, f(x)dx to the right), then d/dx, Σ, frac, roots",

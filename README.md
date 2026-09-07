@@ -59,7 +59,7 @@ Remaining:
 
 - **Visual**: existing Natural Display templates (known miss: ∫ puts a/b to the left of the sign; Casio is b above / a below the symbol, then f(x)dx to the right)
 - **SETUP leftovers**: LineIO (menu item is a no-op)
-- **COMP leftovers**: Ran# is not Casio 3-digit; DMS displays ° for minutes/seconds; ERROR ◄/► does not jump to the bad token
+- **COMP leftovers**: STO A/B/C then RCL is Math ERROR (`calculateStatVars(null)` injects A/B/C=NaN over user memory); Ran# is not Casio 3-digit; DMS displays ° for minutes/seconds; ERROR ◄/► does not jump to the bad token
 - **STAT/EQN**: FREQ toggle, editor Ins/Del, 1-VAR Dist, stay in STAT on recall, EQN a/b/c labels, 2-/3-unknown and cubic EQN, SOLVE UX
 - **Other modes**: CMPLX, BASE-N, MATRIX, VECTOR, TABLE, CONST, CONV (menu rows fall through to COMP)
 
