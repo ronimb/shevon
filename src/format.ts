@@ -142,6 +142,12 @@ export function formatDMS(value: number): { deg: number; min: number; sec: strin
   return { deg: sign * deg, min, sec: trimTrailingZeros(secRounded.toFixed(2)) };
 }
 
+/** Sexagesimal LCD text: degree / arcminute / arcsecond (never all °). */
+export function formatDMSText(value: number): string {
+  const { deg, min, sec } = formatDMS(value);
+  return `${deg}°${min}′${sec}″`;
+}
+
 export function describeFormat(fmt: DisplayFormat): string {
   if (fmt.kind === 'fix') return `Fix ${fmt.digits}`;
   if (fmt.kind === 'sci') return `Sci ${fmt.digits}`;

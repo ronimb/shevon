@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import React from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { reconstructSequence } from './modes/comp.ts';
 import { evaluateExpression, toFraction } from './evaluator.ts';
-import { calculateStatVars } from './modes/stat.tsx';
-import { formatForDisplay, formatEngineering, formatDMS, roundToFormat, type DisplayFormat } from './format.ts';
+import { appendStatRowIfRoom, calculateStatVars, getStatMaxRows, StatDataScreen } from './modes/stat.tsx';
+import { EqnQuadEntry, EqnQuadScreen, solveQuadratic } from './modes/eqn.tsx';
+import { formatMath } from './display.tsx';
+import { formatForDisplay, formatEngineering, formatDMS, formatDMSText, roundToFormat, type DisplayFormat } from './format.ts';
 import type { AngleMode, Vars } from './types.ts';
 
 /** Empty A–F/M/X/Y memory, matching calculator power-on defaults. */
@@ -94,6 +99,7 @@ describe('Phase 1 — SETUP / COMP honesty', () => {
       const r = evalComp('Ran#');
       expect(r).toBeGreaterThanOrEqual(0);
       expect(r).toBeLessThan(1);
+      expect(r * 1000).toBeCloseTo(Math.round(r * 1000), 10);
     }
   });
 
@@ -135,6 +141,88 @@ describe('Phase 1 — display formatting', () => {
     expect(formatDMS(2.5)).toEqual({ deg: 2, min: 30, sec: '0' });
     expect(formatDMS(1.508333333)).toEqual({ deg: 1, min: 30, sec: '30' });
   });
+
+  it('DMS result uses ° ′ ″ (not degree for min/sec)', () => {
+    expect(formatDMSText(2.5)).toBe('2°30′0″');
+    expect(formatDMSText(1.508333333)).toBe('1°30′30″');
+    expect(formatDMSText(2.5)).not.toMatch(/°.*°/);
+  });
+});
+
+describe('Phase 1 — COMP LCD templates', () => {
+  it('abs( renders as Abs with a ⬚ slot, not raw ASCII abs(', () => {
+    const html = formatMath('abs(‸)');
+    expect(html).toContain('Abs');
+    expect(html).not.toContain('abs(');
+    expect(html).toContain('cursor');
+  });
+
+  it('Ran# renders as a function token, not a raw code fragment', () => {
+    const html = formatMath('Ran#');
+    expect(html).toContain('trig-fun');
+    expect(html).toContain('Ran#');
+  });
+
+  it('RanInt#(a,b) uses ⬚ slots like other COMP templates', () => {
+    const html = formatMath('RanInt(‸,)');
+    expect(html).toContain('RanInt#');
+    expect(html).toContain('empty-slot');
+    expect(html).toContain('cursor');
+  });
+});
+
+describe('Phase 2 — STAT FREQ and EQN quadratic', () => {
+  it('STAT editor row caps are 80 / 40 / 26 per FREQ and type', () => {
+    expect(getStatMaxRows('1-VAR', false)).toBe(80);
+    expect(getStatMaxRows('1-VAR', true)).toBe(40);
+    expect(getStatMaxRows('A+BX', false)).toBe(40);
+    expect(getStatMaxRows('A+BX', true)).toBe(26);
+  });
+
+  it('STAT editor will not grow past the FREQ cap', () => {
+    const full = Array.from({ length: 40 }, () => ({ x: '1', y: '', freq: '1' }));
+    expect(appendStatRowIfRoom(full, '1-VAR', true)).toHaveLength(40);
+    expect(appendStatRowIfRoom(full, '1-VAR', false)).toHaveLength(41);
+  });
+
+  it('FREQ OFF counts each row once even if stored freq > 1', () => {
+    const data = [
+      { x: '1', freq: '3' },
+      { x: '2', freq: '1' },
+    ];
+    expect(calculateStatVars('1-VAR', data, false).N).toBe(2);
+    expect(calculateStatVars('1-VAR', data, true).N).toBe(4);
+  });
+
+  it('EQN quadratic: X² − 5X + 6 = 0 → X1=3, X2=2', () => {
+    const roots = solveQuadratic(1, -5, 6);
+    expect(roots).toHaveLength(2);
+    expect(roots[0].val).toBeCloseTo(3, 10);
+    expect(roots[1].val).toBeCloseTo(2, 10);
+  });
+
+  it('EQN quadratic editor has a/b/c labels, cell caret, and bottom-left entry', () => {
+    const grid = renderToStaticMarkup(React.createElement(EqnQuadScreen, { coeffs: ['1', '2', '3'], index: 0 }));
+    expect(grid).toContain('>a</th>');
+    expect(grid).toContain('>b</th>');
+    expect(grid).toContain('>c</th>');
+    expect(grid).toContain('cursor');
+    expect(grid).toContain('active-cell');
+    const entry = renderToStaticMarkup(React.createElement(EqnQuadEntry, { value: '1' }));
+    expect(entry).toContain('text-left');
+    expect(entry).toContain('cursor');
+  });
+
+  it('STAT data editor shows FREQ and a caret in the active cell', () => {
+    const html = renderToStaticMarkup(React.createElement(StatDataScreen, {
+      statType: '1-VAR',
+      statFrequencyEnabled: true,
+      statData: [{ x: '1', freq: '2' }],
+      statCursor: { row: 0, col: 1 },
+    }));
+    expect(html).toContain('FREQ');
+    expect(html).toContain('cursor');
+  });
 });
 
 describe('Phase 1 — Casio-accurate numerics', () => {
@@ -168,5 +256,17 @@ describe('Phase 1 — Casio-accurate numerics', () => {
 
   it('overflow beyond ±10¹⁰⁰ is out of Casio range', () => {
     expect(Math.abs(evalComp('pwr(10,150)'))).toBeGreaterThanOrEqual(1e100);
+  });
+});
+
+describe('History sequences match keyboard shortcuts', () => {
+  it('variable X logs ALPHA, X (keyboard x), not the physical ) key', () => {
+    expect(reconstructSequence('X')).toEqual(['ALPHA', 'X']);
+    expect(reconstructSequence('2X')).toEqual(['2', 'ALPHA', 'X']);
+  });
+
+  it('variable Y logs ALPHA, Y (keyboard y), not S⇔D', () => {
+    expect(reconstructSequence('Y')).toEqual(['ALPHA', 'Y']);
+    expect(reconstructSequence('X+Y')).toEqual(['ALPHA', 'X', '+', 'ALPHA', 'Y']);
   });
 });

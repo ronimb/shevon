@@ -6,12 +6,14 @@ import {
   CardHeader,
   H1,
   H2,
-  H3,
   Pill,
   Row,
   Stack,
+  Stat,
+  Table,
   Text,
   TodoListCard,
+  UsageBar,
   useCanvasAction,
 } from "cursor/canvas";
 
@@ -22,450 +24,253 @@ export default function ShevonRoadmap() {
     dispatch({ type: "newComposerChat", userPrompt: prompt });
   };
 
+  const principles =
+    "Follow docs/principles.md: match Casio function behavior; visual fidelity means every hardware element is present, in the hardware's position/role, and behaves the same (not pixel-perfect). Update roadmap.md and issues.md in the same change. ";
+
   return (
     <Stack gap={28}>
       <Stack gap={8}>
-        <H1>Roadmap and action items</H1>
+        <H1>Roadmap</H1>
         <Text tone="secondary">
-          Concrete work after the Gemini → Cursor move. The goal is a
-          Casio-accurate fx-991ES PLUS emulator, not another generic
-          scientific calculator. Click a task to open a new chat with that
-          item already mentioned.
+          Visual view of `roadmap.md` (refreshed 12 Sep 2026). Markdown is
+          the source of truth. This canvas is a phase board and launch pad,
+          not a second plan.
         </Text>
       </Stack>
-
-      <Callout tone="success" title="Phase 1 complete — COMP and SETUP are honest">
-        On top of the Phase 0 foundation (typed-AST engine, no `new Function`,
-        AI-Studio leftovers gone), COMP now behaves like the hardware: SETUP
-        Fix/Sci/Norm with lit indicators, the hyp menu + Abs, Ran#/RanInt#,
-        ENG, sexagesimal °′″, and Rnd( — plus Gauss–Kronrod ∫, central-diff
-        d/dx, ▲/▼ history replay, ERROR ◄/► editing, and SHIFT 9 CLR. 44
-        tests pass. Next: Phase 2 — finish STAT and EQN before opening new
-        modes.
-      </Callout>
-
-      <Callout tone="info" title="Visual fidelity = all elements present + same behavior">
-        Not pixel-perfect mimicry — browser fonts and our own HTML rendering
-        are fine, and we can lean on our technical advantages as long as we
-        stay stylistically close to the hardware (today's look is a good
-        proxy). The bar for every feature: each visual element the real
-        fx-991ES PLUS shows is present, in the hardware's position/role, and
-        behaves the same. Example: the EQN quadratic editor must show the
-        a / b / c coefficient labels and put the active number entry at the
-        bottom-left like the real unit — not an unlabeled boxed grid. This
-        applies to all modes and all phases, not just Phase 4.
-      </Callout>
 
       <Row gap={8} wrap>
         <Button
           variant="primary"
-          onClick={() =>
-            start(
-              "Start Phase 1: make COMP and SETUP honest. Implement SETUP Fix/Sci/Norm with FIX/SCI indicators, the hyp menu (SHIFT hyp = Abs), Ran#/RanInt#, ENG shift, sexagesimal °′″, and Rnd( — never dump the literal letters ENG or hyp onto the LCD.",
-            )
-          }
+          onClick={() => dispatch({ type: "openFile", path: "roadmap.md" })}
         >
-          Start Phase 1
+          Open roadmap.md
         </Button>
         <Button
           variant="secondary"
-          onClick={() =>
-            start(
-              "Replace the trapezoid ∫ (n=100) with Gauss–Kronrod and the forward-difference d/dx with a central difference plus tolerance, so numeric methods match the Casio to displayed precision. Add golden tests from the manual.",
-            )
-          }
+          onClick={() => dispatch({ type: "openFile", path: "issues.md" })}
         >
-          Casio-accurate numerics
+          Open issues.md
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={() => dispatch({ type: "openFile", path: "backlog.md" })}
+        >
+          Open backlog.md
         </Button>
         <Button
           variant="ghost"
           onClick={() =>
-            start(
-              "Finish STAT and EQN: SETUP STAT FREQ ON/OFF with row caps, editor Ins/Del-A, 1-VAR distributions (P/Q/R and 't), keep STAT active when recalling vars, and add 2-/3-unknown linear + cubic EQN with complex quadratic roots.",
-            )
+            dispatch({ type: "openFile", path: "docs/principles.md" })
           }
         >
-          Finish STAT / EQN
+          Principles
         </Button>
       </Row>
 
-      <H2>Cross-cutting — match the hardware's elements and behavior in every feature</H2>
-      <Text>
-        Runs alongside every phase. Not pixel-perfect mimicry — our fonts and
-        HTML rendering are fine, and we can use technical advantages (show more
-        at once, cleaner layout) while staying stylistically close (today's
-        look is a good proxy). The bar: every element the real unit shows is
-        present and in a sensible place, and each feature behaves functionally
-        the same. Use the manual figures and a photo as the element/behavior
-        checklist, not a pixel reference.
-      </Text>
-      <TodoListCard
-        defaultExpanded
-        todos={[
-          {
-            id: "vis-elements",
-            status: "pending",
-            content:
-              "Audit each screen against the hardware and add any missing elements — e.g. EQN's a / b / c coefficient labels, mode/menu captions, dual-line answers — even if styled our own way",
-          },
-          {
-            id: "vis-placement",
-            status: "pending",
-            content:
-              "Put entry and answer in the hardware's position/role — e.g. EQN quadratic: active number entry at the bottom-left, coefficients in a labeled a / b / c layout",
-          },
-          {
-            id: "vis-indicators",
-            status: "pending",
-            content:
-              "All status indicators present and lit when the unit lights them: S / A (SHIFT/ALPHA), M, STO, RCL, STAT, CMPLX, D/R/G, FIX/SCI, Disp, ◀▶▲▼ (roughly matching positions; our styling is fine)",
-          },
-          {
-            id: "vis-menus",
-            status: "pending",
-            content:
-              "Every MODE / SETUP / STAT-type / EQN / distribution menu shows the same options and captions the hardware does — never a placeholder or a silent COMP fallback",
-          },
-          {
-            id: "vis-cursor",
-            status: "pending",
-            content:
-              "Show where the next character lands — a caret in the active field (COMP already uses ‸; extend to the EQN/STAT editor cells). A shaded box alone is not enough",
-          },
-          {
-            id: "vis-result",
-            status: "pending",
-            content:
-              "Offer the same result forms the unit can — S⇔D fraction/surd/π, complex a+bi, ×10ⁿ scientific, dual-line Pol/Rec r,θ — glyphs may be our fonts",
-          },
-          {
-            id: "vis-errors",
-            status: "pending",
-            content:
-              "Error screens carry the same elements/behavior (Math / Syntax / Stack / Argument ERROR) with the ◀▶ jump-to-token behavior from E-40",
-          },
-          {
-            id: "vis-no-literal",
-            status: "pending",
-            content:
-              "Never show literal function text (ENG, hyp) where the hardware shows a symbol or opens a menu",
-          },
-          {
-            id: "vis-checklist",
-            status: "pending",
-            content:
-              "Definition of done per feature: an element + behavior parity check vs the manual figure — same elements, same placement/role, same behavior; pixel-exactness not required",
-          },
+      <Row gap={24} align="end">
+        <Stat value="Phase 2" label="Current phase" tone="warning" />
+        <Stat value="6" label="Phase 2 items open" />
+        <Stat value="18" label="Open issues" tone="warning" />
+        <Stat value="34/76" label="Coverage done" />
+      </Row>
+
+      <UsageBar
+        total={5}
+        topLeftLabel="Phase progress (source: roadmap.md)"
+        topRightLabel="0 and 1 landed · 2 in progress · 3 and 4 not started"
+        segments={[
+          { id: "p0", value: 1, color: "green" },
+          { id: "p1", value: 1, color: "green" },
+          { id: "p2", value: 1, color: "yellow" },
+          { id: "p3", value: 1, color: "gray" },
+          { id: "p4", value: 1, color: "gray" },
         ]}
-        onTodoClick={(todo) => start(`Visual parity: ${todo.content}`)}
       />
 
-      <H2>Phase 0 — Cursor-ready foundation</H2>
-      <Text>
-        Goal: the repo is understandable, testable, and honest about what
-        it is. Complete — one small console cleanup remains.
-      </Text>
-      <TodoListCard
-        defaultExpanded
-        todos={[
-          {
-            id: "p0-split",
-            status: "completed",
-            content:
-              "Split App.tsx: evaluator, formatMath/toLaTeX, key map, COMP handlers, STAT, EQN, Calculator shell",
-          },
-          {
-            id: "p0-engine",
-            status: "completed",
-            content:
-              "Stop evaluating via new Function; parse into a typed AST (src/parser.ts) and walk it (src/evaluator.ts) so tests can assert intermediate forms",
-          },
-          {
-            id: "p0-tests",
-            status: "completed",
-            content:
-              "Golden tests from the manual: sin 30=0.5, 2/3+1/2=7/6, nPr/nCr samples, STAT mean/σx on E-24 (6 golden + 16 parser = 22)",
-          },
-          {
-            id: "p0-readme",
-            status: "completed",
-            content:
-              "Replace AI Studio README with how to run web / electron, where the PDF lives, and what is unimplemented",
-          },
-          {
-            id: "p0-deps",
-            status: "completed",
-            content:
-              "Removed @google/genai + mathjs and the GEMINI_API_KEY injection from vite.config.ts; deleted metadata.json",
-          },
-          {
-            id: "p0-asset",
-            status: "completed",
-            content:
-              "calculator_new.png committed under src/ and loading; Casio PDF stays gitignored",
-          },
-          {
-            id: "p0-console",
-            status: "pending",
-            content:
-              "Remove the remaining console.log of expressions; keep any diagnostics behind a debug flag",
-          },
+      <Callout tone="success" title="Visual fidelity = elements + placement + behavior">
+        Not pixel-perfect mimicry. Every hardware element must be present,
+        in the hardware’s position/role, and behave the same. Never dump
+        literal function text. Never let a menu silently fall through to
+        COMP. Full rules: `docs/principles.md`.
+      </Callout>
+
+      <H2>Phases</H2>
+      <Table
+        headers={["Phase", "Status", "Goal"]}
+        columnAlign={["left", "left", "left"]}
+        rowTone={["success", "success", "warning", "neutral", "neutral"]}
+        rows={[
+          [
+            "0 Foundation",
+            "Landed",
+            "Typed AST, tests, no AI Studio deps, honest README",
+          ],
+          [
+            "1 COMP / SETUP",
+            "Landed",
+            "Fix/Sci/Norm, hyp, Ran#, ENG, DMS, Rnd, Gauss–Kronrod, CLR",
+          ],
+          [
+            "2 STAT / EQN",
+            "In progress",
+            "Ins/Del-A, Dist, stay in STAT, linear/cubic EQN, SOLVE UX",
+          ],
+          [
+            "3 Remaining modes",
+            "Not started",
+            "CMPLX, BASE-N, MATRIX, VECTOR, TABLE, CONST/CONV — after Phase 2",
+          ],
+          [
+            "4 Fidelity / packaging",
+            "Not started",
+            "Surd/π result forms, full PDF samples, Pages / PWA / exe",
+          ],
         ]}
-        onTodoClick={(todo) => start(`Phase 0: ${todo.content}`)}
+        striped
       />
 
-      <H2>Phase 1 — Make COMP and SETUP honest</H2>
-      <Text>
-        Goal: every key on the faceplate that belongs to COMP does the
-        Casio thing, or is explicitly disabled — never dump the letters
-        ENG or hyp onto the LCD.
-      </Text>
-      <TodoListCard
-        defaultExpanded
-        todos={[
-          {
-            id: "p1-setup",
-            status: "pending",
-            content:
-              "Implement SETUP: LineIO, Fix 0–9, Sci 1–10, Norm 1/2, ab/c vs d/c; light FIX/SCI indicators",
-          },
-          {
-            id: "p1-hyp",
-            status: "pending",
-            content:
-              "hyp key opens sinh/cosh/tanh menu; SHIFT hyp is Abs; wire inverse hyp",
-          },
-          {
-            id: "p1-rand",
-            status: "pending",
-            content:
-              "SHIFT . = Ran# (3-digit < 1); ALPHA . = RanInt#(a,b)",
-          },
-          {
-            id: "p1-eng",
-            status: "pending",
-            content:
-              "ENG / SHIFT ENG shift the displayed result into engineering exponents",
-          },
-          {
-            id: "p1-dms",
-            status: "pending",
-            content:
-              "Sexagesimal input ° ′ ″ and toggle with the °′″ key",
-          },
-          {
-            id: "p1-rnd",
-            status: "pending",
-            content: "Rnd( according to current Fix/Sci/Norm, including the 10÷3×3 example",
-          },
-          {
-            id: "p1-int",
-            status: "completed",
-            content:
-              "∫ now uses adaptive Gauss–Kronrod (G7–K15) and d/dx a central difference + Richardson; golden tests pin ∫x²=1/3, d/dx x²|₃=6",
-          },
-          {
-            id: "p1-replay",
-            status: "completed",
-            content:
-              "LCD history replay with ▲/▼ in COMP (▲ recalls previous, ▼ walks back to a live line); side pane kept as an extra",
-          },
-          {
-            id: "p1-errors",
-            status: "completed",
-            content:
-              "Math/Syntax ERROR: ◄/► return to the expression for editing, AC clears; results beyond ±10¹⁰⁰ raise Math ERROR",
-          },
-          {
-            id: "p1-clr",
-            status: "completed",
-            content: "SHIFT 9 CLR menu: 1:Setup 2:Memory 3:All",
-          },
-        ]}
-        onTodoClick={(todo) => start(`Phase 1: ${todo.content}`)}
-      />
+      <Callout tone="info" title="Priority (12 Sep 2026)">
+        COMP visual leftovers this slice (`vis-indicators` on existing
+        state, `vis-errors` jump-to-token, `vis-no-literal`). Then close
+        Phase 2 with SOLVE first. Daily-driver bar is COMP + STAT + EQN.
+        Phase 3 stays gated. Packaging stays in Phase 4. Lying menus wait
+        for the matching feature.
+      </Callout>
 
-      <H2>Phase 2 — Finish STAT and EQN</H2>
-      <Text>
-        These modes already have UI. Close the behavioral gaps before
-        opening new modes.
+      <H2>Now — visual leftovers</H2>
+      <Card>
+        <CardHeader trailing={<Pill size="sm" active>this slice</Pill>}>
+          COMP LCD parity
+        </CardHeader>
+        <CardBody>
+          <Stack gap={10}>
+            <Text>
+              Light Disp / ◀▶ / ▲▼ from real COMP state. Syntax and Math
+              ERROR ◀▶ jump to the fault token. Hardware-style glyphs for
+              remaining ASCII trig tokens. Do not fake-light CMPLX/MAT/VCT
+              and do not add a separate “disable MODE rows” pass.
+            </Text>
+            <Row gap={8} wrap>
+              <Button
+                variant="primary"
+                onClick={() =>
+                  start(
+                    principles +
+                      "Start the Now visual slice from roadmap.md: vis-indicators (Disp, ◀▶, ▲▼ for COMP history — not CMPLX/MAT/VCT), vis-errors E-40 jump-to-token, vis-no-literal remaining ASCII trig glyphs. Update roadmap.md and issues.md in the same change.",
+                  )
+                }
+              >
+                Start visual slice
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() =>
+                  start(
+                    principles +
+                      "After the visual slice, close Phase 2 from roadmap.md. Do p2-solve first (SOLVE prompt, initial X, L−R residual, Continue, proper errors). Then p2-edit, p2-dist, p2-stat-mode, p2-eqn-linear, p2-eqn-cubic. Do not open Phase 3.",
+                  )
+                }
+              >
+                After that: Phase 2 (SOLVE first)
+              </Button>
+            </Row>
+          </Stack>
+        </CardBody>
+      </Card>
+
+      <H2>Phase 2 remaining</H2>
+      <Text tone="secondary">
+        Close these before opening Phase 3. Ids match `roadmap.md`.
       </Text>
       <TodoListCard
         defaultExpanded
         todos={[
           {
-            id: "p2-freq",
+            id: "p2-solve",
             status: "pending",
-            content: "SETUP STAT FREQ ON/OFF; editor row limits 80 / 40 / 26",
+            content:
+              "p2-solve — SOLVE prompt, initial X, L−R residual, Continue (issue solve-errors) · first after visual",
           },
           {
             id: "p2-edit",
             status: "pending",
-            content: "STAT Edit Ins and Del-A; DEL deletes a line in the editor",
+            content:
+              "p2-edit — STAT Edit Ins and Del-A; DEL deletes a line (issue stat-del)",
           },
           {
             id: "p2-dist",
             status: "pending",
-            content: "1-VAR Dist: P( Q( R( and normalized variate 't",
+            content:
+              "p2-dist — 1-VAR Dist: P( Q( R( and normalized variate 't (issue dist-empty)",
           },
           {
             id: "p2-stat-mode",
             status: "pending",
             content:
-              "Stay in STAT when recalling variables instead of silently jumping to COMP",
+              "p2-stat-mode — Stay in STAT when recalling variables (issue stat-jump-comp)",
           },
           {
             id: "p2-eqn-linear",
             status: "pending",
-            content: "EQN 2-unknown and 3-unknown linear systems",
+            content: "p2-eqn-linear — EQN 2-unknown and 3-unknown linear systems",
           },
           {
             id: "p2-eqn-cubic",
             status: "pending",
-            content: "EQN cubic; quadratic complex roots in Natural Display",
-          },
-          {
-            id: "p2-solve",
-            status: "pending",
             content:
-              "SOLVE: prompt remaining variables, initial X, L−R residual, Continue screen",
+              "p2-eqn-cubic — EQN cubic; quadratic complex roots in Natural Display",
           },
         ]}
-        onTodoClick={(todo) => start(`Phase 2: ${todo.content}`)}
+        onTodoClick={(todo) =>
+          start(`${principles}Roadmap ${todo.content}`)
+        }
       />
 
-      <H2>Phase 3 — Remaining Casio modes</H2>
+      <H2>Cross-cutting visual fidelity</H2>
       <Text>
-        One mode per slice, each with manual sample operations as tests
-        before considering it done.
+        Runs alongside every phase. Inventory:
+        `docs/visual-fidelity-inventory.md`. `vis-cursor` and EQN quadratic
+        placement have landed.
       </Text>
-      <TodoListCard
-        defaultExpanded
-        todos={[
-          {
-            id: "p3-cmplx",
-            status: "pending",
-            content: "CMPLX: i, ∠, a+bi / r∠θ, arg, Conjg, 'r∠θ / 'a+bi",
-          },
-          {
-            id: "p3-basen",
-            status: "pending",
-            content: "BASE-N: bases, d/h/b/o prefixes, logic ops, 16/32-bit ranges",
-          },
-          {
-            id: "p3-matrix",
-            status: "pending",
-            content: "MATRIX: Dim/Data, MatA/B/C/Ans, det Trn inverse Abs powers",
-          },
-          {
-            id: "p3-vector",
-            status: "pending",
-            content: "VECTOR: 2D/3D, dot, cross, Abs, VctAns",
-          },
-          {
-            id: "p3-table",
-            status: "pending",
-            content: "TABLE: f(x), Start/End/Step, Insufficient MEM at >30 rows",
-          },
-          {
-            id: "p3-const",
-            status: "pending",
-            content: "CONST 01–40 (CODATA 2007) and CONV 01–40 (NIST SP 811)",
-          },
+      <Table
+        headers={["Id", "Open work"]}
+        rows={[
+          ["vis-elements", "Missing captions, dual-line answers, leftover unlabeled editors"],
+          ["vis-indicators", "Now: Disp / ◀▶ / ▲▼ from COMP state. CMPLX/MAT/VCT with Phase 3"],
+          ["vis-menus", "Not a standalone pass — fix when the matching feature ships"],
+          ["vis-result", "Surd/π forms, complex a+bi, dual-line Pol/Rec (Phase 4 / later)"],
+          ["vis-errors", "Now: ◀▶ jump-to-token (E-40). Stack/Argument wait on modes"],
+          ["vis-no-literal", "Now: remaining ASCII tokens (trig and friends)"],
+          ["vis-checklist", "Element + behavior parity vs the manual figure"],
         ]}
-        onTodoClick={(todo) => start(`Phase 3: ${todo.content}`)}
+        striped
       />
 
-      <H2>Phase 4 — Fidelity and packaging</H2>
-      <TodoListCard
-        defaultExpanded
-        todos={[
-          {
-            id: "p4-exact",
-            status: "pending",
-            content:
-              "Natural result forms: n√m, p/q π, mixed fractions — not just continued-fraction decimals",
-          },
-          {
-            id: "p4-samples",
-            status: "pending",
-            content:
-              "Automate every numbered sample operation in the PDF as a regression suite",
-          },
-          {
-            id: "p4-packaging",
-            status: "pending",
-            content:
-              "Verify GitHub Pages, PWA, and electron-builder portable exe; real app icon",
-          },
-        ]}
-        onTodoClick={(todo) => start(`Phase 4: ${todo.content}`)}
-      />
-
-      <H2>Suggested next sprint (this week)</H2>
-      <GridLike />
-    </Stack>
-  );
-}
-
-function GridLike() {
-  const dispatch = useCanvasAction();
-  return (
-    <Stack gap={16}>
-      <Card>
-        <CardHeader trailing={<Pill size="sm" active>1</Pill>}>
-          Fix lying keys
-        </CardHeader>
-        <CardBody>
-          <Stack gap={10}>
-            <Text>
-              ENG, hyp, Ran#/RanInt, Abs, SETUP Fix/Sci/Norm, and MODE
-              2/4/6/7/8 currently look like Casio and then fail. Either
-              implement them or show a clear “not yet” on the LCD — do not
-              insert the letters ENG into the expression.
-            </Text>
-            <Button
-              variant="secondary"
-              onClick={() =>
-                dispatch({
-                  type: "openFile",
-                  path: "canvases/casio-coverage.canvas.tsx",
-                })
-              }
-            >
-              Open coverage
-            </Button>
-          </Stack>
-        </CardBody>
-      </Card>
-      <Card>
-        <CardHeader trailing={<Pill size="sm" active>2</Pill>}>
-          Make SETUP real
-        </CardHeader>
-        <CardBody>
-          <Text>
-            Fix/Sci/Norm is the unlock for Rnd(, engineering notation, and
-            Casio-accurate result formatting. Wire the SETUP pages and light
-            the FIX/SCI indicators before touching new modes.
-          </Text>
-        </CardBody>
-      </Card>
-      <Card>
-        <CardHeader trailing={<Pill size="sm" active>3</Pill>}>
-          Trust the numerics
-        </CardHeader>
-        <CardBody>
-          <Text>
-            Swap the trapezoid ∫ and forward d/dx for Gauss–Kronrod and a
-            central difference with tolerance, then pin them with golden
-            tests from the manual so ∫ and d/dx match the hardware.
-          </Text>
-        </CardBody>
-      </Card>
-      <H3>Out of scope until Phase 3</H3>
+      <H2>COMP leftovers (unphased)</H2>
       <Text tone="secondary">
-        MATRIX, VECTOR, TABLE, CONST, CONV, and a pixel-perfect LCD font.
-        Hardware items (battery, contrast, auto power-off) stay skipped.
+        Pull into the current phase when they block honesty. Full list in
+        `roadmap.md`.
+      </Text>
+      <Table
+        headers={["Id", "Gap"]}
+        rows={[
+          ["comp-lineio", "MthIO / LineIO still display-only"],
+          ["comp-colon", "Multi-statements : and Disp"],
+          ["comp-drg", "SHIFT DRG ° r g conversions"],
+          ["comp-bytes", "99-byte input limit + cursor-k"],
+          ["comp-sep", "SETUP Dot / Comma separator"],
+          ["comp-calc", "CALC UX vs Casio prompt flow"],
+          ["comp-range", "Per-function ranges; factorial 69; Σ bounds"],
+          ["comp-keys", "Letter keys steal typing; Shift hold vs toggle"],
+        ]}
+        striped
+      />
+
+      <H2>Out of scope until later</H2>
+      <Text tone="secondary">
+        Hardware contrast, battery, auto power-off. Pixel-perfect LCD font
+        (not before Phase 3 is done). Do not re-implement Phase 0 / Phase 1.
+        Unassigned ideas live in `backlog.md`, not here.
       </Text>
     </Stack>
   );

@@ -1,6 +1,6 @@
 import React from 'react';
 import type { EqnResult } from '../types.ts';
-import { formatResultNumber } from '../display.tsx';
+import { EditorCaret, formatResultNumber } from '../display.tsx';
 
 export function solveQuadratic(a: number, b: number, c: number): EqnResult[] {
   if (a === 0) {
@@ -51,19 +51,38 @@ export function EqnMenuScreen() {
 }
 
 export function EqnQuadScreen({ coeffs, index }: { coeffs: string[]; index: number }) {
+  const labels = ['a', 'b', 'c'];
   return (
     <>
       <div className="eqn-title">aX²+bX+c=0</div>
       <table className="eqn-table">
+        <thead>
+          <tr>
+            {labels.map((label) => (
+              <th key={label}>{label}</th>
+            ))}
+          </tr>
+        </thead>
         <tbody>
           <tr>
-            <td className={index === 0 ? 'active-cell' : ''}>{coeffs[0]}</td>
-            <td className={index === 1 ? 'active-cell' : ''}>{coeffs[1]}</td>
-            <td className={index === 2 ? 'active-cell' : ''}>{coeffs[2]}</td>
+            {coeffs.map((coeff, i) => (
+              <td key={labels[i]} className={index === i ? 'active-cell' : ''}>
+                <EditorCaret value={coeff} active={index === i} />
+              </td>
+            ))}
           </tr>
         </tbody>
       </table>
     </>
+  );
+}
+
+/** Hardware puts the coefficient being typed at the bottom-left of the LCD. */
+export function EqnQuadEntry({ value }: { value: string }) {
+  return (
+    <div className="decimal-result text-left w-full">
+      <EditorCaret value={value} active />
+    </div>
   );
 }
 

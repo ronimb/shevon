@@ -163,7 +163,7 @@ export const formatMath = (input: string): string => {
   // Improved recursive template rendering for display
   const renderTemplates = (s: string): string => {
     let proc = s;
-    const templates = ['nCr', 'nPr', 'pol', 'rec', 'mix', 'frac', 'int', 'diff', 'root', 'sqrt', 'sqr', 'cube', 'log_b', 'log10', 'e^', '10^', 'pwr', 'Σ'];
+    const templates = ['nCr', 'nPr', 'pol', 'rec', 'mix', 'frac', 'int', 'diff', 'root', 'sqrt', 'sqr', 'cube', 'log_b', 'log10', 'e^', '10^', 'pwr', 'Σ', 'RanInt', 'Rnd', 'abs'];
     
     let lastLength = -1;
     while (proc.length !== lastLength) {
@@ -224,6 +224,12 @@ export const formatMath = (input: string): string => {
                     replaced = `10<span class="sup">${slot(args[0])}</span>`;
                 } else if (bestT === 'Σ') {
                     replaced = `<div class="sum-container"><div class="sum-bounds"><span>${slot(args[3])}</span><span>${slot(args[1] || 'x')}=${slot(args[2])}</span></div><span class="sum-symbol">Σ</span><div class="sum-body">${slot(args[0])}</div></div>`;
+                } else if (bestT === 'abs') {
+                    replaced = `<span class="trig-fun">Abs</span>(${slot(args[0])})`;
+                } else if (bestT === 'Rnd') {
+                    replaced = `<span class="trig-fun">Rnd</span>(${slot(args[0])})`;
+                } else if (bestT === 'RanInt') {
+                    replaced = `<span class="trig-fun">RanInt#</span>(${slot(args[0])},${slot(args[1] || '')})`;
                 }
 
                 proc = proc.substring(0, earliestIdx) + replaced + proc.substring(bal.endIdx + 1);
@@ -236,6 +242,8 @@ export const formatMath = (input: string): string => {
   };
 
   h = renderTemplates(h);
+
+  h = h.replace(/Ran#/g, '<span class="trig-fun">Ran#</span>');
 
   h = h.replace(/→([A-M X-Y])/g, '<span style="font-size: 0.8em; margin: 0 4px;">→</span>$1')
        .replace(/\^\(([^)]*)\)/g, (m, p1) => `<span class="sup">${slot(p1)}</span>`) 
@@ -299,6 +307,14 @@ export const renderMathSymbol = (sym: string): React.ReactNode => {
   }
   return <span>{sym}</span>;
 };
+
+/** Blinking COMP-style caret in EQN/STAT editor cells. */
+export const EditorCaret: React.FC<{ value: string; active: boolean }> = ({ value, active }) => (
+  <>
+    {value}
+    {active ? <span className="cursor" /> : null}
+  </>
+);
 
 export const SciNotation: React.FC<{ mantissa: string; exponent: number }> = ({ mantissa, exponent }) => (
   <span className="inline-flex items-center font-mono select-all">

@@ -313,8 +313,9 @@ export const reconstructSequence = (input: string): string[] => {
       'D': ['ALPHA', 'sin'],
       'E': ['ALPHA', 'cos'],
       'F': ['ALPHA', 'tan'],
-      'X': ['ALPHA', ')'],
-      'Y': ['ALPHA', 'S⇔D'],
+      // X/Y match the PC shortcuts: x → ALPHA X, y → ALPHA Y (not the physical ) / S⇔D keys).
+      'X': ['ALPHA', 'X'],
+      'Y': ['ALPHA', 'Y'],
       'M': ['ALPHA', 'M+'],
     };
 

@@ -7,8 +7,9 @@ custom Natural-V.P.A.M. display. Expressions are parsed into a typed AST
 (`src/parser.ts`) and evaluated by a custom engine (`src/evaluator.ts`) — there
 is no `eval`/`new Function` and no third-party math library.
 
-The goal is Casio accuracy, not a generic scientific calculator: behavior is
-checked against the official manual (`fx-570_991ES_PLUS_EN.pdf`).
+The goal is Casio accuracy, not a generic scientific calculator. Design rules
+are in [`docs/principles.md`](docs/principles.md). Behavior is checked against
+the official manual (`fx-570_991ES_PLUS_EN.pdf`).
 
 ## Prerequisites
 
@@ -46,16 +47,27 @@ behavior. It is intentionally **gitignored** (it is a large binary); drop your
 own copy in the repo root to cross-check sample operations. Manual page
 references (e.g. `E-16`) appear throughout the code and tests.
 
-## Status / what is unimplemented
+## Documentation
 
-COMP mode, STAT, and EQN are the most complete. Several faceplate keys and
-modes are still stubbed or intentionally disabled rather than faked. Not yet
-implemented (or only partial):
+Markdown files are the **source of truth**. Canvases are visual views refreshed
+from those files — not a second plan.
 
-- **SETUP**: LineIO, Fix/Sci/Norm, `ab/c` vs `d/c`
-- **COMP keys**: `hyp` menu, `Ran#`/`RanInt#`, `ENG`, sexagesimal `° ′ ″`, `Rnd(`
-- **STAT/EQN**: FREQ toggle, editor Ins/Del, 1-VAR distributions, cubic/complex EQN roots, SOLVE
-- **Other modes**: CMPLX, BASE-N, MATRIX, VECTOR, TABLE, CONST, CONV
+| File | Role |
+|------|------|
+| [`docs/principles.md`](docs/principles.md) | Visual fidelity and function-behavior rules |
+| [`roadmap.md`](roadmap.md) | Phased roadmap, current work, landed work |
+| [`issues.md`](issues.md) | Open bugs (with phase/action when one exists) |
+| [`backlog.md`](backlog.md) | Feature ideas not yet assigned to a phase |
+| [`docs/coverage.md`](docs/coverage.md) | Feature-by-feature Casio coverage |
+| [`docs/visual-fidelity-inventory.md`](docs/visual-fidelity-inventory.md) | LCD element audit |
 
-See `canvases/casio-coverage.canvas.tsx` and `canvases/shevon-roadmap.canvas.tsx`
-for the full coverage map and backlog.
+Agents: [`AGENTS.md`](AGENTS.md) and `.cursor/rules/`.
+
+## Status
+
+COMP mode is usable for everyday scientific work. STAT and EQN are the next
+most complete (FREQ, quadratic editor). CMPLX, BASE-N, MATRIX, VECTOR, TABLE,
+CONST, and CONV are menu chrome only.
+
+Current phase: **Phase 2 — finish STAT and EQN**. See [`roadmap.md`](roadmap.md).
+Coverage snapshot: [`docs/coverage.md`](docs/coverage.md).

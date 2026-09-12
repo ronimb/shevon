@@ -1,8 +1,33 @@
 import React from 'react';
 import type { StatEntry, StatType, Vars } from '../types.ts';
-import { renderMathSymbol } from '../display.tsx';
+import { EditorCaret, renderMathSymbol } from '../display.tsx';
 
-export const calculateStatVars = (statType: StatType | null, statData: StatEntry[]): Vars => {
+/**
+ * fx-991ES PLUS STAT editor row caps (manual E-23):
+ * 1-VAR FREQ OFF = 80, 1-VAR FREQ ON or 2-VAR FREQ OFF = 40, 2-VAR FREQ ON = 26.
+ */
+export function getStatMaxRows(statType: StatType | null, freqEnabled: boolean): number {
+  if (!statType) return 80;
+  const isTwoVar = statType !== '1-VAR';
+  if (!isTwoVar && !freqEnabled) return 80;
+  if (isTwoVar && freqEnabled) return 26;
+  return 40;
+}
+
+export function appendStatRowIfRoom(
+  data: StatEntry[],
+  statType: StatType | null,
+  freqEnabled: boolean,
+): StatEntry[] {
+  if (data.length >= getStatMaxRows(statType, freqEnabled)) return data;
+  return [...data, { x: '', y: '', freq: '1' }];
+}
+
+export const calculateStatVars = (
+  statType: StatType | null,
+  statData: StatEntry[],
+  freqEnabled: boolean = true,
+): Vars => {
     const s: Vars = {
       'type': statType || '',
       'N': 0,
@@ -37,7 +62,7 @@ export const calculateStatVars = (statType: StatType | null, statData: StatEntry
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
     
     statData.forEach(d => {
-      const f = parseFloat(d.freq) || 0;
+      const f = freqEnabled ? (parseFloat(d.freq) || 0) : 1;
       if (f <= 0) return;
       if (d.x === '' && (!isTwoVar || d.y === '')) return;
       const x = parseFloat(d.x) || 0;
@@ -108,7 +133,7 @@ export const calculateStatVars = (statType: StatType | null, statData: StatEntry
           let nFit = 0, fitX = 0, fitX2 = 0, fitY = 0, fitY2 = 0, fitXY = 0;
 
           statData.forEach(d => {
-            const f = parseFloat(d.freq) || 0;
+            const f = freqEnabled ? (parseFloat(d.freq) || 0) : 1;
             if (f <= 0) return;
             if (d.x === '' && (!isTwoVar || d.y === '')) return;
             let xi = parseFloat(d.x) || 0;
@@ -320,9 +345,19 @@ export function StatDataScreen({
         {statData.map((entry, idx) => (
           <div key={idx} className="grid border-b border-black/5" style={{ gridTemplateColumns: gridCols }}>
             <div className="px-1 border-r border-black/10 text-center bg-black/5">{idx + 1}</div>
-            <div className={`px-1 border-r border-black/10 text-right ${statCursor.row === idx && statCursor.col === 0 ? 'bg-black/20 outline outline-1 outline-black/30' : ''}`}>{entry.x === '' ? '0' : entry.x}</div>
-            {isTwoVar && <div className={`px-1 border-r border-black/10 text-right ${statCursor.row === idx && statCursor.col === 1 ? 'bg-black/20 outline outline-1 outline-black/30' : ''}`}>{entry.y === '' ? '0' : entry.y}</div>}
-            {statFrequencyEnabled && <div className={`px-1 text-right ${statCursor.row === idx && (isTwoVar ? statCursor.col === 2 : statCursor.col === 1) ? 'bg-black/20 outline outline-1 outline-black/30' : ''}`}>{entry.freq}</div>}
+            <div className={`px-1 border-r border-black/10 text-right ${statCursor.row === idx && statCursor.col === 0 ? 'bg-black/20 outline outline-1 outline-black/30' : ''}`}>
+              <EditorCaret value={entry.x === '' ? '0' : entry.x} active={statCursor.row === idx && statCursor.col === 0} />
+            </div>
+            {isTwoVar && (
+              <div className={`px-1 border-r border-black/10 text-right ${statCursor.row === idx && statCursor.col === 1 ? 'bg-black/20 outline outline-1 outline-black/30' : ''}`}>
+                <EditorCaret value={entry.y === '' ? '0' : entry.y} active={statCursor.row === idx && statCursor.col === 1} />
+              </div>
+            )}
+            {statFrequencyEnabled && (
+              <div className={`px-1 text-right ${statCursor.row === idx && (isTwoVar ? statCursor.col === 2 : statCursor.col === 1) ? 'bg-black/20 outline outline-1 outline-black/30' : ''}`}>
+                <EditorCaret value={entry.freq} active={statCursor.row === idx && (isTwoVar ? statCursor.col === 2 : statCursor.col === 1)} />
+              </div>
+            )}
           </div>
         ))}
       </div>

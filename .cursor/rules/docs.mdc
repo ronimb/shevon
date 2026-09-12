@@ -1,0 +1,24 @@
+---
+description: Markdown files are the source of truth; canvases are views
+alwaysApply: true
+---
+
+# Documentation sources of truth
+
+Read `roadmap.md` before starting a feature, picking next work, or claiming
+something is done. Follow `docs/principles.md` for how it should look and
+behave.
+
+| File | Role |
+|------|------|
+| `roadmap.md` | Scheduled work (Now, phases, vis-*, leftovers, landed) |
+| `issues.md` | Open bugs; include phase/action id when one exists |
+| `backlog.md` | Unassigned ideas only — not the task list |
+| `docs/coverage.md` | Casio feature coverage |
+| `docs/visual-fidelity-inventory.md` | LCD element audit |
+
+- Update the matching `.md` file in the same change when you add, finish,
+  defer, or close work.
+- Canvases (`canvases/*.canvas.tsx`) are visual views. If they disagree with
+  markdown, markdown wins — refresh the canvas when the story changed.
+- Do not recreate a competing task list in chat, a canvas, or the README.

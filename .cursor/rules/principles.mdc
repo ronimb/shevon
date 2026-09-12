@@ -1,0 +1,26 @@
+---
+description: Design principles — visual fidelity and Casio behavior matching
+alwaysApply: true
+---
+
+# Design principles
+
+Read `docs/principles.md` before implementing or reviewing calculator UI or
+behavior. The Casio manual `fx-570_991ES_PLUS_EN.pdf` is the behavior spec.
+
+- Match **function behavior** to the hardware. Never fake a result. Never dump
+  literal function text (`ENG`, `hyp`, `abs(`) where the unit shows a symbol,
+  template, or menu.
+- **Visual fidelity** is not pixel-perfect mimicry. Every hardware element
+  must be present, in the hardware’s position/role, and behave the same.
+  Example: EQN quadratic uses `a` / `b` / `c` labels and bottom-left entry.
+- Menu items that cannot run must not silently fall through to COMP.
+- A feature is done only after an element + behavior check vs the manual
+  figure (`vis-checklist` in `roadmap.md`).
+
+```text
+❌ BAD: MODE 4 looks selectable, then returns to COMP with no BASE-N.
+✅ GOOD: implement BASE-N, or leave the row explicitly not-implemented.
+❌ BAD: ENG key inserts the letters "ENG" on the LCD.
+✅ GOOD: ENG shifts the displayed result into engineering exponents.
+```

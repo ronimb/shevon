@@ -118,7 +118,8 @@ export const evaluateExpression = (expr: string, scope: Vars, ans: number, angle
       const max = Math.max(a, b);
       return Math.floor(Math.random() * (max - min + 1)) + min;
     },
-    '__ranhash': () => Math.random(),
+    // Casio Ran#: three-digit decimal in [0, 1), i.e. 0.000 … 0.999.
+    '__ranhash': () => Math.floor(Math.random() * 1000) / 1000,
     __pol: (x: number, y: number) => {
       const r = Math.sqrt(x*x + y*y);
       const theta = fromRad(Math.atan2(y, x));
