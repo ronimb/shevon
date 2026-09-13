@@ -1,15 +1,20 @@
 # Shevon — Casio fx-991ES PLUS emulator
 
-A high-fidelity, photo-realistic emulator of the Casio **fx-991ES PLUS**
+A photo-realistic overlay emulator of the Casio **fx-991ES PLUS**
 scientific calculator. The UI is an overlay: absolutely-positioned key
-hitboxes sit on top of `src/calculator_new.png`, and the LCD is rendered as a
-custom Natural-V.P.A.M. display. Expressions are parsed into a typed AST
-(`src/parser.ts`) and evaluated by a custom engine (`src/evaluator.ts`) — there
-is no `eval`/`new Function` and no third-party math library.
+hitboxes sit on top of `src/calculator_new.png`, and the LCD is rendered with
+standard browser fonts and HTML (fractions, roots, and so on) — a close-enough
+approximation, not a pixel-perfect or pixelated copy of the hardware display.
+Visual fidelity means every on-screen element is present in the same relative
+location and behaves the same (same timing, input, and output); exact
+coordinates are not required.
 
 The goal is Casio accuracy, not a generic scientific calculator. Design rules
-are in [`docs/principles.md`](docs/principles.md). Behavior is checked against
-the official manual (`fx-570_991ES_PLUS_EN.pdf`).
+are in [`docs/principles.md`](docs/principles.md). Expressions are parsed into
+a typed AST (`src/parser.ts`) and evaluated by a custom engine
+(`src/evaluator.ts`) — there is no `eval`/`new Function` and no third-party
+math library. Behavior is checked against the official manual
+(`fx-570_991ES_PLUS_EN.pdf`).
 
 ## Prerequisites
 
