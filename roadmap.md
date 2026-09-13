@@ -32,16 +32,22 @@ matching feature — no separate “disable the row” pass.
 Work that is already on screen in COMP. Do not fake-light CMPLX/MAT/VCT, and
 do not add Stack/Argument ERROR until those modes exist.
 
-- [ ] `vis-indicators` — Light **existing-state** indicators: Disp, ◀▶, and
-      ▲▼ for COMP history replay (not only EQN result). Leave CMPLX/MAT/VCT
-      dim until Phase 3. Issue: `ind-hardcoded`, `ind-arrows`.
+- [ ] `vis-indicators` — **Landed:** ◀▶ annunciators now light from caret
+      navigability, and ▲▼ light for COMP history replay (not only EQN result).
+      **Remaining:** STAT editor ▲▼ row-nav; Disp (needs `comp-colon`); CMPLX/
+      MAT/VCT stay dim until Phase 3. Issue: `ind-hardcoded`, `ind-arrows`.
 - [ ] `vis-errors` — Syntax / Math ERROR: E-40 ◀▶ **jump-to-token** (today
-      they only dismiss). Issue: `err-jump`.
-- [ ] `vis-no-literal` — Hardware-style glyphs for remaining ASCII tokens
-      (trig and friends). ENG/hyp/Abs/Ran# already pass. Issue: `ascii-tokens`.
+      they only dismiss). Issue: `err-jump`. **Deferred:** needs an evaluator
+      fault offset, which the Now display slice must not touch.
+- [x] `vis-no-literal` — Hardware-style glyphs for the remaining ASCII tokens
+      (trig / hyp / `ln`) **and** unclosed templates no longer leak IR names.
+      `formatMath` + `toLaTeX` share one template table + walker in
+      `src/display.tsx`; `sqrt(24^(2-2)‸` shows a radical, not the letters
+      `sqrt`. Issue: `ascii-tokens`, `ir-leak` (both fixed).
+      Kickoff prompt: [`docs/prompts/now-visual-slice.md`](docs/prompts/now-visual-slice.md).
 - [ ] `vis-elements` — Only gaps on screens we already ship (mode/menu
       captions, dual-line answers). Skip unlabeled editors that belong to
-      unbuilt EQN types.
+      unbuilt EQN types. (No in-scope element gap actioned in the visual slice.)
 
 `vis-menus` is **not** this slice (see policy below). Surd/π result forms stay
 in Phase 4 (`p4-exact`). Dual-line Pol/Rec is `vis-result` / `pol-rec-line` —
@@ -70,9 +76,10 @@ Applies to **every** phase. Principles:
 - [ ] `vis-elements` — Audit each screen vs the hardware and add missing
       elements (mode/menu captions, dual-line answers, leftover unlabeled
       editors). EQN quadratic a/b/c labels and cell carets already landed.
-- [ ] `vis-indicators` — Light status indicators from real state: Disp, ◀▶,
-      and ▲▼ outside EQN result now (Now slice). CMPLX, MAT, VCT when those
-      modes ship. (S/A/M/STO/RCL/STAT/D/R/G/FIX/SCI already work.)
+- [ ] `vis-indicators` — Light status indicators from real state. ◀▶ and the
+      COMP-history ▲▼ now light (Now slice); STAT ▲▼ and Disp still pending;
+      CMPLX, MAT, VCT when those modes ship. (S/A/M/STO/RCL/STAT/D/R/G/FIX/SCI
+      already work.)
 - [ ] `vis-menus` — Fix with the matching feature, not as a standalone pass.
       MODE 2/4/6/7/8 → Phase 3; EQN 1/2/4 → `p2-eqn-linear` / `p2-eqn-cubic`;
       Dist → `p2-dist`. Until then the lie stands.
@@ -81,9 +88,10 @@ Applies to **every** phase. Principles:
       sci, ENG, and DMS °′″ already work.
 - [ ] `vis-errors` — Math / Syntax / Stack / Argument ERROR with the E-40
       ◀▶ jump-to-token behavior (today ◀▶ only dismisses the error).
-- [ ] `vis-no-literal` — Never show literal function text where the hardware
-      shows a symbol or opens a menu. ENG/hyp dumps are gone; remaining ASCII
-      tokens (trig and friends) still need a hardware-style pass.
+- [x] `vis-no-literal` — Never show literal function text where the hardware
+      shows a symbol or opens a menu. ENG/hyp dumps are gone; trig/hyp/`ln` now
+      paint styled names and unclosed templates no longer leak IR stems (one
+      shared table in `src/display.tsx` for the LCD and History).
 - [ ] `vis-checklist` — Definition of done per feature: element + behavior
       parity vs the manual figure. Pixel-exactness not required.
 
@@ -238,9 +246,12 @@ LCD ▲/▼ history replay, Math/Syntax ERROR dismiss, SHIFT 9 CLR.
 editor a/b/c labels, cell caret, bottom-left entry; STAT editor caret.
 
 **Visual** — COMP / EQN / STAT carets (`vis-cursor`); ENG/hyp/Abs/Ran# no
-longer dump raw ASCII.
+longer dump raw ASCII. `vis-no-literal`: shared LCD/History template table so
+trig/hyp/`ln` paint styled names and unclosed templates never leak IR stems
+(`ir-leak`, `ascii-tokens`). `vis-indicators`: ◀▶ + COMP-history ▲▼ light.
 
-**Tests** — 40 golden (manual samples + Phase 1/2) + 16 parser = 56.
+**Tests** — 47 golden (manual samples + Phase 1/2 + vis-no-literal) + 16
+parser = 63.
 
 ---
 

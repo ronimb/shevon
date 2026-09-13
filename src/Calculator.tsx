@@ -1173,6 +1173,25 @@ const Calculator: React.FC = () => {
     calcMode === 'EQN_MENU' || calcMode === 'STAT_MENU' || calcMode === 'STAT_RESULT' ||
     calcMode === 'STAT_RESULT_SUB' || calcMode === 'STAT_DATA';
 
+  // vis-indicators: light the ▲▼ ◀▶ annunciators from real editor/replay state,
+  // not just the EQN result screen (see roadmap `vis-indicators`, issues
+  // `ind-arrows`). CMPLX/MAT/VCT/Disp stay dim — no backing state until Phase 3
+  // (CMPLX/MAT/VCT) or multi-statement `:` (Disp) lands (issue `ind-hardcoded`).
+  const compEditing =
+    calcMode === 'COMP' && !showingResult && !syntaxError && !mathError && !isLcdMenu;
+  const caretIdx = currentInput.indexOf('‸');
+  // ◀ / ▶ light when the caret can still travel left / right through the entry.
+  const canCaretLeft = compEditing && caretIdx > 0;
+  const canCaretRight = compEditing && caretIdx >= 0 && caretIdx < currentInput.length - 1;
+  // ▲ recalls an older COMP calculation; ▼ walks back toward the live line.
+  const canReplayUp =
+    calcMode === 'COMP' && history.length > 0 &&
+    ((replayIndex < 0 && showingResult) || (replayIndex >= 0 && replayIndex < history.length - 1));
+  const canReplayDown = calcMode === 'COMP' && replayIndex >= 0;
+  const indicatorUp = (calcMode === 'EQN_RESULT' && eqnResultIdx > 0) || canReplayUp;
+  const indicatorDown =
+    (calcMode === 'EQN_RESULT' && eqnResultIdx < eqnResults.length - 1) || canReplayDown;
+
   const renderInput = () => {
     if (showHypMenu) {
       return (
@@ -1585,8 +1604,10 @@ const Calculator: React.FC = () => {
             <div className={`status-item ${displayFormat.kind === 'fix' ? 'active' : 'opacity-10'}`}>FIX</div>
             <div className={`status-item ${displayFormat.kind === 'sci' ? 'active' : 'opacity-10'}`}>SCI</div>
             <div className={`status-item active`}>Math</div>
-            <div className={`status-item ${(calcMode === 'EQN_RESULT' && eqnResultIdx > 0) ? 'active' : 'opacity-10'}`}>▲</div>
-            <div className={`status-item ${(calcMode === 'EQN_RESULT' && eqnResultIdx < eqnResults.length - 1) ? 'active' : 'opacity-10'}`}>▼</div>
+            <div className={`status-item ${canCaretLeft ? 'active' : 'opacity-10'}`}>◀</div>
+            <div className={`status-item ${canCaretRight ? 'active' : 'opacity-10'}`}>▶</div>
+            <div className={`status-item ${indicatorUp ? 'active' : 'opacity-10'}`}>▲</div>
+            <div className={`status-item ${indicatorDown ? 'active' : 'opacity-10'}`}>▼</div>
             <div className={`status-item opacity-10`}>Disp</div>
           </div>
 

@@ -48,19 +48,34 @@ Status: `[ ]` open · `[x]` fixed (move to **Closed** at the next wrap-up).
 
 - [ ] `ind-hardcoded` — CMPLX, MAT, VCT, and Disp render but stay dim
       (`opacity-10`); never tied to real state.
-      **Associated:** `vis-indicators` (full lighting waits on Phase 3 modes
-      for CMPLX/MAT/VCT).
-- [ ] `ind-arrows` — ▲/▼ light only on EQN result, not for COMP history replay
-      or STAT. ◀▶ annunciators are missing from the status bar.
+      **Associated:** `vis-indicators`. CMPLX/MAT/VCT lighting waits on Phase 3
+      modes; Disp waits on multi-statement `:` (`comp-colon`). Leaving them lit
+      with no backing state would be a lie (`docs/principles.md`).
+- [ ] `ind-arrows` — ▲/▼ still do not light in the STAT editor (row nav).
+      **Fixed for COMP:** ◀▶ annunciators now render in the status bar and light
+      from caret navigability, and ▲/▼ light for COMP history replay (not only
+      the EQN result). STAT row-nav lighting is the remaining gap.
       **Associated:** `vis-indicators`.
 - [ ] `err-jump` — Syntax / Math ERROR: ◀▶ dismisses the error and returns to
       the expression; they do not jump the caret to the fault token (E-40).
       Stack / Argument ERROR screens are missing.
-      **Associated:** `vis-errors`.
-- [ ] `ascii-tokens` — Remaining function glyphs (trig and friends) still
-      render as ASCII rather than hardware-style templates. ENG/hyp/Abs/Ran#
-      already pass.
+      **Associated:** `vis-errors`. **Blocked (Now slice):** true jump-to-token
+      needs the evaluator to surface the fault offset; the Now visual slice must
+      not touch the evaluator (`docs/prompts/now-visual-slice.md`), so this is
+      deferred until a fault index is available.
+- [x] `ascii-tokens` — Remaining function glyphs (trig/hyp/`ln`) now paint a
+      styled hardware-style name via the shared template table in
+      `src/display.tsx`; the LCD no longer emits the ASCII stem (`sin(`, `ln(`,
+      `sinh(`, …). ENG/hyp/Abs/Ran# already passed when closed.
       **Associated:** `vis-no-literal`.
+- [x] `ir-leak` — Fixed. `formatMath`/`toLaTeX` share one template table and a
+      walker (`paintTemplates`) that paints unclosed `name(` with the SAME glyph
+      (body = the rest of the string, like `^(`) instead of `break`ing, so IR
+      stems never reach the LCD. Repro `sqrt(24^(2-2)‸` now shows a radical whose
+      body still superscripts `2-2`; nested open templates no longer abort the
+      pass. Not a Math ERROR / evaluator bug.
+      **Associated:** `vis-no-literal` (Now visual slice). Prior review:
+      agent transcript `65992cab-7adc-41c2-8ade-4549a8e80074`.
 - [ ] `pol-rec-line` — Pol/Rec input templates exist; the result is a single
       scalar, not the dual-line r,θ / X,Y screen.
       **Associated:** `vis-result`.

@@ -70,7 +70,7 @@ export default function ShevonRoadmap() {
       <Row gap={24} align="end">
         <Stat value="Phase 2" label="Current phase" tone="warning" />
         <Stat value="6" label="Phase 2 items open" />
-        <Stat value="18" label="Open issues" tone="warning" />
+        <Stat value="16" label="Open issues" tone="warning" />
         <Stat value="34/76" label="Coverage done" />
       </Row>
 
@@ -130,37 +130,51 @@ export default function ShevonRoadmap() {
       />
 
       <Callout tone="info" title="Priority (12 Sep 2026)">
-        COMP visual leftovers this slice (`vis-indicators` on existing
-        state, `vis-errors` jump-to-token, `vis-no-literal`). Then close
-        Phase 2 with SOLVE first. Daily-driver bar is COMP + STAT + EQN.
-        Phase 3 stays gated. Packaging stays in Phase 4. Lying menus wait
-        for the matching feature.
+        Visual slice mostly landed: `vis-no-literal` done (no IR-stem leaks;
+        trig/hyp/ln painted) and `vis-indicators` ◀▶ + COMP-history ▲▼ light.
+        Remaining before Phase 2: `vis-errors` jump-to-token (deferred — needs
+        an evaluator fault offset), STAT ▲▼, `vis-elements`. Then close Phase 2
+        with SOLVE first. Daily-driver bar is COMP + STAT + EQN. Phase 3 stays
+        gated. Lying menus wait for the matching feature.
       </Callout>
 
       <H2>Now — visual leftovers</H2>
       <Card>
-        <CardHeader trailing={<Pill size="sm" active>this slice</Pill>}>
+        <CardHeader trailing={<Pill size="sm" active>mostly landed</Pill>}>
           COMP LCD parity
         </CardHeader>
         <CardBody>
           <Stack gap={10}>
             <Text>
-              Light Disp / ◀▶ / ▲▼ from real COMP state. Syntax and Math
-              ERROR ◀▶ jump to the fault token. Hardware-style glyphs for
-              remaining ASCII trig tokens. Do not fake-light CMPLX/MAT/VCT
-              and do not add a separate “disable MODE rows” pass.
+              Landed: IR stems never reach the LCD — trig/hyp/`ln` paint styled
+              names and unclosed `sqrt(24^(2-2)‸` shows a radical, not the
+              letters `sqrt` (shared LCD/History table in `src/display.tsx`).
+              ◀▶ light from caret navigability and ▲▼ light for COMP history
+              replay. Remaining: `vis-errors` ◀▶ jump-to-token (deferred —
+              needs an evaluator fault offset), STAT ▲▼, `vis-elements`. Disp
+              and CMPLX/MAT/VCT stay dim (no backing state yet / Phase 3).
             </Text>
             <Row gap={8} wrap>
               <Button
                 variant="primary"
                 onClick={() =>
                   start(
-                    principles +
-                      "Start the Now visual slice from roadmap.md: vis-indicators (Disp, ◀▶, ▲▼ for COMP history — not CMPLX/MAT/VCT), vis-errors E-40 jump-to-token, vis-no-literal remaining ASCII trig glyphs. Update roadmap.md and issues.md in the same change.",
+                    "Follow docs/prompts/now-visual-slice.md exactly. That file is the kickoff prompt for the Now visual slice. Include vis-no-literal / ir-leak: unclosed templates must not leak IR names (e.g. sqrt). Do not treat this as a Math ERROR evaluator ticket. Update roadmap.md and issues.md in the same change.",
                   )
                 }
               >
                 Start visual slice
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() =>
+                  dispatch({
+                    type: "openFile",
+                    path: "docs/prompts/now-visual-slice.md",
+                  })
+                }
+              >
+                Open kickoff prompt
               </Button>
               <Button
                 variant="secondary"
@@ -236,11 +250,11 @@ export default function ShevonRoadmap() {
         headers={["Id", "Open work"]}
         rows={[
           ["vis-elements", "Missing captions, dual-line answers, leftover unlabeled editors"],
-          ["vis-indicators", "Now: Disp / ◀▶ / ▲▼ from COMP state. CMPLX/MAT/VCT with Phase 3"],
+          ["vis-indicators", "◀▶ + COMP ▲▼ landed. Remaining: STAT ▲▼, Disp; CMPLX/MAT/VCT with Phase 3"],
           ["vis-menus", "Not a standalone pass — fix when the matching feature ships"],
           ["vis-result", "Surd/π forms, complex a+bi, dual-line Pol/Rec (Phase 4 / later)"],
-          ["vis-errors", "Now: ◀▶ jump-to-token (E-40). Stack/Argument wait on modes"],
-          ["vis-no-literal", "Now: remaining ASCII tokens (trig and friends)"],
+          ["vis-errors", "◀▶ jump-to-token (E-40) deferred — needs evaluator fault offset"],
+          ["vis-no-literal", "Landed: trig/hyp/ln painted; unclosed templates no longer leak IR"],
           ["vis-checklist", "Element + behavior parity vs the manual figure"],
         ]}
         striped

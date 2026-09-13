@@ -1,104 +1,235 @@
 import React from 'react';
 import { DEFAULT_FORMAT, formatForDisplay, type DisplayFormat } from './format.ts';
 
+/**
+ * Shared template table — the single source of truth for turning evaluator IR
+ * stems (`sqrt(`, `sin(`, `frac(`, …) into what the hardware paints.
+ *
+ * Both the LCD (`formatMath`, HTML) and the History pane (`toLaTeX`, LaTeX) walk
+ * THIS list so the two renderers cannot drift: every stem here has a `html` and a
+ * `latex` painter. An IR stem must never survive onto the screen as literal
+ * ASCII — closed OR open. See `docs/prompts/now-visual-slice.md` (vis-no-literal /
+ * ir-leak) and `docs/principles.md`.
+ */
+
+const CURSOR = '‸';
+
+const isEmpty = (text: string) => {
+  if (!text) return true;
+  const clean = text.replace(/[‸⬚]/g, '');
+  return clean.trim() === '';
+};
+
+/** LCD slot: keep the caret, otherwise show an empty ⬚ box for a missing arg. */
+const slot = (text: unknown): string => {
+  if (typeof text !== 'string') return '<span class="empty-slot">⬚</span>';
+  if (text.includes(CURSOR)) return text;
+  if (isEmpty(text)) return '<span class="empty-slot">⬚</span>';
+  return text;
+};
+
+/** Find the `)` that balances the `(` at `startIdx`; null when it is unclosed. */
+const getBalanced = (s: string, startIdx: number): { content: string; endIdx: number } | null => {
+  let count = 0;
+  for (let i = startIdx; i < s.length; i++) {
+    if (s[i] === '(') count++;
+    else if (s[i] === ')') {
+      count--;
+      if (count === 0) return { content: s.substring(startIdx + 1, i), endIdx: i };
+    }
+  }
+  return null;
+};
+
+const splitTopLevelArgs = (s: string): string[] => {
+  const args: string[] = [];
+  let current = '';
+  let pCount = 0;
+  for (let i = 0; i < s.length; i++) {
+    if (s[i] === '(') pCount++;
+    else if (s[i] === ')') pCount--;
+    if (s[i] === ',' && pCount === 0) {
+      args.push(current);
+      current = '';
+    } else {
+      current += s[i];
+    }
+  }
+  args.push(current);
+  return args;
+};
+
+interface TemplateSpec {
+  stem: string;
+  html: (a: string[]) => string;
+  latex: (a: string[]) => string;
+}
+
+/** LCD function-name glyph (sin, ln, Abs, Pol, …) — never the raw `name(` stem. */
+const namedFn = (label: string) => (a: string[]) => `<span class="trig-fun">${label}</span>(${slot(a[0])})`;
+const lx = (v: string | undefined) => v ?? '';
+
+/**
+ * Every `PATS` function stem, longest-first so the earliest/greediest match
+ * wins. Trig / hyp / `ln` are here too: on the LCD they paint a styled function
+ * name, never the ASCII stem.
+ */
+const TEMPLATE_SPECS: TemplateSpec[] = [
+  { stem: 'sinh⁻¹', html: namedFn('sinh⁻¹'), latex: a => `\\sinh^{-1}(${lx(a[0])})` },
+  { stem: 'cosh⁻¹', html: namedFn('cosh⁻¹'), latex: a => `\\cosh^{-1}(${lx(a[0])})` },
+  { stem: 'tanh⁻¹', html: namedFn('tanh⁻¹'), latex: a => `\\tanh^{-1}(${lx(a[0])})` },
+  { stem: 'sin⁻¹', html: namedFn('sin⁻¹'), latex: a => `\\arcsin(${lx(a[0])})` },
+  { stem: 'cos⁻¹', html: namedFn('cos⁻¹'), latex: a => `\\arccos(${lx(a[0])})` },
+  { stem: 'tan⁻¹', html: namedFn('tan⁻¹'), latex: a => `\\arctan(${lx(a[0])})` },
+  { stem: 'sinh', html: namedFn('sinh'), latex: a => `\\sinh(${lx(a[0])})` },
+  { stem: 'cosh', html: namedFn('cosh'), latex: a => `\\cosh(${lx(a[0])})` },
+  { stem: 'tanh', html: namedFn('tanh'), latex: a => `\\tanh(${lx(a[0])})` },
+  { stem: 'sin', html: namedFn('sin'), latex: a => `\\sin(${lx(a[0])})` },
+  { stem: 'cos', html: namedFn('cos'), latex: a => `\\cos(${lx(a[0])})` },
+  { stem: 'tan', html: namedFn('tan'), latex: a => `\\tan(${lx(a[0])})` },
+  { stem: 'ln', html: namedFn('ln'), latex: a => `\\ln(${lx(a[0])})` },
+  {
+    stem: 'nCr',
+    html: a => `<span class="comb-perm">${slot(a[0])}<span class="comb-perm-sym">C</span>${slot(a[1] || '')}</span>`,
+    latex: a => `{\\textstyle \\binom{${lx(a[0])}}{${lx(a[1])}}}`,
+  },
+  {
+    stem: 'nPr',
+    html: a => `<span class="comb-perm">${slot(a[0])}<span class="comb-perm-sym">P</span>${slot(a[1] || '')}</span>`,
+    latex: a => `{}^{${lx(a[0])}}P_{${lx(a[1])}}`,
+  },
+  {
+    stem: 'pol',
+    html: a => `<span class="trig-fun">Pol</span>(${slot(a[0])},${slot(a[1] || '')})`,
+    latex: a => `\\operatorname{Pol}(${lx(a[0])},${lx(a[1])})`,
+  },
+  {
+    stem: 'rec',
+    html: a => `<span class="trig-fun">Rec</span>(${slot(a[0])},${slot(a[1] || '')})`,
+    latex: a => `\\operatorname{Rec}(${lx(a[0])},${lx(a[1])})`,
+  },
+  {
+    stem: 'mix',
+    html: a => `<div class="mix-container"><span class="mix-whole">${slot(a[0])}</span><div class="frac-container"><span class="frac-num">${slot(a[1] || '')}</span><span class="frac-den">${slot(a[2] || '')}</span></div></div>`,
+    latex: a => `${lx(a[0])}\\frac{${lx(a[1])}}{${lx(a[2])}}`,
+  },
+  {
+    stem: 'frac',
+    html: a => `<div class="frac-container"><span class="frac-num">${slot(a[0])}</span><span class="frac-den">${slot(a[1] || '')}</span></div>`,
+    latex: a => `\\frac{${lx(a[0])}}{${lx(a[1])}}`,
+  },
+  {
+    stem: 'int',
+    html: a => `<div class="int-container"><div class="int-bounds"><span>${slot(a[2])}</span><span>${slot(a[1])}</span></div><span class="int-symbol">∫</span><div class="int-body">${slot(a[0])} d${slot(a[3] || 'x')}</div></div>`,
+    latex: a => `\\int_{${lx(a[1])}}^{${lx(a[2])}} ${lx(a[0])} \\, d${a[3] || 'x'}`,
+  },
+  {
+    stem: 'diff',
+    html: a => {
+      const varName = a[1] || 'x';
+      const varSilent = varName.replace(CURSOR, '');
+      return `<div class="diff-container"><div class="diff-frac"><span class="diff-top">d</span><span>d${slot(varName)}</span></div>(${slot(a[0])})<div class="diff-at">${varSilent}=${slot(a[2])}</div></div>`;
+    },
+    latex: a => `\\frac{d}{d${a[1] || 'x'}}\\left(${lx(a[0])}\\right)\\bigg|_{${a[1] || 'x'}=${lx(a[2])}}`,
+  },
+  {
+    stem: 'root',
+    html: a => `<span class="sup">${slot(a[0])}</span><span class="root-symbol">√</span><span class="root-body">${slot(a[1] || '')}</span>`,
+    latex: a => `\\sqrt[${lx(a[0])}]{${lx(a[1])}}`,
+  },
+  {
+    stem: 'sqrt',
+    html: a => `<span class="root-symbol">√</span><span class="root-body">${slot(a[0])}</span>`,
+    latex: a => `\\sqrt{${lx(a[0])}}`,
+  },
+  { stem: 'sqr', html: a => `${slot(a[0])}<span class="sup">2</span>`, latex: a => `{${lx(a[0])}}^2` },
+  { stem: 'cube', html: a => `${slot(a[0])}<span class="sup">3</span>`, latex: a => `{${lx(a[0])}}^3` },
+  {
+    stem: 'log_b',
+    html: a => `log<span class="sub">${slot(a[0])}</span>(${slot(a[1] || '')})`,
+    latex: a => `\\log_{${lx(a[0])}}(${lx(a[1])})`,
+  },
+  { stem: 'log10', html: a => `log(${slot(a[0])})`, latex: a => `\\log_{10}(${lx(a[0])})` },
+  { stem: 'e^', html: a => `e<span class="sup">${slot(a[0])}</span>`, latex: a => `e^{${lx(a[0])}}` },
+  { stem: '10^', html: a => `10<span class="sup">${slot(a[0])}</span>`, latex: a => `10^{${lx(a[0])}}` },
+  { stem: 'pwr', html: a => `${slot(a[0])}<span class="sup">${slot(a[1] || '')}</span>`, latex: a => `{${lx(a[0])}}^{${lx(a[1])}}` },
+  {
+    stem: 'Σ',
+    html: a => `<div class="sum-container"><div class="sum-bounds"><span>${slot(a[3])}</span><span>${slot(a[1] || 'x')}=${slot(a[2])}</span></div><span class="sum-symbol">Σ</span><div class="sum-body">${slot(a[0])}</div></div>`,
+    latex: a => `\\sum_{${a[1] || 'x'}=${lx(a[2])}}^{${lx(a[3])}} ${lx(a[0])}`,
+  },
+  {
+    stem: 'RanInt',
+    html: a => `<span class="trig-fun">RanInt#</span>(${slot(a[0])},${slot(a[1] || '')})`,
+    latex: a => `\\operatorname{RanInt}(${lx(a[0])},${lx(a[1])})`,
+  },
+  { stem: 'Rnd', html: a => `<span class="trig-fun">Rnd</span>(${slot(a[0])})`, latex: a => `\\operatorname{Rnd}(${lx(a[0])})` },
+  { stem: 'abs', html: a => `<span class="trig-fun">Abs</span>(${slot(a[0])})`, latex: a => `|${lx(a[0])}|` },
+  // Legacy IR aliases still emitted by `toLaTeX` history; harmless on the LCD.
+  { stem: 'factorial', html: a => `${slot(a[0])}!`, latex: a => `{${lx(a[0])}}!` },
+  { stem: 'exp', html: a => `e<span class="sup">${slot(a[0])}</span>`, latex: a => `e^{${lx(a[0])}}` },
+  { stem: 'pow', html: a => `${slot(a[0])}<span class="sup">${slot(a[1] || '')}</span>`, latex: a => `{${lx(a[0])}}^{${lx(a[1])}}` },
+];
+
+/**
+ * Walk the string replacing every template stem with its painted form. Shared by
+ * the LCD and the History pane via the `paint` selector.
+ *
+ * Closed `name( … )` → glyph with the balanced contents as the body. Open
+ * `name( …` with no matching `)` → the SAME glyph, with the rest of the string as
+ * the body (mirrors how `^(` already paints an open superscript). We never
+ * `break` on an unclosed stem: the open template is painted and the walk
+ * continues into its body, so a nested open `^(` (or another template) inside an
+ * open radical still renders. This is what keeps IR stems like `sqrt` off screen
+ * while you are mid-type.
+ */
+const paintTemplates = (input: string, paint: (spec: TemplateSpec, args: string[]) => string): string => {
+  let out = '';
+  let rest = input;
+  // Left-to-right: append painted output to `out` and keep scanning only the
+  // unprocessed tail. Painted output is never re-scanned, so a painter that
+  // emits its own name (e.g. LaTeX `\sin(`) can't re-match its stem.
+  while (rest.length > 0) {
+    let earliestIdx = Infinity;
+    let bestSpec: TemplateSpec | null = null;
+    for (const spec of TEMPLATE_SPECS) {
+      const idx = rest.indexOf(spec.stem + '(');
+      if (idx !== -1 && idx < earliestIdx) {
+        earliestIdx = idx;
+        bestSpec = spec;
+      }
+    }
+
+    if (!bestSpec) {
+      out += rest;
+      break;
+    }
+
+    const openIdx = earliestIdx + bestSpec.stem.length; // index of the '('
+    const bal = getBalanced(rest, openIdx);
+    out += rest.substring(0, earliestIdx); // text before the stem is stem-free
+    let content: string;
+    let after: string;
+    if (bal) {
+      content = rest.substring(openIdx + 1, bal.endIdx);
+      after = rest.substring(bal.endIdx + 1);
+    } else {
+      // Unclosed template: the body is everything the user has typed so far.
+      content = rest.substring(openIdx + 1);
+      after = '';
+    }
+    const innerProcessed = paintTemplates(content, paint);
+    const args = splitTopLevelArgs(innerProcessed);
+    out += paint(bestSpec, args);
+    rest = after;
+  }
+  return out;
+};
+
 export const toLaTeX = (expr: string): string => {
-  let proc = expr.replace(/[‸⬚]/g, '');
+  const proc = expr.replace(/[‸⬚]/g, '');
+  let s = paintTemplates(proc, (spec, args) => spec.latex(args));
 
-  const getBalanced = (s: string, startIdx: number): { content: string, endIdx: number } | null => {
-    let count = 0;
-    for (let i = startIdx; i < s.length; i++) {
-        if (s[i] === '(') count++;
-        else if (s[i] === ')') {
-            count--;
-            if (count === 0) return { content: s.substring(startIdx + 1, i), endIdx: i };
-        }
-    }
-    return null;
-  };
-
-  const splitTopLevelArgs = (s: string) => {
-    const args: string[] = [];
-    let current = '';
-    let pCount = 0;
-    for (let i = 0; i < s.length; i++) {
-        if (s[i] === '(') pCount++;
-        else if (s[i] === ')') pCount--;
-        if (s[i] === ',' && pCount === 0) {
-            args.push(current);
-            current = '';
-        } else {
-            current += s[i];
-        }
-    }
-    args.push(current);
-    return args;
-  };
-
-  const renderLaTeX = (s: string): string => {
-    let text = s;
-    const templates = ['int', 'diff', 'frac', 'mix', 'root', 'sqrt', 'sqr', 'cube', 'log_b', 'log10', 'ln', 'abs', 'sin⁻¹', 'cos⁻¹', 'tan⁻¹', 'sin', 'cos', 'tan', 'pwr', 'Σ', 'nCr', 'nPr', 'factorial', 'exp', 'pow'];
-    
-    // Process templates inner-out by always finding the first template with a balanced pair
-    let lastLength = -1;
-    while (text.length !== lastLength) {
-        lastLength = text.length;
-        let earliestIdx = Infinity;
-        let bestT = '';
-        
-        for (const t of templates) {
-            let idx = text.indexOf(t + '(');
-            if (idx !== -1 && idx < earliestIdx) {
-                earliestIdx = idx;
-                bestT = t;
-            }
-        }
-        
-        if (bestT) {
-            const bal = getBalanced(text, earliestIdx + bestT.length);
-            if (bal) {
-                // IMPORTANT: Process the inner content first to handle nested templates
-                const innerProcessed = renderLaTeX(bal.content);
-                const args = splitTopLevelArgs(innerProcessed);
-                let replaced = '';
-                
-                if (bestT === 'int') replaced = `\\int_{${args[1]}}^{${args[2]}} ${args[0]} \\, d${args[3] || 'x'}`;
-                else if (bestT === 'diff') replaced = `\\frac{d}{d${args[1] || 'x'}}\\left(${args[0]}\\right)\\bigg|_{${args[1] || 'x'}=${args[2]}}`;
-                else if (bestT === 'frac') replaced = `\\frac{${args[0]}}{${args[1]}}`;
-                else if (bestT === 'mix') replaced = `${args[0]}\\frac{${args[1]}}{${args[2]}}`;
-                else if (bestT === 'root') replaced = `\\sqrt[${args[0]}]{${args[1]}}`;
-                else if (bestT === 'sqrt') replaced = `\\sqrt{${args[0]}}`;
-                else if (bestT === 'sqr') replaced = `{${args[0]}}^2`;
-                else if (bestT === 'cube') replaced = `{${args[0]}}^3`;
-                else if (bestT === 'pwr') replaced = `{${args[0]}}^{${args[1]}}`;
-                else if (bestT === 'log_b') replaced = `\\log_{${args[0]}}(${args[1]})`;
-                else if (bestT === 'log10') replaced = `\\log_{10}(${args[0]})`;
-                else if (bestT === 'ln') replaced = `\\ln(${args[0]})`;
-                else if (bestT === 'abs') replaced = `|${args[0]}|`;
-                else if (bestT === 'sin') replaced = `\\sin(${args[0]})`;
-                else if (bestT === 'cos') replaced = `\\cos(${args[0]})`;
-                else if (bestT === 'tan') replaced = `\\tan(${args[0]})`;
-                else if (bestT === 'sin⁻¹') replaced = `\\arcsin(${args[0]})`;
-                else if (bestT === 'cos⁻¹') replaced = `\\arccos(${args[0]})`;
-                else if (bestT === 'tan⁻¹') replaced = `\\arctan(${args[0]})`;
-                else if (bestT === 'Σ') replaced = `\\sum_{${args[1] || 'x'}=${args[2]}}^{${args[3]}} ${args[0]}`;
-                else if (bestT === 'nCr') replaced = `{\\textstyle \\binom{${args[0]}}{${args[1]}}}`;
-                else if (bestT === 'nPr') replaced = `{}^{${args[0]}}P_{${args[1]}}`;
-                else if (bestT === 'factorial') replaced = `{${args[0]}}!`;
-                else if (bestT === 'exp') replaced = `e^{${args[0]}}`;
-                else if (bestT === 'pow') replaced = `{${args[0]}}^{${args[1]}}`;
-
-                text = text.substring(0, earliestIdx) + replaced + text.substring(bal.endIdx + 1);
-                // After a replacement, we must break and start again to ensure correct order
-                continue; 
-            }
-        }
-        break; // No more templates with balanced parens found
-    }
-    return text;
-  };
-
-  let s = renderLaTeX(proc);
-  
   // Basic replacements for symbols outside templates
   s = s.replace(/×/g, '\\times ')
        .replace(/÷/g, '\\div ')
@@ -109,19 +240,6 @@ export const toLaTeX = (expr: string): string => {
 };
 
 export const formatMath = (input: string): string => {
-  const isEmpty = (text: string) => {
-    if (!text) return true;
-    let clean = text.replace(/[‸⬚]/g, '');
-    return clean.trim() === '';
-  };
-
-  const slot = (text: any) => {
-    if (typeof text !== 'string') return '<span class="empty-slot">⬚</span>';
-    if (text.includes('‸')) return text;
-    if (isEmpty(text)) return '<span class="empty-slot">⬚</span>';
-    return text;
-  };
-  
   let h = input;
 
   // Replace factorial internal representation back to symbol for display
@@ -130,141 +248,30 @@ export const formatMath = (input: string): string => {
   // Protect equals signs temporarily to avoid interference with tag replacements
   h = h.replace(/=/g, '___EQUALS___');
 
-  const getBalanced = (s: string, startIdx: number): { content: string, endIdx: number } | null => {
-    let count = 0;
-    for (let i = startIdx; i < s.length; i++) {
-        if (s[i] === '(') count++;
-        else if (s[i] === ')') {
-            count--;
-            if (count === 0) return { content: s.substring(startIdx + 1, i), endIdx: i };
-        }
-    }
-    return null;
-  };
-
-  const splitTopLevelArgs = (s: string) => {
-    const args: string[] = [];
-    let current = '';
-    let pCount = 0;
-    for (let i = 0; i < s.length; i++) {
-        if (s[i] === '(') pCount++;
-        else if (s[i] === ')') pCount--;
-        if (s[i] === ',' && pCount === 0) {
-            args.push(current);
-            current = '';
-        } else {
-            current += s[i];
-        }
-    }
-    args.push(current);
-    return args;
-  };
-
-  // Improved recursive template rendering for display
-  const renderTemplates = (s: string): string => {
-    let proc = s;
-    const templates = ['nCr', 'nPr', 'pol', 'rec', 'mix', 'frac', 'int', 'diff', 'root', 'sqrt', 'sqr', 'cube', 'log_b', 'log10', 'e^', '10^', 'pwr', 'Σ', 'RanInt', 'Rnd', 'abs'];
-    
-    let lastLength = -1;
-    while (proc.length !== lastLength) {
-        lastLength = proc.length;
-        let earliestIdx = Infinity;
-        let bestT = '';
-        
-        for (const t of templates) {
-            let idx = proc.indexOf(t + '(');
-            if (idx !== -1 && idx < earliestIdx) {
-                earliestIdx = idx;
-                bestT = t;
-            }
-        }
-        
-        if (bestT) {
-            const bal = getBalanced(proc, earliestIdx + bestT.length);
-            if (bal) {
-                const innerProcessed = renderTemplates(bal.content);
-                const args = splitTopLevelArgs(innerProcessed);
-                let replaced = '';
-                
-                if (bestT === 'nCr' || bestT === 'nPr') {
-                   let sym = bestT === 'nCr' ? 'C' : 'P';
-                   replaced = `<span class="comb-perm">${slot(args[0])}<span class="comb-perm-sym">${sym}</span>${slot(args[1] || '')}</span>`;
-                } else if (bestT === 'pol' || bestT === 'rec') {
-                   let sym = bestT === 'pol' ? 'Pol' : 'Rec';
-                   replaced = `<span class="trig-fun">${sym}</span>(${slot(args[0])},${slot(args[1] || '')})`;
-                } else if (bestT === 'frac') {
-                    replaced = `<div class="frac-container"><span class="frac-num">${slot(args[0])}</span><span class="frac-den">${slot(args[1] || '')}</span></div>`;
-                } else if (bestT === 'mix') {
-                    replaced = `<div class="mix-container"><span class="mix-whole">${slot(args[0])}</span><div class="frac-container"><span class="frac-num">${slot(args[1] || '')}</span><span class="frac-den">${slot(args[2] || '')}</span></div></div>`;
-                } else if (bestT === 'int') {
-                    replaced = `<div class="int-container"><div class="int-bounds"><span>${slot(args[2])}</span><span>${slot(args[1])}</span></div><span class="int-symbol">∫</span><div class="int-body">${slot(args[0])} d${slot(args[3] || 'x')}</div></div>`;
-                } else if (bestT === 'diff') {
-                    const varName = args[1] || 'x';
-                    const varDisplay = slot(varName);
-                    // Avoid cursor duplication in the 'at' portion by stripping cursor from the second mention
-                    const varSilent = varName.replace('‸', '');
-                    replaced = `<div class="diff-container"><div class="diff-frac"><span class="diff-top">d</span><span>d${varDisplay}</span></div>(${slot(args[0])})<div class="diff-at">${varSilent}=${slot(args[2])}</div></div>`;
-                } else if (bestT === 'root') {
-                    replaced = `<span class="sup">${slot(args[0])}</span><span class="root-symbol">√</span><span class="root-body">${slot(args[1] || '')}</span>`;
-                } else if (bestT === 'sqrt') {
-                    replaced = `<span class="root-symbol">√</span><span class="root-body">${slot(args[0])}</span>`;
-                } else if (bestT === 'sqr') {
-                    replaced = `${slot(args[0])}<span class="sup">2</span>`;
-                } else if (bestT === 'cube') {
-                    replaced = `${slot(args[0])}<span class="sup">3</span>`;
-                } else if (bestT === 'pwr') {
-                    replaced = `${slot(args[0])}<span class="sup">${slot(args[1] || '')}</span>`;
-                } else if (bestT === 'log_b') {
-                    replaced = `log<span class="sub">${slot(args[0])}</span>(${slot(args[1] || '')})`;
-                } else if (bestT === 'log10') {
-                    replaced = `log(${slot(args[0])})`;
-                } else if (bestT === 'e^') {
-                    replaced = `e<span class="sup">${slot(args[0])}</span>`;
-                } else if (bestT === '10^') {
-                    replaced = `10<span class="sup">${slot(args[0])}</span>`;
-                } else if (bestT === 'Σ') {
-                    replaced = `<div class="sum-container"><div class="sum-bounds"><span>${slot(args[3])}</span><span>${slot(args[1] || 'x')}=${slot(args[2])}</span></div><span class="sum-symbol">Σ</span><div class="sum-body">${slot(args[0])}</div></div>`;
-                } else if (bestT === 'abs') {
-                    replaced = `<span class="trig-fun">Abs</span>(${slot(args[0])})`;
-                } else if (bestT === 'Rnd') {
-                    replaced = `<span class="trig-fun">Rnd</span>(${slot(args[0])})`;
-                } else if (bestT === 'RanInt') {
-                    replaced = `<span class="trig-fun">RanInt#</span>(${slot(args[0])},${slot(args[1] || '')})`;
-                }
-
-                proc = proc.substring(0, earliestIdx) + replaced + proc.substring(bal.endIdx + 1);
-                continue;
-            }
-        }
-        break;
-    }
-    return proc;
-  };
-
-  h = renderTemplates(h);
+  h = paintTemplates(h, (spec, args) => spec.html(args));
 
   h = h.replace(/Ran#/g, '<span class="trig-fun">Ran#</span>');
 
   h = h.replace(/→([A-M X-Y])/g, '<span style="font-size: 0.8em; margin: 0 4px;">→</span>$1')
-       .replace(/\^\(([^)]*)\)/g, (m, p1) => `<span class="sup">${slot(p1)}</span>`) 
-       .replace(/\^\(([^)]*)$/g, (m, p1) => `<span class="sup">${slot(p1)}</span>`) 
+       .replace(/\^\(([^)]*)\)/g, (_m, p1) => `<span class="sup">${slot(p1)}</span>`)
+       .replace(/\^\(([^)]*)$/g, (_m, p1) => `<span class="sup">${slot(p1)}</span>`)
        .replace(/\^-1/g, '<span class="sup">-1</span>')
        .replace(/‸/g, '<span class="cursor"></span>');
-  
+
   // Restore equals signs with proper styling
   h = h.replace(/___EQUALS___/g, '<span class="equal-symbol mx-1">=</span>');
 
   h = h.replace(/<span class="empty-slot">⬚<\/span><span class="cursor"><\/span>/g, '<span class="cursor"></span>')
        .replace(/<span class="cursor"><\/span><span class="empty-slot">⬚<\/span>/g, '<span class="cursor"></span>');
-  
+
   // Custom absolute-positioned HTML spans for rendering overbars and hats beautifully inside monospace fonts
   h = h
     .replace(/(x\u0304|x̄|x̅|X\u0304|X̄|X̅)/g, '<span class="relative inline-block" style="line-height: 1em;">x<span class="absolute left-[0.025em] right-[0.025em] -top-[0.08em] border-t-[1.5px] border-current"></span></span>')
-    .replace(/(y\u0304|ȳ|y̅|Y\u0304|Ȳ|Y̅)/g, '<span class="relative inline-block" style="line-height: 1em;">y<span class="absolute left-[0.025em] right-[0.025em] -top-[0.08em] border-t-[1.5px] border-current"></span></span>')
+    .replace(/(y\u0304|ȳ|y̅|Y\u0304|Ȳ|Y̅)/g, '<span class="relative inline-block" style="line-height: 1em;">y<span class="absolute left-[0.025em] right-[0.025em] -top-[0.08em] border-t-[1.5px] border-current"></span></span>')
     .replace(/(x\u03021|x̂1|X\u03021|X̂1)/g, '<span class="inline-flex items-baseline" style="line-height: 1em;"><span class="relative inline-block">x<span class="absolute left-0 right-0 -top-[0.25em] text-center font-bold text-[0.8em]">^</span></span><sub class="text-[0.6em] ml-[0.05em] align-sub">1</sub></span>')
     .replace(/(x\u03022|x̂2|X\u03022|X̂2)/g, '<span class="inline-flex items-baseline" style="line-height: 1em;"><span class="relative inline-block">x<span class="absolute left-0 right-0 -top-[0.25em] text-center font-bold text-[0.8em]">^</span></span><sub class="text-[0.6em] ml-[0.05em] align-sub">2</sub></span>')
     .replace(/(x\u0302|x̂|X\u0302|X̂)/g, '<span class="relative inline-block" style="line-height: 1em;">x<span class="absolute left-0 right-0 -top-[0.25em] text-center font-bold text-[0.8em]">^</span></span>')
-    .replace(/(y\u0302|ŷ|Y\u0302|Ŷ)/g, '<span class="relative inline-block" style="line-height: 1em;">y<span class="absolute left-0 right-0 -top-[0.25em] text-center font-bold text-[0.8em]">^</span></span>');
+    .replace(/(y\u0302|ŷ|Y\u0302|Ŷ)/g, '<span class="relative inline-block" style="line-height: 1em;">y<span class="absolute left-0 right-0 -top-[0.25em] text-center font-bold text-[0.8em]">^</span></span>');
 
   return h;
 };

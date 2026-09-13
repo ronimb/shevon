@@ -5,7 +5,7 @@ import { reconstructSequence } from './modes/comp.ts';
 import { evaluateExpression, toFraction } from './evaluator.ts';
 import { appendStatRowIfRoom, calculateStatVars, getStatMaxRows, StatDataScreen } from './modes/stat.tsx';
 import { EqnQuadEntry, EqnQuadScreen, solveQuadratic } from './modes/eqn.tsx';
-import { formatMath } from './display.tsx';
+import { formatMath, toLaTeX } from './display.tsx';
 import { formatForDisplay, formatEngineering, formatDMS, formatDMSText, roundToFormat, type DisplayFormat } from './format.ts';
 import type { AngleMode, Vars } from './types.ts';
 
@@ -168,6 +168,62 @@ describe('Phase 1 — COMP LCD templates', () => {
     expect(html).toContain('RanInt#');
     expect(html).toContain('empty-slot');
     expect(html).toContain('cursor');
+  });
+});
+
+describe('vis-no-literal / ir-leak — IR stems never reach the LCD', () => {
+  // Unclosed radical with a nested open power: the LCD must paint a radical
+  // (√) and a superscript, never the letters "sqrt". Repro from
+  // docs/prompts/now-visual-slice.md.
+  it('unclosed sqrt(24^(2-2)‸ shows a radical, not the letters sqrt', () => {
+    const html = formatMath('sqrt(24^(2-2)‸');
+    expect(html).not.toContain('sqrt');
+    expect(html).toContain('root-symbol'); // √
+    expect(html).toContain('sup'); // ^(2-2) still superscripts inside the body
+    expect(html).toContain('cursor');
+  });
+
+  it('a second open template (frac) also renders instead of leaking frac(', () => {
+    const html = formatMath('frac(3‸');
+    expect(html).not.toContain('frac(');
+    expect(html).toContain('frac-container');
+    expect(html).toContain('empty-slot'); // missing denominator slot
+    expect(html).toContain('cursor');
+  });
+
+  it('open sin( paints a styled function name, not the ASCII stem', () => {
+    const html = formatMath('sin(30‸');
+    expect(html).not.toContain('sin(');
+    expect(html).toContain('trig-fun');
+    expect(html).toContain('sin');
+  });
+
+  it('closed sin(30) does not print the ASCII stem sin(', () => {
+    const html = formatMath('sin(30)');
+    expect(html).not.toContain('sin(');
+    expect(html).toContain('trig-fun');
+  });
+
+  it('closed ln(2) does not print the ASCII stem ln(', () => {
+    const html = formatMath('ln(2)');
+    expect(html).not.toContain('ln(');
+    expect(html).toContain('trig-fun');
+    expect(html).toContain('ln');
+  });
+
+  it('hyperbolic sinh( and its inverse paint a name, not the stem', () => {
+    expect(formatMath('sinh(1)')).not.toContain('sinh(');
+    expect(formatMath('sinh⁻¹(1‸')).not.toContain('sinh⁻¹(');
+    expect(formatMath('cosh(0)')).toContain('trig-fun');
+  });
+
+  // Anti-drift guard: the LCD (formatMath) and History (toLaTeX) walk the same
+  // table, so neither can leak a stem the other maps.
+  it('history toLaTeX maps the same stems (no raw sqrt/sin/ln)', () => {
+    expect(toLaTeX('sqrt(9)')).toBe('\\sqrt{9}');
+    expect(toLaTeX('sin(30)')).toBe('\\sin(30)');
+    expect(toLaTeX('ln(2)')).toBe('\\ln(2)');
+    expect(toLaTeX('sinh(1)')).toBe('\\sinh(1)');
   });
 });
 
