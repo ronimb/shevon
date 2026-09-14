@@ -4,7 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { reconstructSequence } from './modes/comp.ts';
 import { evaluateExpression, toFraction } from './evaluator.ts';
 import { appendStatRowIfRoom, calculateStatVars, getStatMaxRows, StatDataScreen } from './modes/stat.tsx';
-import { EqnQuadEntry, EqnQuadScreen, solveQuadratic } from './modes/eqn.tsx';
+import { EqnQuadEntry, EqnQuadScreen, EqnResultValue, solveQuadratic } from './modes/eqn.tsx';
 import { formatMath, toLaTeX } from './display.tsx';
 import { formatForDisplay, formatEngineering, formatDMS, formatDMSText, roundToFormat, type DisplayFormat } from './format.ts';
 import type { AngleMode, Vars } from './types.ts';
@@ -224,6 +224,35 @@ describe('vis-no-literal / ir-leak — IR stems never reach the LCD', () => {
     expect(toLaTeX('sin(30)')).toBe('\\sin(30)');
     expect(toLaTeX('ln(2)')).toBe('\\ln(2)');
     expect(toLaTeX('sinh(1)')).toBe('\\sinh(1)');
+  });
+
+  it('unicode x² paints the same .sup as ^(2)', () => {
+    const fromKey = formatMath('5²');
+    const fromPwr = formatMath('5^(2)');
+    expect(fromKey).toContain('class="sup"');
+    expect(fromKey).toContain('>2</span>');
+    expect(fromPwr).toContain('class="sup"');
+    expect(fromKey).not.toContain('²');
+  });
+});
+
+describe('Smoke blockers — log10, memory, EQN no-real', () => {
+  it('log10(100) evaluates to 2 (no __log10* rewrite)', () => {
+    expect(evalComp('log10(100)')).toBeCloseTo(2, 10);
+  });
+
+  it('RCL A works when STAT type is null (no NaN A/B/C overlay)', () => {
+    const empty = calculateStatVars(null, []);
+    expect(empty.A).toBeUndefined();
+    expect(evaluateExpression('A', { ...EMPTY_VARS, A: 5 }, 0, 'DEG', empty)).toBe(5);
+  });
+
+  it('EQN no real roots shows the label without a bare Error value', () => {
+    const roots = solveQuadratic(1, 0, 1);
+    expect(roots[0].label).toMatch(/no real/i);
+    expect(Number.isNaN(roots[0].val)).toBe(true);
+    const html = renderToStaticMarkup(React.createElement(EqnResultValue, { results: roots, resultIdx: 0 }));
+    expect(html).not.toMatch(/>Error</);
   });
 });
 

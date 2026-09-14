@@ -591,13 +591,17 @@ export const evaluateExpression = (expr: string, scope: Vars, ans: number, angle
 
   proc = resolveExponents(proc);
 
-  // Enhanced implicit multiplication
+  // Enhanced implicit multiplication.
+  // Digits that belong to a helper name (e.g. `__log10(`) must not become
+  // `digit × (` — that rewrote `__log10(100)` into `__log10*(100)` (Syntax ERROR).
   const funcOrVar = '(Ans|[A-Zπe]|stat_[a-z0-9_]+|__[a-z]+[A-Za-z0-9]*\\()';
   proc = proc.replace(new RegExp(`(\\d+)${funcOrVar}`, 'g'), '$1*$2')
              .replace(new RegExp(`(\\bAns\\b|[A-Zπe])${funcOrVar}`, 'g'), '$1*$2')
              .replace(/(\bAns\\b|[A-Zπe])(\d+)/g, '$1*$2')
              .replace(new RegExp(`(\\))(\\d+|${funcOrVar})`, 'g'), ')*$2')
-             .replace(new RegExp(`(\\d+|Ans|[A-Zπe]|\\))(\\()`, 'g'), '$1*(');
+             .replace(/(\)|Ans|[A-Zπe])(\()/g, '$1*(')
+             // Require the digit run not to continue an identifier (`__log10(`).
+             .replace(/(?<![A-Za-z0-9_])(\d+)(\()/g, '$1*(');
 
   proc = proc.replace(/π/g, 'pi')
     .replace(/\be\b/g, 'e')

@@ -55,14 +55,25 @@ body {
     font-weight: 700;
 }
 .sup { 
-    vertical-align: 0.7em; 
+    vertical-align: 0.55em; 
     font-size: 0.7em; 
     font-weight: 700;
     margin-left: 0.08em;
+    line-height: 1;
 }
 .math-sym { font-family: "Times New Roman", serif; font-style: italic; font-weight: bold; }
 .root-symbol { font-size: 1.1em; vertical-align: middle; }
-.root-body { border-top: 1px solid currentColor; padding-top: 1px; padding-left: 1px; }
+.root-body {
+    border-top: 1px solid currentColor;
+    padding-top: 0.2em;
+    padding-left: 1px;
+    display: inline-block;
+    line-height: 1.35;
+}
+.root-body .sup {
+    /* Keep exponents under the vinculum; default .sup lift collides with it. */
+    vertical-align: 0.35em;
+}
 
 .comb-perm { font-size: 0.9em; font-weight: bold; margin: 0 1px; }
 .comb-perm-sym { font-family: "Times New Roman", serif; font-style: italic; font-size: 1.1em; margin: 0 1px; }

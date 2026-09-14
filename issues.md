@@ -46,6 +46,17 @@ Status: `[ ]` open · `[x]` fixed (move to **Closed** at the next wrap-up).
 
 ## Display / LCD
 
+- [ ] `root-sup-collision` — Superscript inside a radical used to strike the
+      vinculum. CSS padding / nested `.root-body .sup` lift reduced (smoke A1).
+      Re-check nesting after reload.
+- [x] `x2-vs-xy-visual` — x² key inserted unicode `²` while x^y used `.sup`;
+      both now paint via `.sup`. Smoke A1 follow-up.
+- [x] `trig-open-trap` — sin/cos/tan inserted `sin(‸` without a closing `)`,
+      while the LCD painter drew a phantom `)`. →/↓ could not leave the slot
+      (smoke B2). Now inserts `sin(‸)` like log/ln/hyp.
+- [x] `log10-implicit-mul` — `log10(100)` rewrote to `__log10*(100)` → Syntax
+      ERROR (smoke B5). Implicit `digit(` multiply skips digits inside helper
+      names.
 - [ ] `ind-hardcoded` — CMPLX, MAT, VCT, and Disp render but stay dim
       (`opacity-10`); never tied to real state.
       **Associated:** `vis-indicators`. CMPLX/MAT/VCT lighting waits on Phase 3
@@ -95,6 +106,18 @@ Status: `[ ]` open · `[x]` fixed (move to **Closed** at the next wrap-up).
 - [ ] `solve-errors` — SOLVE failures surface as Syntax ERROR instead of
       Variable ERROR / Can’t Solve. No L−R residual or Continue screen.
       **Associated:** `p2-solve`.
+
+---
+
+## Memory
+
+- [x] `mem-abc-nan` — STO/RCL A/B/C Math ERROR when STAT type is null:
+      `calculateStatVars(null)` used to return `A/B/C: NaN`, and
+      `evaluateExpression` spread that over user memory. Fixed: null STAT
+      returns `{}`. Smoke E2/E3.
+- [ ] `sto-without-equals` — Typed operand then STO letter should store that
+      value and show `5→C` (Ans path only after `=`). Partially addressed with
+      the memory overlay fix; re-smoke to confirm.
 
 ---
 

@@ -77,7 +77,7 @@ MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
 | Feature | Manual | Status | In the emulator | Gap |
 |---------|--------|--------|-----------------|-----|
 | Ans | E-12 | Done | `ans` state; persisted localStorage | — |
-| Variables A–F, X, Y | E-13 | Done | ALPHA + keys; STO/RCL; persisted | — |
+| Variables A–F, X, Y | E-13 | Done | ALPHA + keys; STO/RCL; persisted | Was: RCL A/B/C Math ERROR via STAT NaN overlay — fixed |
 | Independent M | E-13 | Done | M+ / SHIFT M−; M indicator | — |
 | CLR Setup / Memory / All | E-2, E-13 | Done | SHIFT 9 CLR menu: 1:Setup 2:Memory 3:All | — |
 

@@ -54,7 +54,10 @@ export const calculateStatVars = (
       'stat_miny': NaN,
       'stat_maxy': NaN,
     };
-    if (!statType) return s;
+    // COMP (no active STAT type): never overlay A/B/C/R. Returning NaN for
+    // those keys used to clobber user memory in evaluateExpression
+    // (`...scope, ...statVars`) so RCL A/B/C became Math ERROR.
+    if (!statType) return {};
 
     let n = 0, sumX = 0, sumX2 = 0, sumY = 0, sumY2 = 0, sumXY = 0;
     let sumX3 = 0, sumX4 = 0, sumX2Y = 0;

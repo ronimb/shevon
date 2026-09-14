@@ -256,6 +256,10 @@ export const formatMath = (input: string): string => {
        .replace(/\^\(([^)]*)\)/g, (_m, p1) => `<span class="sup">${slot(p1)}</span>`)
        .replace(/\^\(([^)]*)$/g, (_m, p1) => `<span class="sup">${slot(p1)}</span>`)
        .replace(/\^-1/g, '<span class="sup">-1</span>')
+       // x² / x³ keys insert unicode; paint them like `^(2)` / `^(3)` so they
+       // match the x^y superscript (same .sup metrics, not a raw glyph).
+       .replace(/²/g, '<span class="sup">2</span>')
+       .replace(/³/g, '<span class="sup">3</span>')
        .replace(/‸/g, '<span class="cursor"></span>');
 
   // Restore equals signs with proper styling

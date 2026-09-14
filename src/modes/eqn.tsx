@@ -53,27 +53,24 @@ export function EqnMenuScreen() {
 export function EqnQuadScreen({ coeffs, index }: { coeffs: string[]; index: number }) {
   const labels = ['a', 'b', 'c'];
   return (
-    <>
-      <div className="eqn-title">aX²+bX+c=0</div>
-      <table className="eqn-table">
-        <thead>
-          <tr>
-            {labels.map((label) => (
-              <th key={label}>{label}</th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            {coeffs.map((coeff, i) => (
-              <td key={labels[i]} className={index === i ? 'active-cell' : ''}>
-                <EditorCaret value={coeff} active={index === i} />
-              </td>
-            ))}
-          </tr>
-        </tbody>
-      </table>
-    </>
+    <table className="eqn-table">
+      <thead>
+        <tr>
+          {labels.map((label) => (
+            <th key={label}>{label}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          {coeffs.map((coeff, i) => (
+            <td key={labels[i]} className={index === i ? 'active-cell' : ''}>
+              <EditorCaret value={coeff} active={index === i} />
+            </td>
+          ))}
+        </tr>
+      </tbody>
+    </table>
   );
 }
 
@@ -93,9 +90,14 @@ export function EqnResultLabel({ results, resultIdx }: { results: EqnResult[]; r
 
 export function EqnResultValue({ results, resultIdx }: { results: EqnResult[]; resultIdx: number }) {
   let res = results[resultIdx];
+  // Message-only outcomes (no real roots / no solution) already put the text
+  // on the input line via EqnResultLabel — don't also paint a bare "Error".
+  if (res?.val === undefined || isNaN(res.val)) {
+    return <div className="decimal-result" />;
+  }
   return (
     <div className="decimal-result">
-      {res?.val !== undefined && !isNaN(res.val) ? formatResultNumber(res.val) : "Error"}
+      {formatResultNumber(res.val)}
     </div>
   );
 }

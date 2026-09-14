@@ -778,8 +778,11 @@ const Calculator: React.FC = () => {
 
   const handleUp = useCallback(() => {
     if (calcMode === 'SETUP') { setSetupPage(p => (p === 0 ? 1 : 0)); return; }
-    // LCD history replay: ▲ recalls the previous calculation onto the line.
-    if (calcMode === 'COMP' && (showingResult || replayIndex >= 0) && history.length > 0) {
+    // LCD history replay: ▲ recalls a past calculation onto the line.
+    // From a result, mid-replay, or a blank live line (after AC). While editing
+    // a non-empty expression, ▲ still prefers template-slot navigation below.
+    const blankLive = currentInput === '‸';
+    if (calcMode === 'COMP' && history.length > 0 && (showingResult || replayIndex >= 0 || blankLive)) {
       const idx = replayIndex < 0 ? 0 : Math.min(history.length - 1, replayIndex + 1);
       const item = history[idx];
       if (item) {
@@ -865,8 +868,9 @@ const Calculator: React.FC = () => {
         setCurrentInput(`Ans→${v}‸`);
       } else {
         try {
-          const sVars = calculateStatVars(statType, statData);
-          let valToSave = evaluateExpression(operand.replace(/Ans/g, String(ans)), {}, ans, angleMode, sVars);
+          // Keep user memory as the eval scope; STAT overlay must not wipe A–C.
+          const sVars = calculateStatVars(statType, statData, statFrequencyEnabled);
+          let valToSave = evaluateExpression(operand.replace(/Ans/g, String(ans)), { ...vars }, ans, angleMode, sVars);
           setVars(prev => ({ ...prev, [v]: valToSave }));
           setCurrentInput(beforeText + `→${v}‸`);
         } catch(e) {
@@ -906,7 +910,7 @@ const Calculator: React.FC = () => {
       if (v === 'Y') toggleSD(); 
       if (v === 'M') handleMemory('plus_minus', 'M'); 
     }
-  }, [isSto, isRcl, isAlpha, isShift, currentInput, showingResult, ans, vars, angleMode, handleInput, toggleSD, handleMemory]);
+  }, [isSto, isRcl, isAlpha, isShift, currentInput, showingResult, ans, vars, angleMode, handleInput, toggleSD, handleMemory, statType, statData, statFrequencyEnabled]);
 
   handleAlphaVarRef.current = handleAlphaVar;
 
@@ -914,7 +918,10 @@ const Calculator: React.FC = () => {
     if (isSto || isRcl || isAlpha) {
       handleAlphaVar(v);
     } else {
-      handleInput(type + (isShift ? '⁻¹(' : '('));
+      // Close the template like log/ln/hyp so →/↓ can leave the argument slot.
+      // Open `sin(‸` looked closed on the LCD (painter adds `)`) but the caret
+      // had nowhere to go, so B2-style `4×sin30×…` could not continue.
+      handleInput(type + (isShift ? '⁻¹(‸)' : '(‸)'));
       setIsShift(false);
     }
   }, [isAlpha, isShift, isSto, isRcl, handleInput, handleAlphaVar]);
@@ -1186,7 +1193,8 @@ const Calculator: React.FC = () => {
   // ▲ recalls an older COMP calculation; ▼ walks back toward the live line.
   const canReplayUp =
     calcMode === 'COMP' && history.length > 0 &&
-    ((replayIndex < 0 && showingResult) || (replayIndex >= 0 && replayIndex < history.length - 1));
+    ((replayIndex < 0 && (showingResult || currentInput === '‸')) ||
+      (replayIndex >= 0 && replayIndex < history.length - 1));
   const canReplayDown = calcMode === 'COMP' && replayIndex >= 0;
   const indicatorUp = (calcMode === 'EQN_RESULT' && eqnResultIdx > 0) || canReplayUp;
   const indicatorDown =

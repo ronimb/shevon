@@ -107,6 +107,6 @@ export function formatKeyStylesSource(styles: Record<string, KeyStyle>): string 
 
 export const PATS = ['!', 'sinh⁻¹(', 'cosh⁻¹(', 'tanh⁻¹(', 'sin⁻¹(', 'cos⁻¹(', 'tan⁻¹(', 'sinh(', 'cosh(', 'tanh(', 'sin(', 'cos(', 'tan(', '×10^', 'sqrt(', 'sqr(', 'cube(', 'pwr(', 'root(', 'frac(', 'mix(', 'int(', 'diff(', 'e^(', '10^(', 'log_b(', 'log10(', 'ln(', 'abs(', 'Rnd(', 'Ans', 'nCr(', 'nPr(', 'Σ(', 'pol(', 'rec(', 'RanInt(', 'Ran#', '^(', 'root(3,'];
 
-export const CURSOR_PATS = ['root(', 'sqrt(', 'sqr(', 'cube(', 'frac(', 'mix(', 'pwr(', 'diff(', 'int(', 'abs(', 'Rnd(', 'log_b(', 'sinh⁻¹(', 'cosh⁻¹(', 'tanh⁻¹(', 'sinh(', 'cosh(', 'tanh(', 'sin(', 'cos(', 'tan(', 'Σ(', 'nCr(', 'nPr(', 'pow(', 'exp(', 'RanInt(', ','];
+export const CURSOR_PATS = ['root(', 'sqrt(', 'sqr(', 'cube(', 'frac(', 'mix(', 'pwr(', 'diff(', 'int(', 'abs(', 'Rnd(', 'log_b(', 'log10(', 'ln(', 'e^(', '10^(', 'sinh⁻¹(', 'cosh⁻¹(', 'tanh⁻¹(', 'sin⁻¹(', 'cos⁻¹(', 'tan⁻¹(', 'sinh(', 'cosh(', 'tanh(', 'sin(', 'cos(', 'tan(', 'Σ(', 'nCr(', 'nPr(', 'pow(', 'exp(', 'RanInt(', ','];
 
 export const DELETE_STEMS = ['pwr', 'root', 'abs', 'Rnd', 'log10', 'ln', 'sinh⁻¹', 'cosh⁻¹', 'tanh⁻¹', 'sinh', 'cosh', 'tanh', 'sin', 'cos', 'tan', 'sum', 'int', 'fac', 'frac', 'sqrt', 'sqr', 'cube', 'log_b'];
