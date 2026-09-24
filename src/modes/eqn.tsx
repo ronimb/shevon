@@ -1,6 +1,6 @@
 import React from 'react';
 import type { EqnResult } from '../types.ts';
-import { EditorCaret, formatResultNumber } from '../display.tsx';
+import { EditorCaret, formatComplexPair, formatResultNumber } from '../display.tsx';
 
 export function solveQuadratic(a: number, b: number, c: number): EqnResult[] {
   if (a === 0) {
@@ -9,7 +9,12 @@ export function solveQuadratic(a: number, b: number, c: number): EqnResult[] {
   }
   let disc = b * b - 4 * a * c;
   if (disc < 0) {
-    return [{ label: "No real solutions", val: NaN }];
+    const real = -b / (2 * a);
+    const imag = Math.sqrt(-disc) / (2 * a);
+    return [
+      { label: "X1 =", val: real, imag },
+      { label: "X2 =", val: real, imag: -imag },
+    ];
   } else if (disc === 0) {
     return [{ label: "X =", val: -b / (2 * a) }];
   } else {
@@ -90,8 +95,11 @@ export function EqnResultLabel({ results, resultIdx }: { results: EqnResult[]; r
 
 export function EqnResultValue({ results, resultIdx }: { results: EqnResult[]; resultIdx: number }) {
   let res = results[resultIdx];
-  // Message-only outcomes (no real roots / no solution) already put the text
-  // on the input line via EqnResultLabel — don't also paint a bare "Error".
+  if (res?.imag !== undefined && Math.abs(res.imag) > 1e-12) {
+    return <div className="decimal-result">{formatComplexPair(res.val, res.imag)}</div>;
+  }
+  // Message-only outcomes (no solution) already put the text on the input
+  // line via EqnResultLabel — don't also paint a bare "Error".
   if (res?.val === undefined || isNaN(res.val)) {
     return <div className="decimal-result" />;
   }

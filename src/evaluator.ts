@@ -52,14 +52,46 @@ export const findPrecedingOperand = (text: string): string => {
   return '';
 };
 
-export const toFraction = (decimal: number) => {
-  let best_n = Math.round(decimal), best_d = 1, best_err = Math.abs(decimal - best_n);
-  for (let d = 1; d <= 1000; d++) {
-    let n = Math.round(decimal * d), err = Math.abs(decimal - n / d);
-    if (err < best_err) { best_n = n; best_d = d; best_err = err; }
-    if (err < 1e-10) break;
+/** 10-digit Casio: n/d must match the value to displayed precision. */
+const fractionFits = (value: number, n: number, d: number) => {
+  if (d <= 0 || !Number.isFinite(n / d)) return false;
+  const scale = Math.max(Math.abs(value), Math.abs(n / d), 1e-12);
+  return Math.abs(value - n / d) <= scale * 5e-11;
+};
+
+/**
+ * Exact p/q only — never a nearby guess (cos 6° is not 363/365).
+ * Continued fraction; accept only when it terminates (true rational) and
+ * matches to 10 digits. Surd/π forms are `p4-exact`.
+ */
+export const toFraction = (decimal: number): { n: number; d: number } | null => {
+  if (!Number.isFinite(decimal)) return null;
+  const sign = decimal < 0 ? -1 : 1;
+  const x = Math.abs(decimal);
+
+  if (fractionFits(x, Math.round(x), 1)) return { n: sign * Math.round(x), d: 1 };
+
+  let h0 = 0, k0 = 1, h1 = 1, k1 = 0;
+  let v = x;
+  for (let i = 0; i < 32; i++) {
+    if (!Number.isFinite(v)) return null;
+    const a = Math.floor(v);
+    const h = a * h1 + h0;
+    const k = a * k1 + k0;
+    if (k === 0 || Math.abs(h) > 1e10 || k > 1e10) return null;
+    const rem = v - a;
+    if (rem < 1e-12) {
+      return fractionFits(x, h, k) ? { n: sign * h, d: k } : null;
+    }
+    v = 1 / rem;
+    h0 = h1; k0 = k1; h1 = h; k1 = k;
   }
-  return { n: best_n, d: best_d };
+  return null;
+};
+
+export const resultDisplayMode = (val: number): 'decimal' | 'fraction' => {
+  const f = toFraction(val);
+  return f !== null && f.d > 1 ? 'fraction' : 'decimal';
 };
 
 export const evaluateExpression = (expr: string, scope: Vars, ans: number, angleMode: AngleMode, statVars: Vars, displayFormat: DisplayFormat = DEFAULT_FORMAT): number => {

@@ -28,8 +28,16 @@ describe('Casio fx-991ES PLUS sample operations', () => {
   it('E-10: 2/3 + 1/2 = 7/6 (Natural Display fraction)', () => {
     const value = evalComp('frac(2,3)+frac(1,2)');
     const frac = toFraction(value);
-    expect(frac.n).toBe(7);
-    expect(frac.d).toBe(6);
+    expect(frac).not.toBeNull();
+    expect(frac!.n).toBe(7);
+    expect(frac!.d).toBe(6);
+  });
+
+  it('does not invent a fraction for a plain trig value', () => {
+    expect(toFraction(evalComp('cos(6)'))).toBeNull();
+    expect(toFraction(evalComp('sin(6)'))).toBeNull();
+    const half = toFraction(evalComp('cos(60)'));
+    expect(half).toEqual({ n: 1, d: 2 });
   });
 
   it('E-18: 10 nPr 4 = 5040', () => {
@@ -196,6 +204,15 @@ describe('vis-no-literal / ir-leak — IR stems never reach the LCD', () => {
     expect(html).not.toContain('sin(');
     expect(html).toContain('trig-fun');
     expect(html).toContain('sin');
+    // Hardware: user types `)`. An unclosed IR must not paint a phantom closer.
+    expect(html.replace(/<[^>]+>/g, '')).toBe('sin(30');
+  });
+
+  it('open log / ln / hyp / Abs also omit the closing paren', () => {
+    expect(formatMath('log10(100‸').replace(/<[^>]+>/g, '')).toBe('log(100');
+    expect(formatMath('ln(2‸').replace(/<[^>]+>/g, '')).toBe('ln(2');
+    expect(formatMath('sinh(1‸').replace(/<[^>]+>/g, '')).toBe('sinh(1');
+    expect(formatMath('abs(3‸').replace(/<[^>]+>/g, '')).toBe('Abs(3');
   });
 
   it('closed sin(30) does not print the ASCII stem sin(', () => {
@@ -247,12 +264,17 @@ describe('Smoke blockers — log10, memory, EQN no-real', () => {
     expect(evaluateExpression('A', { ...EMPTY_VARS, A: 5 }, 0, 'DEG', empty)).toBe(5);
   });
 
-  it('EQN no real roots shows the label without a bare Error value', () => {
+  it('EQN negative discriminant shows the imaginary pair', () => {
     const roots = solveQuadratic(1, 0, 1);
-    expect(roots[0].label).toMatch(/no real/i);
-    expect(Number.isNaN(roots[0].val)).toBe(true);
+    expect(roots).toHaveLength(2);
+    expect(roots[0].label).toBe('X1 =');
+    expect(roots[0].val).toBeCloseTo(0, 10);
+    expect(roots[0].imag).toBeCloseTo(1, 10);
+    expect(roots[1].imag).toBeCloseTo(-1, 10);
     const html = renderToStaticMarkup(React.createElement(EqnResultValue, { results: roots, resultIdx: 0 }));
+    expect(html).toContain('>i<');
     expect(html).not.toMatch(/>Error</);
+    expect(html).not.toMatch(/no real/i);
   });
 });
 

@@ -62,17 +62,36 @@ body {
     line-height: 1;
 }
 .math-sym { font-family: "Times New Roman", serif; font-style: italic; font-weight: bold; }
-.root-symbol { font-size: 1.1em; vertical-align: middle; }
+.root {
+    display: inline-flex;
+    align-items: stretch;
+    line-height: 1;
+    vertical-align: middle;
+}
+.root-symbol {
+    font-size: 1.55em;
+    line-height: 0.82;
+    display: flex;
+    align-items: flex-end;
+    padding-bottom: 0.02em;
+}
 .root-body {
-    border-top: 1px solid currentColor;
-    padding-top: 0.2em;
-    padding-left: 1px;
-    display: inline-block;
-    line-height: 1.35;
+    border-top: 1.5px solid currentColor;
+    margin-top: 0.2em;
+    padding: 0.28em 0.08em 0.02em 0.12em;
+    display: inline-flex;
+    align-items: flex-end;
+    min-height: 1.55em;
+    box-sizing: border-box;
 }
 .root-body .sup {
-    /* Keep exponents under the vinculum; default .sup lift collides with it. */
-    vertical-align: 0.35em;
+    /* Sit inside the body box — never use a lift that can hit the vinculum. */
+    align-self: flex-start;
+    vertical-align: baseline;
+    position: static;
+    top: auto;
+    margin: 0.02em 0 0 0.04em;
+    line-height: 1;
 }
 
 .comb-perm { font-size: 0.9em; font-weight: bold; margin: 0 1px; }
@@ -216,202 +235,6 @@ body {
   pointer-events: none;
   white-space: nowrap;
   z-index: 100;
-}
-
-.flash-map-on .key {
-  pointer-events: none;
-}
-
-.flash-map-layer {
-  position: absolute;
-  inset: 0;
-  z-index: 120;
-  pointer-events: none;
-}
-
-.flash-map-region {
-  position: absolute;
-  pointer-events: auto;
-  cursor: move;
-  box-sizing: border-box;
-  background: rgba(255, 255, 255, 0.28);
-  box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.55);
-  z-index: 120;
-  user-select: none;
-  touch-action: none;
-}
-
-.flash-map-region.nav {
-  z-index: 125;
-}
-
-.flash-map-region.selected {
-  background: rgba(255, 255, 255, 0.42);
-  box-shadow: inset 0 0 0 2px rgba(125, 211, 252, 0.95), 0 0 0 1px rgba(125, 211, 252, 0.55);
-  z-index: 140;
-}
-
-.flash-map-label {
-  position: absolute;
-  left: 2px;
-  top: 1px;
-  font-size: 8px;
-  font-weight: 700;
-  line-height: 1;
-  color: #0b1220;
-  background: rgba(255, 255, 255, 0.72);
-  padding: 1px 3px;
-  border-radius: 2px;
-  pointer-events: none;
-  max-width: calc(100% - 4px);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.flash-map-handle {
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  background: #7dd3fc;
-  border: 1px solid #fff;
-  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
-  z-index: 2;
-  pointer-events: auto;
-}
-
-.flash-map-handle-nw { left: -5px; top: -5px; }
-.flash-map-handle-n { left: 50%; top: -5px; margin-left: -5px; }
-.flash-map-handle-ne { right: -5px; top: -5px; }
-.flash-map-handle-e { right: -5px; top: 50%; margin-top: -5px; }
-.flash-map-handle-se { right: -5px; bottom: -5px; }
-.flash-map-handle-s { left: 50%; bottom: -5px; margin-left: -5px; }
-.flash-map-handle-sw { left: -5px; bottom: -5px; }
-.flash-map-handle-w { left: -5px; top: 50%; margin-top: -5px; }
-
-.flash-map-toolbar {
-  position: fixed;
-  top: 16px;
-  left: 16px;
-  z-index: 200;
-  width: 300px;
-  padding: 12px;
-  border-radius: 14px;
-  background: rgba(18, 18, 18, 0.92);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
-  color: #eee;
-  font-size: 12px;
-  backdrop-filter: blur(8px);
-}
-
-.flash-map-toolbar-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  font-size: 11px;
-}
-
-.flash-map-pill {
-  font-size: 9px;
-  padding: 2px 6px;
-  border-radius: 999px;
-  background: #3f3f46;
-  color: #d4d4d8;
-}
-
-.flash-map-pill.on {
-  background: #0369a1;
-  color: #e0f2fe;
-}
-
-.flash-map-hint {
-  margin: 8px 0 10px;
-  color: rgba(255, 255, 255, 0.55);
-  line-height: 1.35;
-}
-
-.flash-map-toolbar-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: center;
-  margin-top: 8px;
-}
-
-.flash-map-btn {
-  background: rgba(255, 255, 255, 0.08);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
-  padding: 5px 8px;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.flash-map-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.14);
-}
-
-.flash-map-btn:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.flash-map-select-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.flash-map-select-label select {
-  background: #111;
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 6px;
-  padding: 3px 4px;
-  font-size: 11px;
-}
-
-.flash-map-geom {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-top: 10px;
-}
-
-.flash-map-geom-field {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  color: rgba(255, 255, 255, 0.62);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.flash-map-geom-field input {
-  background: #111;
-  color: #7dd3fc;
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 6px;
-  padding: 5px 6px;
-  font-size: 13px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.flash-map-geom-field input:focus {
-  outline: none;
-  border-color: #7dd3fc;
 }
 
 .key-shift { top: 367px; left: 61px; width: 41px; height: 40px; border-radius: 50% 50% 40% 40%; z-index: 60; }

@@ -61,12 +61,16 @@ const splitTopLevelArgs = (s: string): string[] => {
 
 interface TemplateSpec {
   stem: string;
-  html: (a: string[]) => string;
-  latex: (a: string[]) => string;
+  html: (a: string[], closed: boolean) => string;
+  latex: (a: string[], closed: boolean) => string;
 }
 
+/** Only paint `)` when the IR actually has one — user types the closer. */
+const parenBody = (inner: string, closed: boolean) => `(${inner}${closed ? ')' : ''}`;
+
 /** LCD function-name glyph (sin, ln, Abs, Pol, …) — never the raw `name(` stem. */
-const namedFn = (label: string) => (a: string[]) => `<span class="trig-fun">${label}</span>(${slot(a[0])})`;
+const namedFn = (label: string) => (a: string[], closed: boolean) =>
+  `<span class="trig-fun">${label}</span>${parenBody(slot(a[0]), closed)}`;
 const lx = (v: string | undefined) => v ?? '';
 
 /**
@@ -100,12 +104,12 @@ const TEMPLATE_SPECS: TemplateSpec[] = [
   },
   {
     stem: 'pol',
-    html: a => `<span class="trig-fun">Pol</span>(${slot(a[0])},${slot(a[1] || '')})`,
+    html: (a, closed) => `<span class="trig-fun">Pol</span>${parenBody(`${slot(a[0])},${slot(a[1] || '')}`, closed)}`,
     latex: a => `\\operatorname{Pol}(${lx(a[0])},${lx(a[1])})`,
   },
   {
     stem: 'rec',
-    html: a => `<span class="trig-fun">Rec</span>(${slot(a[0])},${slot(a[1] || '')})`,
+    html: (a, closed) => `<span class="trig-fun">Rec</span>${parenBody(`${slot(a[0])},${slot(a[1] || '')}`, closed)}`,
     latex: a => `\\operatorname{Rec}(${lx(a[0])},${lx(a[1])})`,
   },
   {
@@ -134,22 +138,22 @@ const TEMPLATE_SPECS: TemplateSpec[] = [
   },
   {
     stem: 'root',
-    html: a => `<span class="sup">${slot(a[0])}</span><span class="root-symbol">√</span><span class="root-body">${slot(a[1] || '')}</span>`,
+    html: a => `<span class="root"><span class="sup">${slot(a[0])}</span><span class="root-symbol">√</span><span class="root-body">${slot(a[1] || '')}</span></span>`,
     latex: a => `\\sqrt[${lx(a[0])}]{${lx(a[1])}}`,
   },
   {
     stem: 'sqrt',
-    html: a => `<span class="root-symbol">√</span><span class="root-body">${slot(a[0])}</span>`,
+    html: a => `<span class="root"><span class="root-symbol">√</span><span class="root-body">${slot(a[0])}</span></span>`,
     latex: a => `\\sqrt{${lx(a[0])}}`,
   },
   { stem: 'sqr', html: a => `${slot(a[0])}<span class="sup">2</span>`, latex: a => `{${lx(a[0])}}^2` },
   { stem: 'cube', html: a => `${slot(a[0])}<span class="sup">3</span>`, latex: a => `{${lx(a[0])}}^3` },
   {
     stem: 'log_b',
-    html: a => `log<span class="sub">${slot(a[0])}</span>(${slot(a[1] || '')})`,
+    html: (a, closed) => `log<span class="sub">${slot(a[0])}</span>${parenBody(slot(a[1] || ''), closed)}`,
     latex: a => `\\log_{${lx(a[0])}}(${lx(a[1])})`,
   },
-  { stem: 'log10', html: a => `log(${slot(a[0])})`, latex: a => `\\log_{10}(${lx(a[0])})` },
+  { stem: 'log10', html: (a, closed) => `log${parenBody(slot(a[0]), closed)}`, latex: a => `\\log_{10}(${lx(a[0])})` },
   { stem: 'e^', html: a => `e<span class="sup">${slot(a[0])}</span>`, latex: a => `e^{${lx(a[0])}}` },
   { stem: '10^', html: a => `10<span class="sup">${slot(a[0])}</span>`, latex: a => `10^{${lx(a[0])}}` },
   { stem: 'pwr', html: a => `${slot(a[0])}<span class="sup">${slot(a[1] || '')}</span>`, latex: a => `{${lx(a[0])}}^{${lx(a[1])}}` },
@@ -160,11 +164,11 @@ const TEMPLATE_SPECS: TemplateSpec[] = [
   },
   {
     stem: 'RanInt',
-    html: a => `<span class="trig-fun">RanInt#</span>(${slot(a[0])},${slot(a[1] || '')})`,
+    html: (a, closed) => `<span class="trig-fun">RanInt#</span>${parenBody(`${slot(a[0])},${slot(a[1] || '')}`, closed)}`,
     latex: a => `\\operatorname{RanInt}(${lx(a[0])},${lx(a[1])})`,
   },
-  { stem: 'Rnd', html: a => `<span class="trig-fun">Rnd</span>(${slot(a[0])})`, latex: a => `\\operatorname{Rnd}(${lx(a[0])})` },
-  { stem: 'abs', html: a => `<span class="trig-fun">Abs</span>(${slot(a[0])})`, latex: a => `|${lx(a[0])}|` },
+  { stem: 'Rnd', html: (a, closed) => `<span class="trig-fun">Rnd</span>${parenBody(slot(a[0]), closed)}`, latex: a => `\\operatorname{Rnd}(${lx(a[0])})` },
+  { stem: 'abs', html: (a, closed) => `<span class="trig-fun">Abs</span>${parenBody(slot(a[0]), closed)}`, latex: a => `|${lx(a[0])}|` },
   // Legacy IR aliases still emitted by `toLaTeX` history; harmless on the LCD.
   { stem: 'factorial', html: a => `${slot(a[0])}!`, latex: a => `{${lx(a[0])}}!` },
   { stem: 'exp', html: a => `e<span class="sup">${slot(a[0])}</span>`, latex: a => `e^{${lx(a[0])}}` },
@@ -183,7 +187,7 @@ const TEMPLATE_SPECS: TemplateSpec[] = [
  * open radical still renders. This is what keeps IR stems like `sqrt` off screen
  * while you are mid-type.
  */
-const paintTemplates = (input: string, paint: (spec: TemplateSpec, args: string[]) => string): string => {
+const paintTemplates = (input: string, paint: (spec: TemplateSpec, args: string[], closed: boolean) => string): string => {
   let out = '';
   let rest = input;
   // Left-to-right: append painted output to `out` and keep scanning only the
@@ -220,7 +224,7 @@ const paintTemplates = (input: string, paint: (spec: TemplateSpec, args: string[
     }
     const innerProcessed = paintTemplates(content, paint);
     const args = splitTopLevelArgs(innerProcessed);
-    out += paint(bestSpec, args);
+    out += paint(bestSpec, args, !!bal);
     rest = after;
   }
   return out;
@@ -228,7 +232,7 @@ const paintTemplates = (input: string, paint: (spec: TemplateSpec, args: string[
 
 export const toLaTeX = (expr: string): string => {
   const proc = expr.replace(/[‸⬚]/g, '');
-  let s = paintTemplates(proc, (spec, args) => spec.latex(args));
+  let s = paintTemplates(proc, (spec, args, closed) => spec.latex(args, closed));
 
   // Basic replacements for symbols outside templates
   s = s.replace(/×/g, '\\times ')
@@ -248,7 +252,7 @@ export const formatMath = (input: string): string => {
   // Protect equals signs temporarily to avoid interference with tag replacements
   h = h.replace(/=/g, '___EQUALS___');
 
-  h = paintTemplates(h, (spec, args) => spec.html(args));
+  h = paintTemplates(h, (spec, args, closed) => spec.html(args, closed));
 
   h = h.replace(/Ran#/g, '<span class="trig-fun">Ran#</span>');
 
@@ -334,6 +338,21 @@ export const SciNotation: React.FC<{ mantissa: string; exponent: number }> = ({ 
     <span className="text-[0.8em] self-start relative -top-[0.25em] font-bold">{exponent}</span>
   </span>
 );
+
+/** Casio-style a+bi for EQN complex roots (E-28). */
+export function formatComplexPair(real: number, imag: number): string {
+  const near0 = (n: number) => Math.abs(n) < 1e-12;
+  const near1 = (n: number) => Math.abs(Math.abs(n) - 1) < 1e-12;
+  const trim = (n: number) => {
+    const s = n.toPrecision(10);
+    return String(Number(s));
+  };
+  if (near0(imag)) return trim(real);
+  const unit = near1(imag);
+  const imagAbs = unit ? 'i' : `${trim(Math.abs(imag))}i`;
+  if (near0(real)) return imag < 0 ? `-${imagAbs}` : imagAbs;
+  return `${trim(real)}${imag < 0 ? '-' : '+'}${imagAbs}`;
+}
 
 export const formatResultNumber = (
   n: number | undefined | null,

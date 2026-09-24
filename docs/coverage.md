@@ -21,8 +21,8 @@ Refreshed September 2026 from the roadmap, tests (56), and a code pass.
 
 | Status | Count |
 |--------|------:|
-| Done | 34 |
-| Partial | 17 |
+| Done | 35 |
+| Partial | 16 |
 | Missing | 25 |
 | **Total** | **76** |
 
@@ -39,7 +39,7 @@ MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
 | CMPLX | E-5 N2 | Missing | Menu row only; CMPLX indicator always dim | No i, ∠, arg, Conjg, or polar/rect format |
 | STAT | E-5 N3, E-22 | Partial | Type menu, editor, Sum/Var/MinMax/Reg, FREQ | Dist, Ins/Del-A, STAT stays active on recall |
 | BASE-N | E-5 N4, E-26 | Missing | Menu row; selecting 4 returns to COMP | DEC/HEX/BIN/OCT, and/or/xor/xnor, Not, Neg |
-| EQN | E-5 N5, E-28 | Partial | Menu shown; quadratic editor + real roots | 2-unk, 3-unk, cubic; complex quadratic roots |
+| EQN | E-5 N5, E-28 | Partial | Menu shown; quadratic editor + real and complex roots | 2-unk, 3-unk, cubic |
 | MATRIX | E-5 N6, E-29 | Missing | Menu row only | MatA/B/C, Dim, det, Trn, inverse, MatAns |
 | TABLE | E-5 N7, E-32 | Missing | Menu row only | f(x), Start/End/Step, 30-row cap, Insufficient MEM |
 | VECTOR | E-5 N8, E-33 | Missing | Menu row only | VctA/B/C, dot, cross, Abs, VctAns |
@@ -77,7 +77,7 @@ MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
 | Feature | Manual | Status | In the emulator | Gap |
 |---------|--------|--------|-----------------|-----|
 | Ans | E-12 | Done | `ans` state; persisted localStorage | — |
-| Variables A–F, X, Y | E-13 | Done | ALPHA + keys; STO/RCL; persisted | Was: RCL A/B/C Math ERROR via STAT NaN overlay — fixed |
+| Variables A–F, X, Y | E-13 | Done | ALPHA + keys; STO/RCL; persisted | RCL A/B/C NaN overlay fixed; `5` STO letter without `=` shows `5→C` |
 | Independent M | E-13 | Done | M+ / SHIFT M−; M indicator | — |
 | CLR Setup / Memory / All | E-2, E-13 | Done | SHIFT 9 CLR menu: 1:Setup 2:Memory 3:All | — |
 
@@ -126,7 +126,7 @@ MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
 |---------|--------|--------|-----------------|-----|
 | 2-unknown linear | E-28 1 | Missing | Menu text only | Coefficient editor + X,Y solutions |
 | 3-unknown linear | E-28 2 | Missing | Menu text only | X,Y,Z |
-| Quadratic | E-28 3 | Partial | a,b,c labels; caret; bottom-left entry; real roots; ▲▼ | Complex roots with √ form |
+| Quadratic | E-28 3 | Done | a,b,c labels; caret; bottom-left entry; real and a+bi roots; ▲▼ | Exact √ form of complex roots is `p4-exact` |
 | Cubic | E-28 4 | Missing | Menu text only | Up to three real/complex roots |
 
 ## CMPLX / BASE-N / MATRIX / TABLE / VECTOR / Constants
@@ -207,6 +207,6 @@ difference with Richardson extrapolation. STAT regressions for non-linear
 types are linearized with log/reciprocal transforms. Quadratic STAT uses
 Cramer's rule on the 3×3 normal equations.
 
-Results use a 10-digit budget or scientific mantissa×10^n. S⇔D uses a
-continued-search `toFraction` (d ≤ 1000), not Casio's √/π exact forms.
-π÷6 will not show as (1/6)π until `p4-exact`.
+Results use a 10-digit budget or scientific mantissa×10^n. S⇔D shows a
+fraction only when the value is an exact p/q (not a nearby guess). Surd/π
+forms are `p4-exact`. π÷6 will not show as (1/6)π until then.

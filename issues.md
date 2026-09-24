@@ -46,14 +46,14 @@ Status: `[ ]` open · `[x]` fixed (move to **Closed** at the next wrap-up).
 
 ## Display / LCD
 
-- [ ] `root-sup-collision` — Superscript inside a radical used to strike the
-      vinculum. CSS padding / nested `.root-body .sup` lift reduced (smoke A1).
-      Re-check nesting after reload.
+- [x] `root-sup-collision` — Superscript inside a radical used to strike the
+      vinculum. Radicals now wrap in `.root` (flex) so the exponent sits in the
+      body box under the bar. Round-2 re-smoke (24 Sep 2026).
 - [x] `x2-vs-xy-visual` — x² key inserted unicode `²` while x^y used `.sup`;
       both now paint via `.sup`. Smoke A1 follow-up.
-- [x] `trig-open-trap` — sin/cos/tan inserted `sin(‸` without a closing `)`,
-      while the LCD painter drew a phantom `)`. →/↓ could not leave the slot
-      (smoke B2). Now inserts `sin(‸)` like log/ln/hyp.
+- [x] `trig-open-trap` — LCD used to paint a phantom `)` on open `sin(`.
+      Closing `)` is user-typed only; the painter draws it only when it is in
+      the IR. Insert is `sin(‸`.
 - [x] `log10-implicit-mul` — `log10(100)` rewrote to `__log10*(100)` → Syntax
       ERROR (smoke B5). Implicit `digit(` multiply skips digits inside helper
       names.
@@ -91,8 +91,11 @@ Status: `[ ]` open · `[x]` fixed (move to **Closed** at the next wrap-up).
       scalar, not the dual-line r,θ / X,Y screen.
       **Associated:** `vis-result`.
 - [ ] `surd-pi-form` — Surd input templates exist; results fall back to
-      decimal/fraction. π stays decimal unless the value is an integer.
+      decimal (or an exact p/q). π stays decimal unless the value is an integer.
       **Associated:** `p4-exact`, `vis-result`.
+- [x] `invented-frac` — S⇔D / Natural Display used the closest d≤1000 ratio
+      (`cos(6°)` → 363/365). Now only exact p/q (e.g. `cos(60)=1/2`); otherwise
+      10-digit decimal, and S⇔D does not invent a fraction.
 
 ---
 
@@ -115,9 +118,10 @@ Status: `[ ]` open · `[x]` fixed (move to **Closed** at the next wrap-up).
       `calculateStatVars(null)` used to return `A/B/C: NaN`, and
       `evaluateExpression` spread that over user memory. Fixed: null STAT
       returns `{}`. Smoke E2/E3.
-- [ ] `sto-without-equals` — Typed operand then STO letter should store that
-      value and show `5→C` (Ans path only after `=`). Partially addressed with
-      the memory overlay fix; re-smoke to confirm.
+- [x] `sto-without-equals` — Typed operand then STO letter stores that value
+      and shows `5→C`; after `=` it shows `Ans→C`.
+- [x] `sto-result-stale` — After `5` STO A the previous answer stayed on the
+      result line. Store now puts the stored value there.
 
 ---
 
@@ -129,9 +133,10 @@ Status: `[ ]` open · `[x]` fixed (move to **Closed** at the next wrap-up).
 - [ ] `hist-letters` — Remaining letter shortcuts (A–F / M and SHIFT/ALPHA
       overlays) are not fully audited against the History sequence contract.
       **Associated:** Now → Current history.
-- [ ] `p0-console` — Hitbox-calibration still `console.log`s CSS; keep
-      diagnostics behind a debug flag.
-      **Associated:** Phase 0 leftover.
+- [x] `replay-no-result` — ▲ recalled the expression but cleared the answer
+      line. Replay now shows the stored result underneath.
+- [x] `flash-map` — Calibration overlay removed from the app.
+- [x] `p0-console` — Hitbox-calibration `console.log` went with the flash map.
 
 ---
 

@@ -25,6 +25,8 @@ export interface StatEntry {
 export interface EqnResult {
   label: string;
   val: number;
+  /** Imaginary part when the quadratic has complex roots. */
+  imag?: number;
 }
 
 export interface KeyStyle {

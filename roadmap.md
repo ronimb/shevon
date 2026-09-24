@@ -135,7 +135,7 @@ See **Landed**. Remaining COMP gaps that did not block Phase 1 are listed under
       silently jumping to COMP (`insertStatVar` currently forces COMP).
       Issue: `stat-jump-comp`.
 - [ ] `p2-eqn-linear` — EQN 2-unknown and 3-unknown linear systems.
-- [ ] `p2-eqn-cubic` — EQN cubic; quadratic complex roots in Natural Display.
+- [ ] `p2-eqn-cubic` — EQN cubic. **Quadratic complex roots** (a+bi) landed.
 
 ---
 
@@ -243,7 +243,8 @@ Ran#/RanInt#, ENG, sexagesimal °′″, Rnd(, Gauss–Kronrod ∫, central-diff
 LCD ▲/▼ history replay, Math/Syntax ERROR dismiss, SHIFT 9 CLR.
 
 **Phase 2 started** — STAT FREQ ON/OFF with 80/40/26 row caps; EQN quadratic
-editor a/b/c labels, cell caret, bottom-left entry; STAT editor caret.
+editor a/b/c labels, cell caret, bottom-left entry; STAT editor caret;
+quadratic complex roots as a+bi.
 
 **Visual** — COMP / EQN / STAT carets (`vis-cursor`); ENG/hyp/Abs/Ran# no
 longer dump raw ASCII. `vis-no-literal`: shared LCD/History template table so

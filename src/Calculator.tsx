@@ -2,8 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import calculatorImg from './calculator_new.png';
 import type { CalcMode, DisplayMode, AngleMode, StatType, StatEntry, EqnResult, KeyStyle, HistoryItem, Vars } from './types.ts';
 import { INITIAL_KEY_STYLES } from './keys.ts';
-import FlashMapLayer from './FlashMapLayer.tsx';
-import { evaluateExpression, findPrecedingOperand, toFraction } from './evaluator.ts';
+import { evaluateExpression, findPrecedingOperand, resultDisplayMode, toFraction } from './evaluator.ts';
 import { toLaTeX, formatMath, formatResultNumber, SciNotation } from './display.tsx';
 import {
   DEFAULT_FORMAT,
@@ -49,8 +48,7 @@ import {
 } from './modes/eqn.tsx';
 
 const Calculator: React.FC = () => {
-  const [flashMap, setFlashMap] = useState(() => localStorage.getItem('calc_flash_map') !== '0');
-  const [keyStyles, setKeyStyles] = useState<Record<string, KeyStyle>>(() => {
+  const [keyStyles] = useState<Record<string, KeyStyle>>(() => {
     try {
       const saved = localStorage.getItem('calc_flash_map_styles');
       if (saved) return { ...INITIAL_KEY_STYLES, ...JSON.parse(saved) };
@@ -58,39 +56,10 @@ const Calculator: React.FC = () => {
     return INITIAL_KEY_STYLES;
   });
 
-  const clickCount = useRef(0);
-  const lastClick = useRef(0);
   const keysRootRef = useRef<HTMLDivElement>(null);
   const flashTimers = useRef<Map<string, number>>(new Map());
 
-  const handleDebugToggle = () => {
-    const now = Date.now();
-    if (now - lastClick.current < 500) {
-      clickCount.current++;
-    } else {
-      clickCount.current = 1;
-    }
-    lastClick.current = now;
-    if (clickCount.current >= 3) {
-      setFlashMap(prev => !prev);
-      clickCount.current = 0;
-    }
-  };
-
   const [scale, setScale] = useState(1);
-
-  useEffect(() => {
-    localStorage.setItem('calc_flash_map', flashMap ? '1' : '0');
-  }, [flashMap]);
-
-  useEffect(() => {
-    localStorage.setItem('calc_flash_map_styles', JSON.stringify(keyStyles));
-  }, [keyStyles]);
-
-  const resetFlashMap = useCallback(() => {
-    setKeyStyles(INITIAL_KEY_STYLES);
-    localStorage.removeItem('calc_flash_map_styles');
-  }, []);
 
   const [currentInput, setCurrentInput] = useState<string>("‸");
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -209,8 +178,8 @@ const Calculator: React.FC = () => {
   const handleInput = useCallback((val: string) => {
     if (showHypMenu) {
       const hypMap: Record<string, string> = {
-        '1': 'sinh(‸)', '2': 'cosh(‸)', '3': 'tanh(‸)',
-        '4': 'sinh⁻¹(‸)', '5': 'cosh⁻¹(‸)', '6': 'tanh⁻¹(‸)',
+        '1': 'sinh(‸', '2': 'cosh(‸', '3': 'tanh(‸',
+        '4': 'sinh⁻¹(‸', '5': 'cosh⁻¹(‸', '6': 'tanh⁻¹(‸',
       };
       if (hypMap[val]) {
         setShowHypMenu(false);
@@ -639,7 +608,7 @@ const Calculator: React.FC = () => {
       setEngMode(null);
       setDmsResult(false);
       setReplayIndex(-1);
-      setDisplayMode(Number.isInteger(val) ? 'decimal' : 'fraction');
+      setDisplayMode(resultDisplayMode(val));
     }
   }, [calcMode, eqnIndex, eqnCoeffs, eqnResultIdx, eqnResults, performEvaluation, toLaTeX, formatMath, promptVar, tackleNextPrompt, statType, statData, statCursor, statFrequencyEnabled]);
 
@@ -787,7 +756,10 @@ const Calculator: React.FC = () => {
       const item = history[idx];
       if (item) {
         setReplayIndex(idx);
-        setShowingResult(false);
+        setShowingResult(true);
+        setAns(item.result);
+        setLastValue(item.result);
+        setDisplayMode(resultDisplayMode(item.result));
         setSyntaxError(false);
         setMathError(false);
         setEngMode(null);
@@ -812,8 +784,11 @@ const Calculator: React.FC = () => {
 
   const toggleSD = useCallback(() => {
     if (!showingResult) return;
-    setDisplayMode(prev => prev === 'decimal' ? 'fraction' : 'decimal');
-  }, [showingResult]);
+    setDisplayMode(prev => {
+      if (prev === 'fraction') return 'decimal';
+      return resultDisplayMode(ans) === 'fraction' ? 'fraction' : 'decimal';
+    });
+  }, [showingResult, ans]);
 
   const handleAlphaVarRef = useRef<((v: string) => void) | null>(null);
   const handleTrigRef = useRef<((type: string, v: string) => void) | null>(null);
@@ -844,7 +819,7 @@ const Calculator: React.FC = () => {
           }, ...prev].slice(0, 50));
           setLastValue(evalRes.val);
           setShowingResult(true);
-          setDisplayMode(Number.isInteger(evalRes.val) ? 'decimal' : 'fraction');
+          setDisplayMode(resultDisplayMode(evalRes.val));
         } else {
           return; // Syntax error handled in performEvaluation
         }
@@ -872,6 +847,9 @@ const Calculator: React.FC = () => {
           const sVars = calculateStatVars(statType, statData, statFrequencyEnabled);
           let valToSave = evaluateExpression(operand.replace(/Ans/g, String(ans)), { ...vars }, ans, angleMode, sVars);
           setVars(prev => ({ ...prev, [v]: valToSave }));
+          setAns(valToSave);
+          setLastValue(valToSave);
+          setDisplayMode(resultDisplayMode(valToSave));
           setCurrentInput(beforeText + `→${v}‸`);
         } catch(e) {
           setVars(prev => ({ ...prev, [v]: ans }));
@@ -900,7 +878,7 @@ const Calculator: React.FC = () => {
       }
       if (v === 'C') {
         // hyp key: SHIFT hyp = Abs(, otherwise open the sinh/cosh/tanh menu.
-        if (isShift) { handleInput('abs(‸)'); setIsShift(false); }
+        if (isShift) { handleInput('abs(‸'); setIsShift(false); }
         else setShowHypMenu(true);
       }
       if (v === 'D') handleTrigRef.current?.('sin', 'D');
@@ -918,10 +896,9 @@ const Calculator: React.FC = () => {
     if (isSto || isRcl || isAlpha) {
       handleAlphaVar(v);
     } else {
-      // Close the template like log/ln/hyp so →/↓ can leave the argument slot.
-      // Open `sin(‸` looked closed on the LCD (painter adds `)`) but the caret
-      // had nowhere to go, so B2-style `4×sin30×…` could not continue.
-      handleInput(type + (isShift ? '⁻¹(‸)' : '(‸)'));
+      // Hardware: user types the closing `)`. Do not insert it, and the LCD
+      // painter only draws `)` when it is in the IR.
+      handleInput(type + (isShift ? '⁻¹(‸' : '(‸'));
       setIsShift(false);
     }
   }, [isAlpha, isShift, isSto, isRcl, handleInput, handleAlphaVar]);
@@ -1012,7 +989,7 @@ const Calculator: React.FC = () => {
   // "." key: SHIFT . = Ran#, ALPHA . = RanInt#(a,b), otherwise a decimal point.
   const handleDotKey = useCallback(() => {
     if (isShift) { handleInput('Ran#'); setIsShift(false); }
-    else if (isAlpha) { handleInput('RanInt(‸,)'); setIsAlpha(false); }
+    else if (isAlpha) { handleInput('RanInt(‸,'); setIsAlpha(false); }
     else handleInput('.');
   }, [isShift, isAlpha, handleInput]);
 
@@ -1053,7 +1030,7 @@ const Calculator: React.FC = () => {
   }, [isShift, handleInput]);
 
   const handleLogKey = useCallback(() => {
-    if (isShift) handleInput('Σ(‸,x,0,10)'); else handleInput('log_b(‸,)');
+    if (isShift) handleInput('Σ(‸,x,0,10)'); else handleInput('log_b(‸,');
     setIsShift(false);
   }, [isShift, handleInput]);
 
@@ -1061,8 +1038,8 @@ const Calculator: React.FC = () => {
     if (isShift) {
       if (shift === 'nCr') handlePermComb('C');
       else if (shift === 'nPr') handlePermComb('P');
-      else if (shift === 'pol') handleInput('pol(‸,)');
-      else if (shift === 'rec') handleInput('rec(‸,)');
+      else if (shift === 'pol') handleInput('pol(‸,');
+      else if (shift === 'rec') handleInput('rec(‸,');
       else handleInput(shift);
     } else {
       handleInput(normal);
@@ -1095,7 +1072,6 @@ const Calculator: React.FC = () => {
       else handleInput(v);
     };
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (flashMap) return;
       if (e.key === 'Shift') {
         e.preventDefault();
         flashKey('shift', true);
@@ -1152,7 +1128,6 @@ const Calculator: React.FC = () => {
       else if (e.key.toLowerCase() === 'a') { e.preventDefault(); press('ans', () => handleInput('Ans'), 'Ans'); }
     };
     const handleKeyUp = (e: KeyboardEvent) => {
-      if (flashMap) return;
       if (e.key === 'Shift') {
         e.preventDefault();
         unflashKey('shift');
@@ -1171,7 +1146,7 @@ const Calculator: React.FC = () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [setShiftMomentary, setAlphaMomentary, clearAll, del, solve, handleRight, handleLeft, handleUp, handleDown, handleInput, handleParentheses, handleTrig, handleLogKey, handleSquareRootKey, handleSquareKey, handlePowerKey, handleAlphaVar, flashKey, unflashKey, isShift, isAlpha, isSto, isRcl, flashMap]);
+  }, [setShiftMomentary, setAlphaMomentary, clearAll, del, solve, handleRight, handleLeft, handleUp, handleDown, handleInput, handleParentheses, handleTrig, handleLogKey, handleSquareRootKey, handleSquareKey, handlePowerKey, handleAlphaVar, flashKey, unflashKey, isShift, isAlpha, isSto, isRcl]);
 
   // --- Rendering Helpers ---
   const isLcdMenu =
@@ -1361,7 +1336,7 @@ const Calculator: React.FC = () => {
       // Fractions only exist in Norm; Fix/Sci always show a formatted decimal.
       if (displayMode === 'fraction' && !Number.isInteger(ans) && displayFormat.kind === 'norm') {
         let f = toFraction(ans);
-        if (f.d > 1000000 || f.d === 1) {
+        if (!f || f.d === 1) {
           return <div className="decimal-result">{formatResultNumber(ans, displayFormat)}</div>;
         }
         if (mixedFraction && Math.abs(f.n) > f.d) {
@@ -1583,7 +1558,7 @@ const Calculator: React.FC = () => {
         >
           <div 
             ref={keysRootRef}
-            className={`calc-container relative w-[504px] h-[1000px] rounded-[60px] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.7)] overflow-hidden${flashMap ? ' flash-map-on' : ''}`}
+            className="calc-container relative w-[504px] h-[1000px] rounded-[60px] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.7)] overflow-hidden"
             style={{ 
               backgroundImage: `url(${calculatorImg})`,
               backgroundSize: '100% 100%', 
@@ -1593,8 +1568,7 @@ const Calculator: React.FC = () => {
           >
         
         <div 
-          onClick={handleDebugToggle}
-          className="lcd-screen absolute top-[148px] left-[68px] w-[368px] h-[166px] bg-[#94a394] bg-gradient-to-br from-[#a8b8a8] to-[#8e9e8e] px-[14px] pt-[22px] pb-[10px] flex flex-col justify-start font-mono box-border z-[60] cursor-pointer rounded-[4px] overflow-hidden shadow-[inset_1px_1px_4px_rgba(0,0,0,0.3)] after:content-[''] after:absolute after:inset-0 after:bg-[radial-gradient(rgba(0,0,0,0.03)_1px,transparent_0)] after:bg-[length:3.5px_3.5px] after:pointer-events-none after:z-10"
+          className="lcd-screen absolute top-[148px] left-[68px] w-[368px] h-[166px] bg-[#94a394] bg-gradient-to-br from-[#a8b8a8] to-[#8e9e8e] px-[14px] pt-[22px] pb-[10px] flex flex-col justify-start font-mono box-border z-[60] rounded-[4px] overflow-hidden shadow-[inset_1px_1px_4px_rgba(0,0,0,0.3)] after:content-[''] after:absolute after:inset-0 after:bg-[radial-gradient(rgba(0,0,0,0.03)_1px,transparent_0)] after:bg-[length:3.5px_3.5px] after:pointer-events-none after:z-10"
         >
           <div className="status-bar absolute top-0 left-0 right-0 h-5 px-[10px] text-[8px] font-black flex justify-between items-center z-20 pointer-events-none font-sans tracking-[-0.3px] bg-black/5 border-b border-black/10">
             <div className={`status-item ${isShift ? 'active' : 'opacity-10'}`}>S</div>
@@ -1640,8 +1614,8 @@ const Calculator: React.FC = () => {
         {renderMappingKey('sqrt', withFlash(handleSquareRootKey, '√'), 'sci sr2 sc2')}
         {renderMappingKey('sqr', withFlash(handleSquareKey, 'x²'), 'sci sr2 sc3')}
         {renderMappingKey('pwr', withFlash(handlePowerKey, 'xⁿ'), 'sci sr2 sc4')}
-        {renderMappingKey('log10', withFlash(() => handleOpKey('log10(‸)', '10^(‸)'), 'log'), 'sci sr2 sc5')}
-        {renderMappingKey('ln', withFlash(() => handleOpKey('ln(‸)', 'e^(‸)'), 'ln'), 'sci sr2 sc6')}
+        {renderMappingKey('log10', withFlash(() => handleOpKey('log10(‸', '10^(‸)'), 'log'), 'sci sr2 sc5')}
+        {renderMappingKey('ln', withFlash(() => handleOpKey('ln(‸', 'e^(‸)'), 'ln'), 'sci sr2 sc6')}
 
         {renderMappingKey('A', withFlash(() => handleAlphaVar('A'), '(-)'), 'sci sr3 sc1')}
         {renderMappingKey('B', withFlash(() => handleAlphaVar('B'), '°\'"'), 'sci sr3 sc2')}
@@ -1702,22 +1676,13 @@ const Calculator: React.FC = () => {
         {renderMappingKey('sub', withFlash(() => handleOpKey('-', 'rec'), '-'), 'num nr3 nc5')}
         
         {renderMappingKey('0', withFlash(() => {
-          if (isShift) { handleInput('Rnd(‸)'); setIsShift(false); }
+          if (isShift) { handleInput('Rnd(‸'); setIsShift(false); }
           else handleInput('0');
         }, '0'), 'num nr4 nc1')}
         {renderMappingKey('dot', withFlash(handleDotKey, '.'), 'num nr4 nc2')}
         {renderMappingKey('exp', withFlash(handleExpKey, '×10ˣ'), 'num nr4 nc3')}
         {renderMappingKey('ans', withFlash(() => handleInput('Ans'), 'Ans'), 'num nr4 nc4')}
         {renderMappingKey('solve', withFlash(solve, '='), 'num nr4 nc5')}
-
-        <FlashMapLayer
-          styles={keyStyles}
-          onChange={setKeyStyles}
-          scale={scale}
-          enabled={flashMap}
-          onToggle={() => setFlashMap(v => !v)}
-          onReset={resetFlashMap}
-        />
         </div>
       </div>
     </div>
