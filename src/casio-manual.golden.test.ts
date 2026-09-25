@@ -5,7 +5,18 @@ import { collectSolvePromptVars, expressionHasSolveUnknown, moveCompCursorRight,
 import { chipFamily, renderMiniButton } from './historyKeys.tsx';
 import { liveOperationSequence, setupCommitSequence } from './historyOps.ts';
 import { evaluateExpression, toFraction } from './evaluator.ts';
-import { CalcError, calcErrorLabel } from './types.ts';
+import {
+  CalcError,
+  calcComplex,
+  calcErrorLabel,
+  calcInteger,
+  calcPrimary,
+  complexAbs,
+  complexArg,
+  complexToPolar,
+  complexToRect,
+  conjugate,
+} from './types.ts';
 import { appendStatRowIfRoom, calculateStatVars, getStatMaxRows, StatDataScreen } from './modes/stat.tsx';
 import { EqnQuadEntry, EqnQuadScreen, EqnResultValue, solveQuadratic } from './modes/eqn.tsx';
 import { formatMath, toLaTeX } from './display.tsx';
@@ -16,7 +27,7 @@ import type { AngleMode, Vars } from './types.ts';
 const EMPTY_VARS: Vars = { A: 0, B: 0, C: 0, D: 0, E: 0, F: 0, X: 0, Y: 0, M: 0 };
 
 function evalComp(expr: string, angleMode: AngleMode = 'DEG', fmt?: DisplayFormat): number {
-  return evaluateExpression(expr, { ...EMPTY_VARS }, 0, angleMode, {}, fmt);
+  return calcPrimary(evaluateExpression(expr, { ...EMPTY_VARS }, 0, angleMode, {}, fmt));
 }
 
 describe('Casio fx-991ES PLUS sample operations', () => {
@@ -227,6 +238,16 @@ describe('vis-no-literal / ir-leak — IR stems never reach the LCD', () => {
     expect(html.replace(/<[^>]+>/g, '')).toBe('sin(30');
   });
 
+  it('Pol/Rec insert as Pol( / Rec( with no built-in comma', () => {
+    const polOpen = formatMath('pol(‸').replace(/<[^>]+>/g, '');
+    const recOpen = formatMath('rec(‸').replace(/<[^>]+>/g, '');
+    expect(polOpen).toBe('Pol(');
+    expect(recOpen).toBe('Rec(');
+    expect(polOpen).not.toContain(',');
+    expect(formatMath('pol(3,4)').replace(/<[^>]+>/g, '')).toBe('Pol(3,4)');
+    expect(formatMath('rec(2,0)').replace(/<[^>]+>/g, '')).toBe('Rec(2,0)');
+  });
+
   it('open log / ln / hyp omit the closing paren; abs is | |', () => {
     expect(formatMath('log10(100‸').replace(/<[^>]+>/g, '')).toBe('log(100');
     expect(formatMath('ln(2‸').replace(/<[^>]+>/g, '')).toBe('ln(2');
@@ -282,20 +303,72 @@ describe('Smoke blockers — log10, memory, EQN no-real', () => {
   it('RCL A works when STAT type is null (no NaN A/B/C overlay)', () => {
     const empty = calculateStatVars(null, []);
     expect(empty.A).toBeUndefined();
-    expect(evaluateExpression('A', { ...EMPTY_VARS, A: 5 }, 0, 'DEG', empty)).toBe(5);
+    expect(calcPrimary(evaluateExpression('A', { ...EMPTY_VARS, A: 5 }, 0, 'DEG', empty))).toBe(5);
   });
 
   it('EQN negative discriminant shows the imaginary pair', () => {
     const roots = solveQuadratic(1, 0, 1);
     expect(roots).toHaveLength(2);
     expect(roots[0].label).toBe('X1 =');
-    expect(roots[0].val).toBeCloseTo(0, 10);
-    expect(roots[0].imag).toBeCloseTo(1, 10);
-    expect(roots[1].imag).toBeCloseTo(-1, 10);
+    expect(roots[0].value.kind).toBe('complex');
+    expect(roots[0].value.kind === 'complex' && roots[0].value.re).toBeCloseTo(0, 10);
+    expect(roots[0].value.kind === 'complex' && roots[0].value.im).toBeCloseTo(1, 10);
+    expect(roots[1].value.kind === 'complex' && roots[1].value.im).toBeCloseTo(-1, 10);
     const html = renderToStaticMarkup(React.createElement(EqnResultValue, { results: roots, resultIdx: 0 }));
     expect(html).toContain('>i<');
     expect(html).not.toMatch(/>Error</);
     expect(html).not.toMatch(/no real/i);
+  });
+});
+
+describe('debt-value — CalcValue', () => {
+  it('everyday COMP stays a real IEEE payload', () => {
+    const v = evaluateExpression('sin(30)', { ...EMPTY_VARS }, 0, 'DEG', {});
+    expect(v.kind).toBe('real');
+    expect(calcPrimary(v)).toBeCloseTo(0.5, 10);
+  });
+
+  it('Pol returns pair r,θ and still writes X,Y', () => {
+    const scope = { ...EMPTY_VARS };
+    const v = evaluateExpression('pol(3,4)', scope, 0, 'DEG', {});
+    expect(v.kind).toBe('pair');
+    expect(v.kind === 'pair' && v.pair).toBe('pol');
+    expect(v.kind === 'pair' && v.a).toBeCloseTo(5, 10);
+    expect(v.kind === 'pair' && v.b).toBeCloseTo(53.13010235, 6);
+    expect(scope.X).toBeCloseTo(5, 10);
+    expect(scope.Y).toBeCloseTo(53.13010235, 6);
+  });
+
+  it('Rec returns pair X,Y', () => {
+    const scope = { ...EMPTY_VARS };
+    const v = evaluateExpression('rec(2,0)', scope, 0, 'DEG', {});
+    expect(v.kind).toBe('pair');
+    expect(v.kind === 'pair' && v.pair).toBe('rec');
+    expect(v.kind === 'pair' && v.a).toBeCloseTo(2, 10);
+    expect(v.kind === 'pair' && v.b).toBeCloseTo(0, 10);
+  });
+
+  it('nested Pol stays a real (only the top-level call is a pair)', () => {
+    const v = evaluateExpression('2+pol(3,4)', { ...EMPTY_VARS }, 0, 'DEG', {});
+    expect(v.kind).toBe('real');
+    expect(calcPrimary(v)).toBeCloseTo(7, 10);
+  });
+
+  it('conjugate / arg / polar stay on CalcComplex (CMPLX later)', () => {
+    const z = calcComplex(3, 4);
+    expect(conjugate(z)).toEqual({ kind: 'complex', re: 3, im: -4, form: 'rect' });
+    expect(complexAbs(z)).toBeCloseTo(5, 10);
+    expect(complexArg(z)).toBeCloseTo(Math.atan2(4, 3), 12);
+    const polar = complexToPolar(z);
+    expect(polar.form).toBe('polar');
+    expect(polar.re).toBeCloseTo(5, 10);
+    const back = complexToRect(polar);
+    expect(back.re).toBeCloseTo(3, 10);
+    expect(back.im).toBeCloseTo(4, 10);
+  });
+
+  it('reserved BASE-N integer constructor exists without changing COMP', () => {
+    expect(calcInteger(255, 16)).toEqual({ kind: 'integer', n: 255, base: 16 });
   });
 });
 
@@ -325,8 +398,8 @@ describe('Phase 2 — STAT FREQ and EQN quadratic', () => {
   it('EQN quadratic: X² − 5X + 6 = 0 → X1=3, X2=2', () => {
     const roots = solveQuadratic(1, -5, 6);
     expect(roots).toHaveLength(2);
-    expect(roots[0].val).toBeCloseTo(3, 10);
-    expect(roots[1].val).toBeCloseTo(2, 10);
+    expect(calcPrimary(roots[0].value)).toBeCloseTo(3, 10);
+    expect(calcPrimary(roots[1].value)).toBeCloseTo(2, 10);
   });
 
   it('EQN quadratic editor has a/b/c labels, cell caret, and bottom-left entry', () => {

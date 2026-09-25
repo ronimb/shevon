@@ -1,26 +1,26 @@
 import React from 'react';
-import type { EqnResult } from '../types.ts';
+import { calcComplex, calcReal, type EqnResult } from '../types.ts';
 import { EditorCaret, formatComplexPair, formatResultNumber } from '../display.tsx';
 
 export function solveQuadratic(a: number, b: number, c: number): EqnResult[] {
   if (a === 0) {
-    if (b === 0) return [{ label: "No solution", val: NaN }];
-    else return [{ label: "X =", val: -c / b }];
+    if (b === 0) return [{ label: "No solution", value: calcReal(NaN) }];
+    else return [{ label: "X =", value: calcReal(-c / b) }];
   }
   let disc = b * b - 4 * a * c;
   if (disc < 0) {
     const real = -b / (2 * a);
     const imag = Math.sqrt(-disc) / (2 * a);
     return [
-      { label: "X1 =", val: real, imag },
-      { label: "X2 =", val: real, imag: -imag },
+      { label: "X1 =", value: calcComplex(real, imag) },
+      { label: "X2 =", value: calcComplex(real, -imag) },
     ];
   } else if (disc === 0) {
-    return [{ label: "X =", val: -b / (2 * a) }];
+    return [{ label: "X =", value: calcReal(-b / (2 * a)) }];
   } else {
     return [
-      { label: "X1 =", val: (-b + Math.sqrt(disc)) / (2 * a) },
-      { label: "X2 =", val: (-b - Math.sqrt(disc)) / (2 * a) }
+      { label: "X1 =", value: calcReal((-b + Math.sqrt(disc)) / (2 * a)) },
+      { label: "X2 =", value: calcReal((-b - Math.sqrt(disc)) / (2 * a)) },
     ];
   }
 }
@@ -95,17 +95,19 @@ export function EqnResultLabel({ results, resultIdx }: { results: EqnResult[]; r
 
 export function EqnResultValue({ results, resultIdx }: { results: EqnResult[]; resultIdx: number }) {
   let res = results[resultIdx];
-  if (res?.imag !== undefined && Math.abs(res.imag) > 1e-12) {
-    return <div className="decimal-result">{formatComplexPair(res.val, res.imag)}</div>;
+  const v = res?.value;
+  if (v?.kind === 'complex' && Math.abs(v.im) > 1e-12) {
+    return <div className="decimal-result">{formatComplexPair(v.re, v.im)}</div>;
   }
   // Message-only outcomes (no solution) already put the text on the input
   // line via EqnResultLabel — don't also paint a bare "Error".
-  if (res?.val === undefined || isNaN(res.val)) {
+  const n = v?.kind === 'real' ? v.re : v?.kind === 'complex' ? v.re : NaN;
+  if (v === undefined || isNaN(n)) {
     return <div className="decimal-result" />;
   }
   return (
     <div className="decimal-result">
-      {formatResultNumber(res.val)}
+      {formatResultNumber(n)}
     </div>
   );
 }

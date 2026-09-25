@@ -209,6 +209,12 @@ body {
 }
 
 .decimal-result { font-size: 2.2rem; font-weight: bold; letter-spacing: -1.2px; }
+.pair-result {
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: -0.4px;
+    white-space: nowrap;
+}
 .solve-result {
     display: flex;
     flex-direction: column;

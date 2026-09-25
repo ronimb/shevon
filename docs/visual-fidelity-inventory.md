@@ -79,7 +79,7 @@ Ids match [`issues.md`](../issues.md) and [`roadmap.md`](../roadmap.md).
 | `dist-empty` / `vis-menus` | Distribution submenu | Menu label exists but opens empty submenu | `stat.tsx` |
 | `lying-menus` / `vis-menus` | MODE 2/4/6/7/8 | Listed in MODE menu but silently fall back to COMP | `lcd.tsx`, `modeRouter.ts` |
 | `surd-pi-form` / `vis-result` | Surd `n√m` result | Input template exists; no surd result form | `display.tsx` |
-| `pol-rec-line` / `vis-result` | Pol/Rec dual-line r,θ | Input templates exist; returns single scalar | `evaluator.ts` |
+| `pol-rec-line` / `vis-result` | Pol/Rec single-line r,θ / x,y | `Pol(` / `Rec(` (comma typed); result `r=…, θ=…` or bottom-right `x=…, y=…` | `evaluator.ts`, `lcd.tsx`, `display.tsx` |
 | `err-jump` / `vis-errors` | Error ◀▶ | Syntax / Math jump to `CalcError.offset` (E-40). Stack / Argument screens still missing | `lcd.tsx`, `modeRouter.ts` |
 | `lineio-display` / `comp-lineio` | MthIO / LineIO | SETUP shows options; not functional | `lcd.tsx`, `modeRouter.ts` |
 
@@ -164,7 +164,7 @@ Status bar CSS: `index.css`.
 | π | SHIFT+×10ˣ inserts `π` | Decimal unless integer |
 | Scientific ×10ⁿ | Raw `×10^` text | Yes via `SciNotation` |
 | Complex a+bi | No (CMPLX unused) | EQN quadratic only (`formatComplexPair`) |
-| Pol/Rec r,θ | `pol(‸,)` / `rec(‸,)` templates | Single scalar only |
+| Pol/Rec r,θ | `pol(‸` / `rec(‸` (comma typed) | Single line `r=…, θ=…` / bottom-right `x=…, y=…` |
 | S⇔D | — | Yes in Norm mode when `showingResult` |
 | ENG | — | Yes |
 | DMS | ° ′ ″ | Yes |

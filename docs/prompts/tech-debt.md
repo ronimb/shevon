@@ -8,7 +8,7 @@ of truth: `roadmap.md` **Now**.
 | 0 | (landed) | `p2-solve` / `CalcError` | — |
 | A | (landed) | `debt-source-map` | — |
 | B | (landed) | `debt-shell` | — |
-| C | `debt-value` | [`debt-value.md`](debt-value.md) | start here |
+| C | (landed) | `debt-value` | — |
 | — | sanity | [`sanity-landed.md`](sanity-landed.md) | after every slice |
 
 Then remaining Phase 2 (`p2-edit` …), then `p4-packaging`. Phase 3 stays
@@ -22,6 +22,5 @@ plan. Chat markdown links often do nothing on Windows — use Ctrl+P or the
 tech-debt canvas buttons.
 ---
 
-Follow `docs/principles.md` and `roadmap.md` Now. Open the slice prompt
-named in the table for this chat (`debt-value.md` if starting fresh).
-Do not start remaining Phase 2, packaging, or Phase 3.
+Follow `docs/principles.md` and `roadmap.md` Now. Slices A–C have landed.
+Do not start remaining Phase 2, packaging, or Phase 3 from a debt chat.

@@ -20,10 +20,6 @@ import {
 export default function ShevonRoadmap() {
   const dispatch = useCanvasAction();
 
-  const start = (prompt: string) => {
-    dispatch({ type: "newComposerChat", userPrompt: prompt });
-  };
-
   return (
     <Stack gap={28}>
       <Stack gap={8}>
@@ -79,7 +75,7 @@ export default function ShevonRoadmap() {
         <Stat value="Phase 2" label="Current phase" tone="warning" />
         <Stat value="5" label="Phase 2 items open" />
         <Stat value="15" label="Open issues" tone="warning" />
-        <Stat value="36/76" label="Coverage done" />
+        <Stat value="37/76" label="Coverage done" />
       </Row>
 
       <UsageBar
@@ -146,36 +142,27 @@ export default function ShevonRoadmap() {
       <H2>Now — tech debt</H2>
       <Card>
         <CardHeader trailing={<Pill size="sm" active>this program</Pill>}>
-          Slices A and B landed; C CalcValue next
+          Slices A–C landed
         </CardHeader>
         <CardBody>
           <Stack gap={10}>
             <Text>
-              A and B landed: source-map / E-40 jump, and the Calculator
-              shell split. Next: `CalcValue` (`debt-value`). Then remaining
-              Phase 2, then `p4-packaging`. LineIO is not debt.
+              A, B, and C landed: source-map / E-40 jump, the Calculator
+              shell split, and `CalcValue` (`real` | `complex` | `pair`).
+              Then remaining Phase 2, then `p4-packaging`. LineIO is not
+              debt.
             </Text>
             <Row gap={8} wrap>
-              <Button
-                variant="primary"
-                onClick={() =>
-                  start(
-                    "Follow docs/prompts/debt-value.md exactly. Slice C only (debt-value). Afterward run docs/prompts/sanity-landed.md. Do not start Phase 2 leftovers or packaging.",
-                  )
-                }
-              >
-                Start tech debt (slice C)
-              </Button>
               <Button
                 variant="secondary"
                 onClick={() =>
                   dispatch({
                     type: "openFile",
-                    path: "docs/prompts/debt-value.md",
+                    path: "docs/prompts/sanity-landed.md",
                   })
                 }
               >
-                Open slice C prompt
+                Sanity checklist
               </Button>
               <Button
                 variant="ghost"
@@ -188,17 +175,6 @@ export default function ShevonRoadmap() {
               >
                 Program index
               </Button>
-              <Button
-                variant="ghost"
-                onClick={() =>
-                  dispatch({
-                    type: "openFile",
-                    path: "docs/prompts/sanity-landed.md",
-                  })
-                }
-              >
-                Sanity checklist
-              </Button>
             </Row>
           </Stack>
         </CardBody>
@@ -207,8 +183,8 @@ export default function ShevonRoadmap() {
       <H2>Phase 2 remaining</H2>
       <Text tone="secondary">
         After A/B/C and sanity. Close these before opening Phase 3. Ids
-        match `roadmap.md`. Do not start these from this list while debt
-        is open.
+        match `roadmap.md`. Debt slices have landed; do not start these
+        from a debt chat.
       </Text>
       <TodoListCard
         defaultExpanded
@@ -270,7 +246,7 @@ export default function ShevonRoadmap() {
           ["vis-elements", "Missing captions, dual-line answers, leftover unlabeled editors"],
           ["vis-indicators", "◀▶ + COMP ▲▼ landed. Remaining: STAT ▲▼, Disp; CMPLX/MAT/VCT with Phase 3"],
           ["vis-menus", "Not a standalone pass — fix when the matching feature ships"],
-          ["vis-result", "Surd/π forms, complex a+bi, dual-line Pol/Rec (Phase 4 / later)"],
+          ["vis-result", "Surd/π forms, complex a+bi (Pol/Rec dual-line landed with debt-value)"],
           ["vis-errors", "◀▶ jump landed (debt-source-map). Stack / Argument screens still open"],
           ["vis-no-literal", "Landed: trig/hyp/ln painted; unclosed templates no longer leak IR"],
           ["vis-checklist", "Element + behavior parity vs the manual figure"],

@@ -1,5 +1,6 @@
 import React from 'react';
-import type { AngleMode, CalcMode, DisplayMode, EqnResult, HistoryItem, StatEntry, StatType, Vars } from './types.ts';
+import type { AngleMode, CalcMode, CalcValue, DisplayMode, EqnResult, HistoryItem, StatEntry, StatType, Vars } from './types.ts';
+import { pairLabels } from './types.ts';
 import { CalcError, calcErrorLabel } from './types.ts';
 import { formatMath, formatResultNumber, SciNotation } from './display.tsx';
 import { formatEngineering, formatDMS, type DisplayFormat } from './format.ts';
@@ -95,6 +96,7 @@ export interface LcdProps {
   prevPromptValue: string;
   currentInput: string;
   ans: number;
+  result: CalcValue;
   history: HistoryItem[];
   replayIndex: number;
   eqnCoeffs: string[];
@@ -293,6 +295,18 @@ export function LcdScreen(p: LcdProps) {
     }
 
     if (p.showingResult) {
+      if (p.result.kind === 'pair') {
+        const [la, lb] = pairLabels(p.result);
+        const rec = p.result.pair === 'rec';
+        return (
+          <div className={`pair-result w-full ${rec ? 'text-right' : 'text-left'}`}>
+            <span>{la}=</span>
+            {formatResultNumber(p.result.a, p.displayFormat)}
+            <span>, {lb}=</span>
+            {formatResultNumber(p.result.b, p.displayFormat)}
+          </div>
+        );
+      }
       if (p.engMode !== null) {
         const eng = formatEngineering(p.ans, p.engMode);
         return <div className="decimal-result"><SciNotation mantissa={eng.mantissa} exponent={eng.exponent} /></div>;
@@ -369,7 +383,7 @@ export function LcdScreen(p: LcdProps) {
         {renderInput()}
       </div>
 
-      <div id="result-text" className={`flex items-end grow text-[#1a1a1a] pb-1 pointer-events-none ${p.calcMode === 'EQN_QUAD' || p.solveScreen === 'result' ? 'justify-start' : 'justify-end'} ${menu ? 'hidden' : ''}`}>
+      <div id="result-text" className={`flex items-end grow text-[#1a1a1a] pb-1 pointer-events-none ${p.calcMode === 'EQN_QUAD' || p.solveScreen === 'result' || (p.showingResult && p.result.kind === 'pair' && p.result.pair === 'pol') ? 'justify-start' : 'justify-end'} ${menu ? 'hidden' : ''}`}>
         {renderResult()}
       </div>
     </div>

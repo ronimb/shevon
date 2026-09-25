@@ -1,6 +1,6 @@
 import { parse, ParseError, type AstNode } from './parser.ts';
 import { DEFAULT_FORMAT, roundToFormat, type DisplayFormat } from './format.ts';
-import { CalcError, type AngleMode, type Vars } from './types.ts';
+import { CalcError, calcPair, calcReal, type AngleMode, type CalcValue, type Vars } from './types.ts';
 
 /** Rewrite text plus a parallel map: map[i] is the caret-stripped original index of text[i]. */
 type Mapped = { text: string; map: number[] };
@@ -198,7 +198,7 @@ export const resultDisplayMode = (val: number): 'decimal' | 'fraction' => {
   return f !== null && f.d > 1 ? 'fraction' : 'decimal';
 };
 
-export const evaluateExpression = (expr: string, scope: Vars, ans: number, angleMode: AngleMode, statVars: Vars, displayFormat: DisplayFormat = DEFAULT_FORMAT): number => {
+export const evaluateExpression = (expr: string, scope: Vars, ans: number, angleMode: AngleMode, statVars: Vars, displayFormat: DisplayFormat = DEFAULT_FORMAT): CalcValue => {
     const toRad = (x: number) => {
     if (angleMode === 'DEG') return x * Math.PI / 180;
     if (angleMode === 'GRA') return x * Math.PI / 200;
@@ -870,10 +870,21 @@ export const evaluateExpression = (expr: string, scope: Vars, ans: number, angle
     if (!Number.isFinite(val) || Math.abs(val) >= 1e100) {
       throw new CalcError('math', ast.offset);
     }
-    return val;
+    return wrapCalcValue(val, ast, scope);
   } catch (e) {
     if (e instanceof CalcError) throw e;
     if (e instanceof ParseError) throw new CalcError('syntax', toOrig(mapped.map, e.pos, origLen));
     throw new CalcError('syntax');
   }
 };
+
+/** Top-level Pol/Rec is a pair; everything else stays IEEE `real`. */
+function wrapCalcValue(val: number, ast: AstNode, scope: Vars): CalcValue {
+  if (ast.type === 'call' && ast.name === '__pol') {
+    return calcPair('pol', val, Number(scope.Y));
+  }
+  if (ast.type === 'call' && ast.name === '__rec') {
+    return calcPair('rec', val, Number(scope.Y));
+  }
+  return calcReal(val);
+}

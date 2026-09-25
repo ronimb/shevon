@@ -1,6 +1,9 @@
 /**
  * Casio-style number formatting and display-format state.
  *
+ * These helpers consume the IEEE `real` payload (`CalcValue.kind === 'real'`).
+ * Complex, pair, BASE-N integer, and matrix dispatch stays at the LCD.
+ *
  * The fx-991ES PLUS SETUP menu lets the user pick how results are displayed:
  *   - Fix n   (n = 0..9):  fixed number of decimal places
  *   - Sci n   (n = 1..10): scientific notation with n significant digits

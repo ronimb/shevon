@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { parse, tokenize, ParseError, insertImplicitMultiply, type AstNode } from './parser.ts';
 import { evaluateExpression } from './evaluator.ts';
-import type { AngleMode, Vars } from './types.ts';
+import { calcPrimary, type AngleMode, type Vars } from './types.ts';
 
 const EMPTY_VARS: Vars = { A: 0, B: 0, C: 0, D: 0, E: 0, F: 0, X: 0, Y: 0, M: 0 };
 
 function evalComp(expr: string, angleMode: AngleMode = 'DEG', vars: Vars = EMPTY_VARS): number {
-  return evaluateExpression(expr, { ...vars }, 0, angleMode, {});
+  return calcPrimary(evaluateExpression(expr, { ...vars }, 0, angleMode, {}));
 }
 
 function shape(node: AstNode): unknown {

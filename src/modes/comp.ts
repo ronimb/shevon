@@ -1,6 +1,6 @@
 import { evaluateExpression, findPrecedingOperand } from '../evaluator.ts';
 import { CURSOR_PATS, DELETE_STEMS, PATS } from '../keys.ts';
-import { CalcError, type AngleMode, type Vars } from '../types.ts';
+import { CalcError, calcPrimary, type AngleMode, type Vars } from '../types.ts';
 
 /** SOLVE unknown is X. Dummy template `x` (∫ / d/dx / Σ) does not count. */
 export function expressionHasSolveUnknown(expr: string): boolean {
@@ -72,7 +72,7 @@ export function newtonSolveX(expr: string, vars: Vars, ans: number, angleMode: A
 
   const evalAt = (xx: number, step: boolean): number => {
     try {
-      return evaluateExpression(raw, { ...vars, X: xx }, ans, angleMode, statVars);
+      return calcPrimary(evaluateExpression(raw, { ...vars, X: xx }, ans, angleMode, statVars));
     } catch (e) {
       if (step && e instanceof CalcError && e.kind === 'math') {
         throw new CalcError('cantSolve');

@@ -4,7 +4,7 @@ import type { KeyStyle } from './types.ts';
 import { INITIAL_KEY_STYLES } from './keys.ts';
 import { renderMiniButton } from './historyKeys.tsx';
 import { isReplayableHistory, liveOperationSequence } from './historyOps.ts';
-import { formatMath } from './display.tsx';
+import { formatCalcPlain, formatMath } from './display.tsx';
 import { LcdScreen } from './lcd.tsx';
 import { useKeyFlash, usePcKeyboard } from './keyboard.ts';
 import { useCalculatorState } from './useCalculatorState.ts';
@@ -237,6 +237,7 @@ const Calculator: React.FC = () => {
           prevPromptValue={store.prevPromptValue}
           currentInput={store.currentInput}
           ans={store.ans}
+          result={store.lastValue}
           history={store.history}
           replayIndex={store.replayIndex}
           eqnCoeffs={store.eqnCoeffs}
@@ -401,7 +402,7 @@ const Calculator: React.FC = () => {
                         )}
                         {item.result !== null && (
                         <div className="flex-shrink-0 text-white text-xl font-black tracking-tighter tabular-nums opacity-90 border-l border-white/10 pl-3">
-                          {item.result.toLocaleString(undefined, { maximumFractionDigits: 10 })}
+                          {formatCalcPlain(item.result)}
                         </div>
                         )}
                       </div>
@@ -470,6 +471,7 @@ const Calculator: React.FC = () => {
                     <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">R</kbd> <span>Square Root</span></div>
                     <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">Q</kbd> <span>Square (x²)</span></div>
                     <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">^</kbd> <span>Power (xⁿ)</span></div>
+                    <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">,</kbd> <span>Comma (SHIFT ))</span></div>
                     <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">A</kbd> <span>Answer (Ans)</span></div>
                     <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">X</kbd> <span>Variable X (ALPHA ))</span></div>
                     <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">Y</kbd> <span>Variable Y (ALPHA S⇔D)</span></div>

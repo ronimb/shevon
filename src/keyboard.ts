@@ -154,6 +154,12 @@ export function usePcKeyboard(a: PcKeyboardActions) {
       else if (e.key === '/') { e.preventDefault(); press('div', cur.handleDivKey, '÷'); }
       else if (e.key === '(') { e.preventDefault(); press('paren-open', () => cur.handleParentheses('(', 'X', true), '('); }
       else if (e.key === ')') { e.preventDefault(); press('paren-close', () => cur.handleParentheses(')', 'Y', true), ')'); }
+      else if (e.key === ',') {
+        e.preventDefault();
+        cur.flashKey('paren-close');
+        recordShortcut(['SHIFT', ')']);
+        cur.handleInput(',');
+      }
       else if (e.key === '^' || (e.key === '6' && e.shiftKey)) {
         e.preventDefault();
         press('pwr', () => cur.handlePowerKey(true), 'xⁿ');

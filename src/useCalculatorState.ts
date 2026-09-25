@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import type { CalcMode, DisplayMode, AngleMode, StatType, StatEntry, EqnResult, HistoryItem, Vars } from './types.ts';
-import { CalcError } from './types.ts';
+import { CalcError, calcReal, type AngleMode, type CalcMode, type CalcValue, type DisplayMode, type EqnResult, type HistoryItem, type StatEntry, type StatType, type Vars } from './types.ts';
 import { DEFAULT_FORMAT, type DisplayFormat } from './format.ts';
 import type { SetupPrompt, SolveScreen } from './lcd.tsx';
 
@@ -41,7 +40,7 @@ export function useCalculatorState() {
     localStorage.setItem('calc_angle_mode', angleMode);
   }, [angleMode]);
 
-  const [lastValue, setLastValue] = useState<number>(0);
+  const [lastValue, setLastValue] = useState<CalcValue>(() => calcReal(0));
   const [showingResult, setShowingResult] = useState<boolean>(false);
   const [isShift, setIsShift] = useState<boolean>(false);
   const [isAlpha, setIsAlpha] = useState<boolean>(false);

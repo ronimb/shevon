@@ -13,7 +13,7 @@ Status is about **behavior**, not whether a menu label exists.
 | Missing | MODE/SETUP row is decorative, or the key is a no-op / literal text dump |
 
 Scheduled work: [`roadmap.md`](../roadmap.md). Defects: [`issues.md`](../issues.md).
-Refreshed 25 Sep 2026 from the roadmap, tests (86), and a code pass.
+Refreshed 25 Sep 2026 from the roadmap (`debt-value` landed), tests, and a code pass.
 
 ---
 
@@ -21,8 +21,8 @@ Refreshed 25 Sep 2026 from the roadmap, tests (86), and a code pass.
 
 | Status | Count |
 |--------|------:|
-| Done | 36 |
-| Partial | 16 |
+| Done | 37 |
+| Partial | 15 |
 | Missing | 24 |
 | **Total** | **76** |
 
@@ -96,7 +96,7 @@ MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
 | ∫ integration | E-14, E-15 | Done | Adaptive Gauss–Kronrod (G7–K15) | Time Out Error; COMP-only rule (backlog) |
 | d/dx derivative | E-14 | Done | Central difference + Richardson | Time Out |
 | Σ summation | E-14 | Partial | Integer loop; end capped at start+1000 | ±1e10 bounds; nested Pol/∫/d/dx/Σ ban |
-| Pol / Rec | E-14 | Partial | SHIFT + / −; writes X,Y; returns r or x only | Dual-line r,θ / X,Y result screen |
+| Pol / Rec | E-14 | Done | SHIFT + / −; writes X,Y; `Pol(` / `Rec(` (no built-in comma); `=` paints `r=…, θ=…` or bottom-right `x=…, y=…` | Nested Pol/Rec still a scalar (primary r or X) |
 | x! | E-15 | Done | SHIFT x⁻¹; factorial() | Casio max 69; we allow 170 |
 | Ran# / RanInt# | E-15 | Done | SHIFT . and ALPHA . wired; templates | — |
 | nPr / nCr | E-18 | Done | SHIFT × / ÷ wrap operand | Range checks from E-39 |
@@ -157,10 +157,10 @@ MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
 | Feature | Manual | Status | In the emulator | Gap |
 |---------|--------|--------|-----------------|-----|
 | Photo overlay + hitboxes | — | Done | Absolute keys; triple-click calibration; `calculator_new.png` | — |
-| PC keyboard | — | Partial | Enter, arrows, Shift/Alt, S/C/T/L/R/Q/A, X/Y vars | Letter keys steal typing; Shift hold vs overlay toggle |
+| PC keyboard | — | Partial | Enter, arrows, Shift/Alt, comma (SHIFT )), S/C/T/L/R/Q/A, X/Y vars | Letter keys steal typing; Shift hold vs overlay toggle |
 | History / LaTeX pane | — | Done | 50 items, Load, physical-key Show Keys; STO / MODE / SETUP actions | Not Casio behavior; keep as extra. Live Current keys strip is on top |
 | Electron + Pages + PWA | — | Partial | Scripts and workflow present | Verify portable exe, Pages deploy, and PWA install end-to-end |
-| Tests | E-16 examples | Partial | 70 golden + 16 parser = 86 | Remaining numbered sample operations in the PDF |
+| Tests | E-16 examples | Partial | Golden + parser + CalcValue (101 after debt-value) | Remaining numbered sample operations in the PDF |
 
 ---
 

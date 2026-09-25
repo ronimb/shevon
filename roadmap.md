@@ -36,8 +36,9 @@ Sanity: [`sanity-landed.md`](docs/prompts/sanity-landed.md).
 
 ### 1. Remaining engine tech debt (this program)
 
-`p2-solve` already landed typed `CalcError` (gap 1). `debt-source-map` and
-`debt-shell` have landed. One slice left. Do not start CMPLX / BASE-N / MATRIX
+`p2-solve` already landed typed `CalcError` (gap 1). `debt-source-map`,
+`debt-shell`, and `debt-value` have landed. Remaining Now work is sanity,
+then Phase 2 leftovers, then packaging. Do not start CMPLX / BASE-N / MATRIX
 or `p4-exact` here.
 
 - [x] `debt-source-map` — Source-map the IR rewrite; fill `CalcError.offset`;
@@ -48,10 +49,14 @@ or `p4-exact` here.
       keyboard, mode router). One state store. First consumer: STAT recall
       (`insertStatVar` in `modes/stat.tsx`) is extractable for `p2-stat-mode`.
       Was backlog “Architecture”.
-- [ ] `debt-value` — Evaluator returns `CalcValue` (`real` | `complex` |
-      `pair`), not a bare `number`. COMP decimals/fractions must look the
-      same. EQN a+bi uses the same type. Pol/Rec may become a pair
-      (`pol-rec-line`) if it falls out of the type. Surd/π stay `p4-exact`.
+- [x] `debt-value` — Evaluator returns `CalcValue` (`real` | `complex` |
+      `pair`), not a bare `number`. COMP decimals/fractions look the same.
+      EQN a+bi uses `complex` (no `imag?` side field). Pol/Rec returns
+      `pair` and paints a single line r=…, θ=… / x=…, y=…
+      (`pol-rec-line`). Helpers for
+      conjugate / arg / polar and reserved `integer` / `matrix` kinds sit
+      on the same type so CMPLX / BASE-N / MATRIX attach later. Surd/π
+      stay `p4-exact`.
 
 ### 2. Sanity check (landed functionality only)
 
@@ -96,8 +101,8 @@ Applies to **every** phase. Principles:
       MODE 2/4/6/7/8 → Phase 3; EQN 1/2/4 → `p2-eqn-linear` / `p2-eqn-cubic`;
       Dist → `p2-dist`. Until then the lie stands.
 - [ ] `vis-result` — Same result forms as the unit: S⇔D fraction/surd/π,
-      complex a+bi, ×10ⁿ, dual-line Pol/Rec r,θ. Fractions, mixed fractions,
-      sci, ENG, and DMS °′″ already work.
+      complex a+bi, ×10ⁿ. Dual-line Pol/Rec r,θ landed with `debt-value`.
+      Fractions, mixed fractions, sci, ENG, and DMS °′″ already work.
 - [ ] `vis-errors` — Math / Syntax ERROR E-40 ◀▶ jump-to-token landed
       (`debt-source-map`). Stack / Argument ERROR screens still missing —
       do not add them until a mode needs them.

@@ -1,5 +1,6 @@
 import React from 'react';
 import { DEFAULT_FORMAT, formatForDisplay, type DisplayFormat } from './format.ts';
+import { pairLabels, type CalcValue } from './types.ts';
 
 /**
  * Shared template table — the single source of truth for turning evaluator IR
@@ -75,6 +76,12 @@ interface TemplateSpec {
 /** Only paint `)` when the IR actually has one — user types the closer. */
 const parenBody = (inner: string, closed: boolean) => `(${inner}${closed ? ')' : ''}`;
 
+/** Pol/Rec: no built-in comma. Show `,` only after the user types one (2nd arg). */
+const commaArgs = (a: string[]) =>
+  a.length > 1 ? `${slot(a[0])},${slot(a[1] || '')}` : slot(a[0]);
+const commaArgsPlain = (a: string[]) =>
+  a.length > 1 ? `${lx(a[0])},${lx(a[1])}` : lx(a[0]);
+
 /** LCD function-name glyph (sin, ln, Abs, Pol, …) — never the raw `name(` stem. */
 const namedFn = (label: string) => (a: string[], closed: boolean) =>
   `<span class="trig-fun">${label}</span>${parenBody(slot(a[0]), closed)}`;
@@ -111,13 +118,13 @@ const TEMPLATE_SPECS: TemplateSpec[] = [
   },
   {
     stem: 'pol',
-    html: (a, closed) => `<span class="trig-fun">Pol</span>${parenBody(`${slot(a[0])},${slot(a[1] || '')}`, closed)}`,
-    latex: a => `\\operatorname{Pol}(${lx(a[0])},${lx(a[1])})`,
+    html: (a, closed) => `<span class="trig-fun">Pol</span>${parenBody(commaArgs(a), closed)}`,
+    latex: a => `\\operatorname{Pol}(${commaArgsPlain(a)})`,
   },
   {
     stem: 'rec',
-    html: (a, closed) => `<span class="trig-fun">Rec</span>${parenBody(`${slot(a[0])},${slot(a[1] || '')}`, closed)}`,
-    latex: a => `\\operatorname{Rec}(${lx(a[0])},${lx(a[1])})`,
+    html: (a, closed) => `<span class="trig-fun">Rec</span>${parenBody(commaArgs(a), closed)}`,
+    latex: a => `\\operatorname{Rec}(${commaArgsPlain(a)})`,
   },
   {
     stem: 'mix',
@@ -363,6 +370,20 @@ export function formatComplexPair(real: number, imag: number): string {
   const imagAbs = unit ? 'i' : `${trim(Math.abs(imag))}i`;
   if (near0(real)) return imag < 0 ? `-${imagAbs}` : imagAbs;
   return `${trim(real)}${imag < 0 ? '-' : '+'}${imagAbs}`;
+}
+
+/** History-pane / replay text. LCD formatters still consume `real` via calcPrimary. */
+export function formatCalcPlain(v: CalcValue): string {
+  switch (v.kind) {
+    case 'real':
+      return String(v.re);
+    case 'complex':
+      return formatComplexPair(v.re, v.im);
+    case 'pair': {
+      const [la, lb] = pairLabels(v);
+      return `${la}=${v.a}, ${lb}=${v.b}`;
+    }
+  }
 }
 
 export const formatResultNumber = (

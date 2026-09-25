@@ -89,9 +89,11 @@ Status: `[ ]` open · `[x]` fixed (move to **Closed** at the next wrap-up).
       pass. Not a Math ERROR / evaluator bug.
       **Associated:** `vis-no-literal` (Now visual slice). Prior review:
       agent transcript `65992cab-7adc-41c2-8ade-4549a8e80074`.
-- [ ] `pol-rec-line` — Pol/Rec input templates exist; the result is a single
-      scalar, not the dual-line r,θ / X,Y screen.
-      **Associated:** `vis-result`.
+- [x] `pol-rec-line` — Pol/Rec insert as `pol(` / `rec(` (no built-in
+      comma). Top-level `=` paints a single line: `r=…, θ=…` (Pol) or
+      right-aligned bottom `x=…, y=…` (Rec). Nested Pol/Rec still
+      contributes the primary scalar and writes X,Y.
+      **Associated:** `vis-result`, `debt-value`.
 - [ ] `surd-pi-form` — Surd input templates exist; results fall back to
       decimal (or an exact p/q). π stays decimal unless the value is an integer.
       **Associated:** `p4-exact`, `vis-result`.

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
-import { CalcError } from './types.ts';
-import type { Vars } from './types.ts';
+import { CalcError, calcPrimary, calcReal } from './types.ts';
+import type { CalcValue, Vars } from './types.ts';
 import { evaluateExpression, findPrecedingOperand, resultDisplayMode } from './evaluator.ts';
 import { formatMath, toLaTeX } from './display.tsx';
 import { DEFAULT_FORMAT } from './format.ts';
@@ -211,6 +211,7 @@ export function useModeRouter(s: CalculatorStore) {
       const resetMemory = () => {
         s.setVars({ A: 0, B: 0, C: 0, D: 0, E: 0, F: 0, X: 0, Y: 0, M: 0 });
         s.setAns(0);
+        s.setLastValue(calcReal(0));
         s.setHistory([]);
       };
       if (val === '1') resetSetup();
@@ -304,8 +305,9 @@ export function useModeRouter(s: CalculatorStore) {
     }
   }, [s]);
 
-  const applyEvalSuccess = useCallback((evalRes: { val: number; raw: string; finalSequence: string[] }) => {
+  const applyEvalSuccess = useCallback((evalRes: { val: CalcValue; raw: string; finalSequence: string[] }) => {
     const { val, raw, finalSequence } = evalRes;
+    const n = calcPrimary(val);
     s.prependHistory({
       rawInput: raw,
       displayInput: formatMath(raw),
@@ -314,14 +316,14 @@ export function useModeRouter(s: CalculatorStore) {
       sequence: finalSequence,
       kind: 'calc',
     });
-    s.setAns(val);
+    s.setAns(n);
     s.setCurrentSequence([]);
     s.setLastValue(val);
     s.setShowingResult(true);
     s.setEngMode(null);
     s.setDmsResult(false);
     s.setReplayIndex(-1);
-    s.setDisplayMode(resultDisplayMode(val));
+    s.setDisplayMode(resultDisplayMode(n));
   }, [s]);
 
   const runSolveNewton = useCallback((scope: Vars) => {
@@ -336,7 +338,7 @@ export function useModeRouter(s: CalculatorStore) {
       );
       s.setVars({ ...scope, X: x });
       s.setAns(x);
-      s.setLastValue(x);
+      s.setLastValue(calcReal(x));
       s.setSolveResidual(residual);
       s.setSolveScreen('result');
       s.setShowingResult(true);
@@ -653,11 +655,12 @@ export function useModeRouter(s: CalculatorStore) {
       while (idx < s.history.length && !isReplayableHistory(s.history[idx])) idx++;
       const item = s.history[idx];
       if (item && item.result !== null) {
+        const n = calcPrimary(item.result);
         s.setReplayIndex(idx);
         s.setShowingResult(true);
-        s.setAns(item.result);
+        s.setAns(n);
         s.setLastValue(item.result);
-        s.setDisplayMode(resultDisplayMode(item.result));
+        s.setDisplayMode(resultDisplayMode(n));
         s.setLcdError(null);
         s.setEngMode(null);
         s.setDmsResult(false);
@@ -701,11 +704,13 @@ export function useModeRouter(s: CalculatorStore) {
 
     if (action === 'plus_minus') {
       let valToUse = s.ans;
+      let stored: CalcValue = calcReal(s.ans);
       if (!s.showingResult) {
         const evalRes = performEvaluation();
         if (evalRes) {
-          valToUse = evalRes.val;
-          s.setAns(evalRes.val);
+          stored = evalRes.val;
+          valToUse = calcPrimary(evalRes.val);
+          s.setAns(valToUse);
           s.prependHistory({
             rawInput: evalRes.raw,
             displayInput: formatMath(evalRes.raw),
@@ -716,7 +721,7 @@ export function useModeRouter(s: CalculatorStore) {
           });
           s.setLastValue(evalRes.val);
           s.setShowingResult(true);
-          s.setDisplayMode(resultDisplayMode(evalRes.val));
+          s.setDisplayMode(resultDisplayMode(valToUse));
         } else {
           return;
         }
@@ -726,7 +731,7 @@ export function useModeRouter(s: CalculatorStore) {
         s.prependHistory({
           rawInput: s.isShift ? 'M−' : 'M+',
           displayInput: s.isShift ? 'M−' : 'M+',
-          result: valToUse,
+          result: stored,
           latex: '',
           sequence: s.isShift ? ['SHIFT', 'M+'] : ['M+'],
           kind: 'action',
@@ -746,6 +751,7 @@ export function useModeRouter(s: CalculatorStore) {
       let operand = findPrecedingOperand(beforeText);
       let storedRaw = '';
       let storedVal = s.ans;
+      let storedResult: CalcValue = calcReal(s.ans);
 
       if (s.showingResult || !operand || beforeText === '') {
         s.setVars(prev => ({ ...prev, [v]: s.ans }));
@@ -754,10 +760,11 @@ export function useModeRouter(s: CalculatorStore) {
       } else {
         try {
           const sVars = calculateStatVars(s.statType, s.statData, s.statFrequencyEnabled);
-          storedVal = evaluateExpression(operand.replace(/Ans/g, String(s.ans)), { ...s.vars }, s.ans, s.angleMode, sVars);
+          storedResult = evaluateExpression(operand.replace(/Ans/g, String(s.ans)), { ...s.vars }, s.ans, s.angleMode, sVars);
+          storedVal = calcPrimary(storedResult);
           s.setVars(prev => ({ ...prev, [v]: storedVal }));
           s.setAns(storedVal);
-          s.setLastValue(storedVal);
+          s.setLastValue(storedResult);
           s.setDisplayMode(resultDisplayMode(storedVal));
           storedRaw = beforeText + `→${v}`;
           s.setCurrentInput(storedRaw + '‸');
@@ -770,7 +777,7 @@ export function useModeRouter(s: CalculatorStore) {
       s.prependHistory({
         rawInput: storedRaw,
         displayInput: formatMath(storedRaw),
-        result: storedVal,
+        result: storedResult,
         latex: toLaTeX(storedRaw),
         sequence: reconstructSequence(storedRaw),
         kind: 'action',
@@ -946,8 +953,8 @@ export function useModeRouter(s: CalculatorStore) {
     if (s.isShift) {
       if (shift === 'nCr') handlePermComb('C');
       else if (shift === 'nPr') handlePermComb('P');
-      else if (shift === 'pol') handleInput('pol(‸,');
-      else if (shift === 'rec') handleInput('rec(‸,');
+      else if (shift === 'pol') handleInput('pol(‸');
+      else if (shift === 'rec') handleInput('rec(‸');
       else handleInput(shift);
     } else {
       handleInput(normal);

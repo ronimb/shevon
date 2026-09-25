@@ -91,7 +91,7 @@ const FEATURES: Feature[] = [
   { area: "Functions", name: "∫ integration", manual: "E-14, E-15", status: "done", inCode: "Adaptive Gauss–Kronrod (G7–K15)", gap: "Time Out Error; COMP-only rule (backlog)" },
   { area: "Functions", name: "d/dx derivative", manual: "E-14", status: "done", inCode: "Central difference + Richardson", gap: "Time Out" },
   { area: "Functions", name: "Σ summation", manual: "E-14", status: "partial", inCode: "Integer loop; end capped at start+1000", gap: "±1e10 bounds; nested Pol/∫/d/dx/Σ ban" },
-  { area: "Functions", name: "Pol / Rec", manual: "E-14", status: "partial", inCode: "SHIFT + / −; writes X,Y; returns r or x only", gap: "Dual-line r,θ / X,Y result screen" },
+  { area: "Functions", name: "Pol / Rec", manual: "E-14", status: "done", inCode: "SHIFT + / −; writes X,Y; Pol( / Rec( no built-in comma; = paints r=…, θ=… or bottom-right x=…, y=…", gap: "Nested Pol/Rec still a scalar (primary r or X)" },
   { area: "Functions", name: "x!", manual: "E-15", status: "done", inCode: "SHIFT x⁻¹; factorial()", gap: "Casio max 69; we allow 170" },
   { area: "Functions", name: "Ran# / RanInt#", manual: "E-15", status: "done", inCode: "SHIFT . and ALPHA . wired; templates", gap: "" },
   { area: "Functions", name: "nPr / nCr", manual: "E-18", status: "done", inCode: "SHIFT × / ÷ wrap operand", gap: "Range checks from E-39" },
@@ -131,10 +131,10 @@ const FEATURES: Feature[] = [
   { area: "Errors", name: "Calculation range ±1×10^99", manual: "E-38", status: "partial", inCode: "Overflow beyond ±10¹⁰⁰ raises Math ERROR", gap: "Per-function ranges from E-38–39; factorial 69" },
 
   { area: "Platform", name: "Photo overlay + hitboxes", manual: "—", status: "done", inCode: "Absolute keys; triple-click calibration; calculator_new.png", gap: "" },
-  { area: "Platform", name: "PC keyboard", manual: "—", status: "partial", inCode: "Enter, arrows, Shift/Alt, S/C/T/L/R/Q/A, X/Y vars", gap: "Letter keys steal typing; Shift hold vs overlay toggle" },
+  { area: "Platform", name: "PC keyboard", manual: "—", status: "partial", inCode: "Enter, arrows, Shift/Alt, comma (SHIFT )), S/C/T/L/R/Q/A, X/Y vars", gap: "Letter keys steal typing; Shift hold vs overlay toggle" },
   { area: "Platform", name: "History / LaTeX pane", manual: "—", status: "done", inCode: "50 items, Load, physical-key Show Keys; STO/MODE/SETUP actions", gap: "Not Casio behavior; keep as extra. Live Current keys strip is on top" },
   { area: "Platform", name: "Electron + Pages + PWA", manual: "—", status: "partial", inCode: "Scripts and workflow present", gap: "Verify portable exe, Pages deploy, and PWA install end-to-end" },
-  { area: "Platform", name: "Tests", manual: "E-16 examples", status: "partial", inCode: "70 golden + 16 parser = 86", gap: "Remaining numbered sample operations in the PDF" },
+  { area: "Platform", name: "Tests", manual: "E-16 examples", status: "partial", inCode: "Golden + parser + CalcValue (101 after debt-value)", gap: "Remaining numbered sample operations in the PDF" },
 ];
 
 const AREAS: Array<Area | "All"> = [

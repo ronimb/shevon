@@ -18,10 +18,6 @@ import {
 export default function TechDebtFramework() {
   const dispatch = useCanvasAction();
 
-  const start = (prompt: string) => {
-    dispatch({ type: "newComposerChat", userPrompt: prompt });
-  };
-
   return (
     <Stack gap={28}>
       <Stack gap={8}>
@@ -33,14 +29,14 @@ export default function TechDebtFramework() {
       </Stack>
 
       <Row gap={24} align="end">
-        <Stat value="3 / 4" label="Gaps done (CalcError + A + B)" tone="success" />
-        <Stat value="C" label="Next slice" tone="warning" />
-        <Stat value="95" label="Tests after slice B" />
+        <Stat value="4 / 4" label="Gaps done (CalcError + A + B + C)" tone="success" />
+        <Stat value="—" label="Debt slices left" tone="success" />
+        <Stat value="101" label="Tests after slice C" />
       </Row>
 
       <Callout tone="info" title="Order is fixed">
-        A and B landed. Next chat is C CalcValue only. Sanity after each.
-        Then remaining Phase 2, then packaging. LineIO is not debt.
+        A, B, and C landed. Run sanity on landed COMP/STAT/EQN, then
+        remaining Phase 2, then packaging. LineIO is not debt.
         Phase 3 stays gated.
       </Callout>
 
@@ -48,7 +44,7 @@ export default function TechDebtFramework() {
       <Table
         headers={["Slice", "Id", "Prompt", "Done when"]}
         columnAlign={["left", "left", "left", "left"]}
-        rowTone={["success", "success", "success", "warning"]}
+        rowTone={["success", "success", "success", "success"]}
         rows={[
           [
             "0",
@@ -80,64 +76,17 @@ export default function TechDebtFramework() {
 
       <Card>
         <CardHeader trailing={<Pill size="sm" tone="success">landed</Pill>}>
-          Slice B
-        </CardHeader>
-        <CardBody>
-          <Text>
-            Calculator.tsx now composes lcd.tsx, keyboard.ts,
-            useCalculatorState, and modeRouter.ts. insertStatVar lives in
-            modes/stat.tsx and still jumps to COMP. Next chat is slice C
-            only — do not mix Phase 2 leftovers into that chat.
-          </Text>
-        </CardBody>
-      </Card>
-
-      <Card>
-        <CardHeader trailing={<Pill size="sm" active>start here</Pill>}>
           Slice C
         </CardHeader>
         <CardBody>
-          <Stack gap={10}>
-            <Text>
-              Evaluator returns CalcValue (real | complex | pair). COMP
-              decimals and fractions must look the same. EQN a+bi uses the
-              same type.
-            </Text>
-            <Row gap={8} wrap>
-              <Button
-                variant="primary"
-                onClick={() =>
-                  start(
-                    "Follow docs/prompts/debt-value.md exactly. Slice C only (debt-value). Afterward run docs/prompts/sanity-landed.md. Do not start Phase 2 leftovers or packaging.",
-                  )
-                }
-              >
-                Start slice C
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() =>
-                  dispatch({
-                    type: "openFile",
-                    path: "docs/prompts/debt-value.md",
-                  })
-                }
-              >
-                Open C prompt
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() =>
-                  dispatch({
-                    type: "openFile",
-                    path: "docs/prompts/sanity-landed.md",
-                  })
-                }
-              >
-                Sanity checklist
-              </Button>
-            </Row>
-          </Stack>
+          <Text>
+            Evaluator returns CalcValue (real | complex | pair). EQN a+bi
+            uses complex. Top-level Pol/Rec paints a single line
+            (r=…, θ=… / bottom-right x=…, y=…).
+            Conjugate / arg / polar helpers and reserved integer / matrix
+            kinds are on the same type. COMP decimals and fractions are
+            unchanged. Next: remaining Phase 2 — not from this chat.
+          </Text>
         </CardBody>
       </Card>
 

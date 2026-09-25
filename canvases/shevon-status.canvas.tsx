@@ -34,16 +34,16 @@ export default function ShevonStatus() {
       </Stack>
 
       <Grid columns={4} gap={16}>
-        <Stat value="36/76" label="Coverage done" tone="warning" />
+        <Stat value="37/76" label="Coverage done" tone="warning" />
         <Stat value="3 / 8" label="Modes with real logic" />
         <Stat value="AST" label="Engine (no new Function)" tone="success" />
-        <Stat value="95" label="Tests (after debt-shell)" tone="success" />
+        <Stat value="101" label="Tests (after debt-value)" tone="success" />
       </Grid>
 
       <Callout tone="success" title="Phase 1 landed · Phase 2 in progress">
         COMP/SETUP and SOLVE (CalcError, Variable ERROR / Can’t Solve, L−R)
         are in the tree. STAT FREQ and EQN quadratic (real + a+bi) landed.
-        Now: engine tech debt (A + B landed, C CalcValue next),
+        Now: engine tech debt (A + B + C landed),
         then the five remaining Phase 2 items, then packaging.
         Phase 3 stays gated.
       </Callout>
@@ -180,7 +180,7 @@ export default function ShevonStatus() {
       <Table
         headers={["Issue", "What’s wrong", "Associated"]}
         columnAlign={["left", "left", "left"]}
-        rowTone={["warning", "warning", "warning", "info"]}
+        rowTone={["warning", "warning", "warning"]}
         rows={[
           [
             "lying-menus",
@@ -197,11 +197,6 @@ export default function ShevonStatus() {
             "STAT ▲▼ and Disp still dim; CMPLX/MAT/VCT wait on Phase 3",
             "vis-indicators",
           ],
-          [
-            "Calculator.tsx shell split",
-            "LCD, keyboard, one store, and mode router extracted; STAT recall still jumps to COMP",
-            "debt-shell landed · p2-stat-mode next for stay-in-STAT",
-          ],
         ]}
         striped
       />
@@ -212,9 +207,9 @@ export default function ShevonStatus() {
         columnAlign={["left", "left", "left"]}
         rows={[
           [
-            "Tech debt C",
-            "CalcValue real|complex|pair; COMP must look the same",
-            "roadmap.md → Now §1",
+            "Sanity + remaining Phase 2",
+            "Debt A–C landed; do not start Phase 2 from a debt chat",
+            "roadmap.md → Now §2–3",
           ],
           [
             "Sanity on landed COMP/STAT/EQN/SOLVE",
