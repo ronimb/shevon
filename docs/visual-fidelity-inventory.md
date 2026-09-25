@@ -16,7 +16,11 @@ this file disagrees with `roadmap.md` on what is scheduled, follow the roadmap.
 | Role | Path |
 |------|------|
 | Entry re-export | `src/App.tsx` → `Calculator.tsx` |
-| Main shell: LCD, keypad overlay, state, routing | `src/Calculator.tsx` |
+| Shell compose (keypad overlay, history pane) | `src/Calculator.tsx` |
+| LCD + status annunciators | `src/lcd.tsx` |
+| PC keyboard + SHIFT/ALPHA flash | `src/keyboard.ts` |
+| One calc state store | `src/useCalculatorState.ts` |
+| Mode router (COMP / STAT / EQN / SETUP / CLR) | `src/modeRouter.ts` |
 | Input/result formatting (`formatMath`, `toLaTeX`, `SciNotation`) | `src/display.tsx` |
 | SETUP number formats, ENG, DMS | `src/format.ts` |
 | Key hit-area coordinates | `src/keys.ts` |
@@ -29,8 +33,7 @@ this file disagrees with `roadmap.md` on what is scheduled, follow the roadmap.
 | LCD/cursor/status CSS | `src/index.css` |
 | Faceplate bitmap | `src/calculator_new.png` |
 
-There is no separate `Display.tsx` component — the LCD is JSX inline in
-`Calculator.tsx`, with formatting logic in `display.tsx`.
+LCD paint lives in `lcd.tsx`. Formatting logic stays in `display.tsx`.
 
 ---
 
@@ -41,25 +44,25 @@ rebuild.
 
 | Element | Location | Notes |
 |---------|----------|-------|
-| LCD shell + dual-line layout | `Calculator.tsx` | Input top-left, result bottom-right |
-| Status annunciators (S, A, M, STO, RCL, STAT, D/R/G, FIX, SCI) | `Calculator.tsx` | Rendered and wired to real state |
+| LCD shell + dual-line layout | `lcd.tsx` | Input top-left, result bottom-right |
+| Status annunciators (S, A, M, STO, RCL, STAT, D/R/G, FIX, SCI) | `lcd.tsx` | Rendered and wired to real state |
 | COMP caret + empty-slot boxes | `display.tsx` | `‸` → blinking bar; `⬚` dashed template slots |
 | EQN / STAT editor carets | `eqn.tsx`, `stat.tsx` | Active cell shows a caret, not only a shaded box |
-| MODE / SETUP / CLR menus | `Calculator.tsx` | Both SETUP pages render; Deg/Rad/Gra/Fix/Sci/Norm/ab/c/d/c/FREQ work |
+| MODE / SETUP / CLR menus | `lcd.tsx`, `modeRouter.ts` | Both SETUP pages render; Deg/Rad/Gra/Fix/Sci/Norm/ab/c/d/c/FREQ work |
 | STAT type menu | `stat.tsx` | All 8 types selectable |
-| hyp menu | `Calculator.tsx` | Overlays COMP input line; does not dump “hyp” text |
+| hyp menu | `lcd.tsx` | Overlays COMP input line; does not dump “hyp” text |
 | EQN quadratic editor | `eqn.tsx` | a/b/c labels, cell caret, bottom-left entry |
 | Result forms: fractions, mixed fractions | `display.tsx`, SETUP ab/c vs d/c | d/c and ab/c when applicable |
 | Sci ×10ⁿ, ENG, S⇔D toggle | `display.tsx`, `format.ts` | Engineering notation and decimal ↔ fraction |
 | Fix/Sci/Norm decimals | `format.ts` | Via `formatForDisplay` / `formatResultNumber` |
 | DMS °′″ | `format.ts` | Distinct degree / minute / second glyphs |
-| Syntax + Math ERROR | `Calculator.tsx` | ◄/► dismisses error and returns to expression |
-| Variable ERROR / Can’t Solve | `Calculator.tsx` | SOLVE no-X / Newton miss; same ◀▶ / AC dismiss |
-| SOLVE solve for x / x= / L-R= | `Calculator.tsx` | Confirm screen, then equation + x= + L-R= together |
+| Syntax + Math ERROR | `lcd.tsx`, `modeRouter.ts` | ◄/► dismisses error and returns to expression |
+| Variable ERROR / Can’t Solve | `lcd.tsx`, `modeRouter.ts` | SOLVE no-X / Newton miss; same ◀▶ / AC dismiss |
+| SOLVE solve for x / x= / L-R= | `lcd.tsx`, `modeRouter.ts` | Confirm screen, then equation + x= + L-R= together |
 | Keypad overlay | `Calculator.tsx`, `keys.ts` | Transparent buttons over faceplate PNG |
-| ENG / hyp / Abs / Ran# / RanInt# | `Calculator.tsx`, `display.tsx` | No literal ENG/hyp dump; abs is `| |`; Ran# templates |
+| ENG / hyp / Abs / Ran# / RanInt# | `modeRouter.ts`, `display.tsx` | No literal ENG/hyp dump; abs is `| |`; Ran# templates |
 | Trig / hyp / `ln` / unclosed templates | `display.tsx` | Shared `paintTemplates` table; IR stems never reach the LCD (`vis-no-literal`) |
-| ◀▶ + COMP ▲▼ | `Calculator.tsx` | Light from caret navigability and COMP history replay |
+| ◀▶ + COMP ▲▼ | `lcd.tsx` | Light from caret navigability and COMP history replay |
 
 ---
 
@@ -70,15 +73,15 @@ Ids match [`issues.md`](../issues.md) and [`roadmap.md`](../roadmap.md).
 
 | Id | Existing element | Current state | File |
 |----|------------------|---------------|------|
-| `ind-hardcoded` / `vis-indicators` | CMPLX, MAT, VCT, Disp | Rendered but hardcoded dim — never light up | `Calculator.tsx` |
-| `ind-arrows` / `vis-indicators` | ▲/▼ arrows | COMP history replay and EQN result light; STAT editor row-nav does not | `Calculator.tsx` |
-| `eqn-menu-fallthrough` / `vis-menus` | EQN types 1/2/4 | Menu lists all four; only type 3 (quadratic) works | `eqn.tsx`, `Calculator.tsx` |
+| `ind-hardcoded` / `vis-indicators` | CMPLX, MAT, VCT, Disp | Rendered but hardcoded dim — never light up | `lcd.tsx` |
+| `ind-arrows` / `vis-indicators` | ▲/▼ arrows | COMP history replay and EQN result light; STAT editor row-nav does not | `lcd.tsx` |
+| `eqn-menu-fallthrough` / `vis-menus` | EQN types 1/2/4 | Menu lists all four; only type 3 (quadratic) works | `eqn.tsx`, `lcd.tsx`, `modeRouter.ts` |
 | `dist-empty` / `vis-menus` | Distribution submenu | Menu label exists but opens empty submenu | `stat.tsx` |
-| `lying-menus` / `vis-menus` | MODE 2/4/6/7/8 | Listed in MODE menu but silently fall back to COMP | `Calculator.tsx` |
+| `lying-menus` / `vis-menus` | MODE 2/4/6/7/8 | Listed in MODE menu but silently fall back to COMP | `lcd.tsx`, `modeRouter.ts` |
 | `surd-pi-form` / `vis-result` | Surd `n√m` result | Input template exists; no surd result form | `display.tsx` |
 | `pol-rec-line` / `vis-result` | Pol/Rec dual-line r,θ | Input templates exist; returns single scalar | `evaluator.ts` |
-| `err-jump` / `vis-errors` | Error ◀▶ | Dismisses only; no jump-to-token | `Calculator.tsx` |
-| `lineio-display` / `comp-lineio` | MthIO / LineIO | SETUP shows options; not functional | `Calculator.tsx` |
+| `err-jump` / `vis-errors` | Error ◀▶ | Syntax / Math jump to `CalcError.offset` (E-40). Stack / Argument screens still missing | `lcd.tsx`, `modeRouter.ts` |
+| `lineio-display` / `comp-lineio` | MthIO / LineIO | SETUP shows options; not functional | `lcd.tsx`, `modeRouter.ts` |
 
 ---
 
@@ -101,7 +104,7 @@ Ids match [`issues.md`](../issues.md) and [`roadmap.md`](../roadmap.md).
 ### 1. LCD display
 
 - **Dual-line (input + answer):** `#input-text` and `#result-text` in
-  `Calculator.tsx`.
+  `lcd.tsx`.
 - **History on LCD:** No multi-line history stack. ▲/▼ replay one past entry
   into `currentInput`.
 - **Sidebar history pane:** Separate off-device panel, not part of LCD
@@ -170,12 +173,12 @@ Status bar CSS: `index.css`.
 
 | Error | Display | Recovery |
 |-------|---------|----------|
-| Syntax ERROR | Yes | ◄/► clears `lcdError`, returns to expression |
+| Syntax ERROR | Yes | ◄/► jumps caret to `offset`, then returns to expression |
 | Math ERROR | Yes | Same |
-| Variable ERROR | Yes | SOLVE with no X; same dismiss |
-| Can’t Solve | Yes | Newton miss; same dismiss |
+| Variable ERROR | Yes | SOLVE with no X; dismiss, no token jump |
+| Can’t Solve | Yes | Newton miss; dismiss, no token jump |
 | Stack / Argument ERROR | No | — |
-| Jump-to-token | No | — |
+| Jump-to-token | Yes | Syntax / Math only (`debt-source-map`) |
 
 ### 8. Keypad behavior
 

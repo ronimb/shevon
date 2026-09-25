@@ -22,50 +22,61 @@ wrap-up, then move them to **Landed**).
 
 ## Now
 
-Priority (12 Sep 2026): COMP visual leftovers first, then close Phase 2
-(`p2-solve` landed). Daily-driver bar is COMP + STAT + EQN. Do not open Phase 3
-until Phase 2 closes. Packaging stays in Phase 4. Lying menus wait for the
-matching feature — no separate “disable the row” pass.
+Priority (25 Sep 2026): **engine tech debt first**, then a sanity pass on
+what already ships, then the five remaining Phase 2 items, then packaging
+(pulled forward from Phase 4). Daily-driver bar is still COMP + STAT + EQN.
+Do not open Phase 3 until Phase 2 closes. Lying menus wait for the matching
+feature. Unbounded MthIO / LineIO is **not** tech debt (parked leftover).
 
-### 1. Visual leftovers (this slice)
+Kickoff index: [`docs/prompts/tech-debt.md`](docs/prompts/tech-debt.md).
+Slices: [`debt-source-map.md`](docs/prompts/debt-source-map.md),
+[`debt-shell.md`](docs/prompts/debt-shell.md),
+[`debt-value.md`](docs/prompts/debt-value.md).
+Sanity: [`sanity-landed.md`](docs/prompts/sanity-landed.md).
 
-Work that is already on screen in COMP. Do not fake-light CMPLX/MAT/VCT, and
-do not add Stack/Argument ERROR until those modes exist.
+### 1. Remaining engine tech debt (this program)
 
-- [ ] `vis-indicators` — **Landed:** ◀▶ annunciators now light from caret
-      navigability, and ▲▼ light for COMP history replay (not only EQN result).
-      **Remaining:** STAT editor ▲▼ row-nav; Disp (needs `comp-colon`); CMPLX/
-      MAT/VCT stay dim until Phase 3. Issue: `ind-hardcoded`, `ind-arrows`.
-- [ ] `vis-errors` — Syntax / Math ERROR: E-40 ◀▶ **jump-to-token** (today
-      they only dismiss). Issue: `err-jump`. **Deferred:** needs an evaluator
-      fault offset, which the Now display slice must not touch.
-- [x] `vis-no-literal` — Hardware-style glyphs for the remaining ASCII tokens
-      (trig / hyp / `ln`) **and** unclosed templates no longer leak IR names.
-      `formatMath` + `toLaTeX` share one template table + walker in
-      `src/display.tsx`; `sqrt(24^(2-2)‸` shows a radical, not the letters
-      `sqrt`. Issue: `ascii-tokens`, `ir-leak` (both fixed).
-      Kickoff prompt: [`docs/prompts/now-visual-slice.md`](docs/prompts/now-visual-slice.md).
-- [ ] `vis-elements` — Only gaps on screens we already ship (mode/menu
-      captions, dual-line answers). Skip unlabeled editors that belong to
-      unbuilt EQN types. (No in-scope element gap actioned in the visual slice.)
+`p2-solve` already landed typed `CalcError` (gap 1). `debt-source-map` and
+`debt-shell` have landed. One slice left. Do not start CMPLX / BASE-N / MATRIX
+or `p4-exact` here.
 
-`vis-menus` is **not** this slice (see policy below). Surd/π result forms stay
-in Phase 4 (`p4-exact`). Dual-line Pol/Rec is `vis-result` / `pol-rec-line` —
-pull in only if it blocks the COMP visual pass.
+- [x] `debt-source-map` — Source-map the IR rewrite; fill `CalcError.offset`;
+      E-40 ◀▶ jump-to-token (`vis-errors` / `err-jump`). Move implicit
+      multiply into the parser. Type the helper bag. Do not replace the AST
+      walker or parse templates natively.
+- [x] `debt-shell` — Split `Calculator.tsx` along existing seams (LCD,
+      keyboard, mode router). One state store. First consumer: STAT recall
+      (`insertStatVar` in `modes/stat.tsx`) is extractable for `p2-stat-mode`.
+      Was backlog “Architecture”.
+- [ ] `debt-value` — Evaluator returns `CalcValue` (`real` | `complex` |
+      `pair`), not a bare `number`. COMP decimals/fractions must look the
+      same. EQN a+bi uses the same type. Pol/Rec may become a pair
+      (`pol-rec-line`) if it falls out of the type. Surd/π stay `p4-exact`.
 
-### 2. After that — close Phase 2
+### 2. Sanity check (landed functionality only)
 
-Needed for the daily-driver bar and the Phase 3 gate, even though STAT editor
-/ Dist / linear EQN are not daily pain. **Do `p2-solve` first.**
+After each debt slice, and once after all three: `npm test`, `npm run lint`,
+and a browser pass of COMP (trig, frac, SOLVE Variable / Can’t Solve / L−R),
+STAT editor + recall, EQN quadratic real + a+bi. File new defects in
+`issues.md`. Do not treat leftovers (LineIO, Dist, linear EQN) as failures.
 
-See **Phase 2** for the full list. `p2-solve` (typed `CalcError` + E-20
-SOLVE procedure) has landed. Next Phase 2 item is `p2-edit`.
+### 3. Remaining Phase 2
+
+`p2-freq` and `p2-solve` have landed. Then: `p2-edit`, `p2-dist`,
+`p2-stat-mode`, `p2-eqn-linear`, `p2-eqn-cubic`. See **Phase 2**.
+
+### 4. Packaging (pulled forward)
+
+`p4-packaging` — GitHub Pages, PWA, electron-builder portable exe, real app
+icon. Still after the Phase 2 list; still before Phase 3 modes.
 
 ### Parked extra — Current history
 
-Still scheduled, not this slice. UI + remaining letter-shortcut audit live
-under **Emulator extras** below. Keyboard `x`/`y` insert X/Y; sequences log
-the physical keys `ALPHA`, `)` / `ALPHA`, `S⇔D`.
+Letter-shortcut audit (`hist-letters`) stays under **Emulator extras**. Not
+this program.
+
+Visual leftovers that are not tech debt (STAT ▲▼, Disp, `vis-elements`) stay
+on the cross-cutting list. `vis-no-literal` has landed.
 
 ---
 
@@ -87,8 +98,9 @@ Applies to **every** phase. Principles:
 - [ ] `vis-result` — Same result forms as the unit: S⇔D fraction/surd/π,
       complex a+bi, ×10ⁿ, dual-line Pol/Rec r,θ. Fractions, mixed fractions,
       sci, ENG, and DMS °′″ already work.
-- [ ] `vis-errors` — Math / Syntax / Stack / Argument ERROR with the E-40
-      ◀▶ jump-to-token behavior (today ◀▶ only dismisses the error).
+- [ ] `vis-errors` — Math / Syntax ERROR E-40 ◀▶ jump-to-token landed
+      (`debt-source-map`). Stack / Argument ERROR screens still missing —
+      do not add them until a mode needs them.
 - [x] `vis-no-literal` — Never show literal function text where the hardware
       shows a symbol or opens a menu. ENG/hyp dumps are gone; trig/hyp/`ln` now
       paint styled names and unclosed templates no longer leak IR stems (one
@@ -169,7 +181,8 @@ policy). Do not add a separate not-implemented pass.
 - [ ] `p4-samples` — Automate every numbered sample operation in the PDF as a
       regression suite.
 - [ ] `p4-packaging` — Verify GitHub Pages, PWA, and electron-builder portable
-      exe; real app icon.
+      exe; real app icon. **Pulled forward:** run after remaining Phase 2
+      (see **Now** §4), before Phase 3.
 
 ---
 
@@ -258,8 +271,17 @@ trig/hyp/`ln` paint styled names and unclosed templates never leak IR stems
 X= result, L−R residual, Continue (`p2-solve`). LCD errors are one
 `lcdError` (`CalcError`), not Syntax/Math booleans.
 
-**Tests** — 70 golden (manual samples + Phase 1/2 + vis-no-literal +
-history/keys + SOLVE) + 16 parser = 86.
+**Tests** — golden (manual samples + Phase 1/2 + vis-no-literal +
+history/keys + SOLVE + E-40 offset/jump) + parser (implicit multiply) > 86.
+
+**debt-source-map** — IR rewrite carries original offsets onto AST nodes and
+`CalcError.offset`. Syntax / Math ERROR ◀▶ jumps to the fault token. Implicit
+multiply is token-level in the parser (`log10(100)` stays 2). Helper bag is
+typed.
+
+**debt-shell** — `Calculator.tsx` composes `lcd.tsx`, `keyboard.ts`,
+`useCalculatorState`, and `modeRouter.ts`. One store for `vars` / `ans` /
+history. STAT recall lives in `modes/stat.tsx` (still jumps to COMP).
 
 ---
 

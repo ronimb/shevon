@@ -41,9 +41,8 @@ and delete it from here. Do not leave the same item in two files.
 
 ## Architecture
 
-- Split the remaining `Calculator.tsx` UI shell (COMP/STAT/EQN handlers, LCD,
-  keys, history) now that the engine and mode helpers are extracted. Not
-  scheduled — do not treat as Phase 2.
+(The `Calculator.tsx` shell split is scheduled as `debt-shell` in
+[`roadmap.md`](roadmap.md) **Now**.)
 
 ## Diagnostics
 

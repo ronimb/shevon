@@ -17,16 +17,19 @@ export type BinaryOp = '+' | '-' | '*' | '/' | '**';
 export type UnaryOp = '+' | '-';
 
 export type AstNode =
-  | { type: 'num'; value: number }
-  | { type: 'var'; name: string }
-  | { type: 'call'; name: string; args: AstNode[] }
-  | { type: 'unary'; op: UnaryOp; operand: AstNode }
-  | { type: 'binary'; op: BinaryOp; left: AstNode; right: AstNode };
+  | { type: 'num'; value: number; offset: number }
+  | { type: 'var'; name: string; offset: number }
+  | { type: 'call'; name: string; args: AstNode[]; offset: number }
+  | { type: 'unary'; op: UnaryOp; operand: AstNode; offset: number }
+  | { type: 'binary'; op: BinaryOp; left: AstNode; right: AstNode; offset: number };
 
 export class ParseError extends Error {
-  constructor(message: string) {
+  readonly pos: number;
+
+  constructor(message: string, pos = 0) {
     super(message);
     this.name = 'ParseError';
+    this.pos = pos;
   }
 }
 
@@ -66,7 +69,7 @@ export function tokenize(input: string): Token[] {
       }
       const raw = input.slice(start, i);
       const value = Number(raw);
-      if (Number.isNaN(value)) throw new ParseError(`Invalid number "${raw}"`);
+      if (Number.isNaN(value)) throw new ParseError(`Invalid number "${raw}"`, start);
       tokens.push({ type: 'num', value, pos: start });
       continue;
     }
@@ -109,10 +112,43 @@ export function tokenize(input: string): Token[] {
       continue;
     }
 
-    throw new ParseError(`Unexpected character "${c}" at position ${i}`);
+    throw new ParseError(`Unexpected character "${c}" at position ${i}`, i);
   }
 
   return tokens;
+}
+
+/** After rewrite, helpers are `__sin` / `__log10` / … — those stay calls. */
+export function isCallIdent(name: string): boolean {
+  return name.startsWith('__');
+}
+
+function endsValue(t: Token): boolean {
+  return t.type === 'num' || t.type === 'ident' || t.type === 'rparen';
+}
+
+function startsValue(t: Token): boolean {
+  return t.type === 'num' || t.type === 'ident' || t.type === 'lparen';
+}
+
+/**
+ * Token-level implicit multiply: `2(` → `2*(`, `2__sin(` → `2*__sin(`,
+ * `)(` → `)*(`. `ident(` is a call only when `ident` is a helper (`__…`).
+ * That keeps `__log10(100)` a call instead of `__log10*(100)`.
+ */
+export function insertImplicitMultiply(tokens: Token[]): Token[] {
+  if (tokens.length === 0) return tokens;
+  const out: Token[] = [tokens[0]];
+  for (let i = 1; i < tokens.length; i++) {
+    const prev = out[out.length - 1];
+    const next = tokens[i];
+    const callOpen = prev.type === 'ident' && next.type === 'lparen' && isCallIdent(prev.value);
+    if (endsValue(prev) && startsValue(next) && !callOpen) {
+      out.push({ type: 'op', value: '*', pos: next.pos });
+    }
+    out.push(next);
+  }
+  return out;
 }
 
 /**
@@ -145,7 +181,7 @@ class Parser {
   parse(): AstNode {
     const node = this.parseAdditive();
     const rest = this.peek();
-    if (rest) throw new ParseError(`Unexpected token at position ${rest.pos}`);
+    if (rest) throw new ParseError(`Unexpected token at position ${rest.pos}`, rest.pos);
     return node;
   }
 
@@ -156,7 +192,7 @@ class Parser {
       if (t && t.type === 'op' && (t.value === '+' || t.value === '-')) {
         this.next();
         const right = this.parseMultiplicative();
-        left = { type: 'binary', op: t.value, left, right };
+        left = { type: 'binary', op: t.value, left, right, offset: t.pos };
       } else {
         break;
       }
@@ -171,7 +207,7 @@ class Parser {
       if (t && t.type === 'op' && (t.value === '*' || t.value === '/')) {
         this.next();
         const right = this.parseUnary();
-        left = { type: 'binary', op: t.value, left, right };
+        left = { type: 'binary', op: t.value, left, right, offset: t.pos };
       } else {
         break;
       }
@@ -184,7 +220,7 @@ class Parser {
     if (t && t.type === 'op' && (t.value === '+' || t.value === '-')) {
       this.next();
       const operand = this.parseUnary();
-      return { type: 'unary', op: t.value, operand };
+      return { type: 'unary', op: t.value, operand, offset: t.pos };
     }
     return this.parsePower();
   }
@@ -196,40 +232,44 @@ class Parser {
       this.next();
       // Right-associative; allow a unary exponent (e.g. 2**-3).
       const exponent = this.parseUnary();
-      return { type: 'binary', op: '**', left: base, right: exponent };
+      return { type: 'binary', op: '**', left: base, right: exponent, offset: t.pos };
     }
     return base;
   }
 
   private parsePrimary(): AstNode {
     const t = this.next();
-    if (!t) throw new ParseError('Unexpected end of expression');
+    if (!t) {
+      const last = this.tokens[this.tokens.length - 1];
+      throw new ParseError('Unexpected end of expression', last?.pos ?? 0);
+    }
 
     if (t.type === 'num') {
-      return { type: 'num', value: t.value };
+      return { type: 'num', value: t.value, offset: t.pos };
     }
 
     if (t.type === 'ident') {
-      // Function call if immediately followed by '('.
+      // Function call if immediately followed by '('. Implicit multiply
+      // already inserted a `*` for value-idents (`Ans(`, `X(`).
       const nt = this.peek();
       if (nt && nt.type === 'lparen') {
         this.next(); // consume '('
         const args = this.parseArgs();
-        return { type: 'call', name: t.value, args };
+        return { type: 'call', name: t.value, args, offset: t.pos };
       }
-      return { type: 'var', name: t.value };
+      return { type: 'var', name: t.value, offset: t.pos };
     }
 
     if (t.type === 'lparen') {
       const inner = this.parseAdditive();
       const close = this.next();
       if (!close || close.type !== 'rparen') {
-        throw new ParseError('Expected ")"');
+        throw new ParseError('Expected ")"', close?.pos ?? t.pos);
       }
       return inner;
     }
 
-    throw new ParseError(`Unexpected token at position ${t.pos}`);
+    throw new ParseError(`Unexpected token at position ${t.pos}`, t.pos);
   }
 
   private parseArgs(): AstNode[] {
@@ -243,9 +283,12 @@ class Parser {
     while (true) {
       args.push(this.parseAdditive());
       const t = this.next();
-      if (!t) throw new ParseError('Expected "," or ")"');
+      if (!t) {
+        const last = this.tokens[this.tokens.length - 1];
+        throw new ParseError('Expected "," or ")"', last?.pos ?? 0);
+      }
       if (t.type === 'rparen') break;
-      if (t.type !== 'comma') throw new ParseError(`Expected "," or ")" at position ${t.pos}`);
+      if (t.type !== 'comma') throw new ParseError(`Expected "," or ")" at position ${t.pos}`, t.pos);
     }
     return args;
   }
@@ -253,5 +296,5 @@ class Parser {
 
 /** Parse a canonical expression string into an AST. */
 export function parse(input: string): AstNode {
-  return new Parser(tokenize(input)).parse();
+  return new Parser(insertImplicitMultiply(tokenize(input))).parse();
 }

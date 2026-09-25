@@ -1,5 +1,5 @@
 import React from 'react';
-import type { StatEntry, StatType, Vars } from '../types.ts';
+import type { CalcMode, StatEntry, StatType, Vars } from '../types.ts';
 import { EditorCaret, renderMathSymbol } from '../display.tsx';
 
 /**
@@ -292,6 +292,25 @@ export function getStatSubMenuInsert(statSubMenu: string | null, statType: StatT
     return options[val] || null;
   }
   return null;
+}
+
+/** Recall a STAT var onto the COMP line. Still jumps to COMP (`stat-jump-comp` / `p2-stat-mode`). */
+export function insertStatVar(
+  name: string,
+  currentInput: string,
+  showingResult: boolean,
+): { calcMode: CalcMode; currentInput: string; showingResult: boolean; lcdError: null } {
+  if (showingResult || currentInput.includes('→')) {
+    const isOperator = /[+×÷\-]/.test(name) || name === 'sqr(‸)' || name === 'cube(‸)' || name.startsWith('pwr(') || name.startsWith('root(') || name.startsWith('frac(');
+    let nextInput = isOperator ? "Ans" + name : name;
+    if (!nextInput.includes('‸')) nextInput += '‸';
+    return { calcMode: 'COMP', currentInput: nextInput, showingResult: false, lcdError: null };
+  }
+  const target = name.includes('‸') ? name : name + '‸';
+  const nextInput = currentInput.includes('‸')
+    ? currentInput.replace('‸', target)
+    : currentInput + target;
+  return { calcMode: 'COMP', currentInput: nextInput, showingResult, lcdError: null };
 }
 
 export function getStatSubMenuOptions(statSubMenu: string | null, statType: StatType | null): string[] {

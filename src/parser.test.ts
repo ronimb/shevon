@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parse, tokenize, ParseError, type AstNode } from './parser.ts';
+import { parse, tokenize, ParseError, insertImplicitMultiply, type AstNode } from './parser.ts';
 import { evaluateExpression } from './evaluator.ts';
 import type { AngleMode, Vars } from './types.ts';
 
@@ -9,9 +9,24 @@ function evalComp(expr: string, angleMode: AngleMode = 'DEG', vars: Vars = EMPTY
   return evaluateExpression(expr, { ...vars }, 0, angleMode, {});
 }
 
+function shape(node: AstNode): unknown {
+  switch (node.type) {
+    case 'num':
+      return { type: 'num', value: node.value };
+    case 'var':
+      return { type: 'var', name: node.name };
+    case 'call':
+      return { type: 'call', name: node.name, args: node.args.map(shape) };
+    case 'unary':
+      return { type: 'unary', op: node.op, operand: shape(node.operand) };
+    case 'binary':
+      return { type: 'binary', op: node.op, left: shape(node.left), right: shape(node.right) };
+  }
+}
+
 describe('parser: AST shape', () => {
   it('respects * over + precedence and left-associativity', () => {
-    expect(parse('1+2*3')).toEqual<AstNode>({
+    expect(shape(parse('1+2*3'))).toEqual({
       type: 'binary',
       op: '+',
       left: { type: 'num', value: 1 },
@@ -25,7 +40,7 @@ describe('parser: AST shape', () => {
   });
 
   it('parses ** as right-associative above unary minus', () => {
-    expect(parse('2**3**2')).toEqual<AstNode>({
+    expect(shape(parse('2**3**2'))).toEqual({
       type: 'binary',
       op: '**',
       left: { type: 'num', value: 2 },
@@ -39,7 +54,7 @@ describe('parser: AST shape', () => {
   });
 
   it('parses function calls, nested calls and identifiers', () => {
-    expect(parse('__sin(__pow(X,2))')).toEqual<AstNode>({
+    expect(shape(parse('__sin(__pow(X,2))'))).toEqual({
       type: 'call',
       name: '__sin',
       args: [
@@ -56,7 +71,7 @@ describe('parser: AST shape', () => {
   });
 
   it('parses zero-argument calls', () => {
-    expect(parse('__ranhash()')).toEqual<AstNode>({
+    expect(shape(parse('__ranhash()'))).toEqual({
       type: 'call',
       name: '__ranhash',
       args: [],
@@ -64,7 +79,7 @@ describe('parser: AST shape', () => {
   });
 
   it('parses unary minus', () => {
-    expect(parse('-X')).toEqual<AstNode>({
+    expect(shape(parse('-X'))).toEqual({
       type: 'unary',
       op: '-',
       operand: { type: 'var', name: 'X' },
@@ -106,6 +121,26 @@ describe('evaluator: no new Function, AST-backed', () => {
   it('handles implicit multiplication', () => {
     expect(evalComp('2sin(30)')).toBeCloseTo(1, 10);
     expect(evalComp('2(3)')).toBe(6);
+  });
+
+  it('does not insert multiply inside __log10(', () => {
+    expect(evalComp('log10(100)')).toBeCloseTo(2, 10);
+    expect(shape(parse('__log10(100)'))).toEqual({
+      type: 'call',
+      name: '__log10',
+      args: [{ type: 'num', value: 100 }],
+    });
+    const toks = insertImplicitMultiply(tokenize('__log10(100)'));
+    expect(toks.some((t) => t.type === 'op' && t.value === '*')).toBe(false);
+  });
+
+  it('inserts implicit multiply at token level for 2(', () => {
+    expect(shape(parse('2(3)'))).toEqual({
+      type: 'binary',
+      op: '*',
+      left: { type: 'num', value: 2 },
+      right: { type: 'num', value: 3 },
+    });
   });
 
   it('evaluates a summation via the Σ lambda form', () => {

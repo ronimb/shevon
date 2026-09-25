@@ -29,7 +29,7 @@ export default function ShevonStatus() {
           Casio fx-991ES PLUS hardware overlay emulator. Behavior spec: the
           official user guide (`fx-570_991ES_PLUS_EN.pdf`). This canvas is a
           snapshot of `roadmap.md`, `issues.md`, and `docs/coverage.md`
-          (refreshed 24 Sep 2026).
+          (refreshed 25 Sep 2026).
         </Text>
       </Stack>
 
@@ -37,16 +37,15 @@ export default function ShevonStatus() {
         <Stat value="36/76" label="Coverage done" tone="warning" />
         <Stat value="3 / 8" label="Modes with real logic" />
         <Stat value="AST" label="Engine (no new Function)" tone="success" />
-        <Stat value="86" label="Tests (70 golden + 16 parser)" tone="success" />
+        <Stat value="95" label="Tests (after debt-shell)" tone="success" />
       </Grid>
 
       <Callout tone="success" title="Phase 1 landed · Phase 2 in progress">
-        COMP/SETUP are honest for Fix/Sci/Norm, hyp, Ran#, ENG, DMS, Rnd,
-        Gauss–Kronrod ∫, and CLR. STAT FREQ, the EQN quadratic editor
-        (a/b/c, caret, bottom-left entry), and quadratic a+bi roots have
-        started Phase 2. The Now visual slice mostly landed: IR stems never
-        reach the LCD, and ◀▶ plus COMP-history ▲▼ light from real state.
-        Next: finish STAT and EQN before opening new modes.
+        COMP/SETUP and SOLVE (CalcError, Variable ERROR / Can’t Solve, L−R)
+        are in the tree. STAT FREQ and EQN quadratic (real + a+bi) landed.
+        Now: engine tech debt (A + B landed, C CalcValue next),
+        then the five remaining Phase 2 items, then packaging.
+        Phase 3 stays gated.
       </Callout>
 
       <Stack gap={8}>
@@ -194,14 +193,14 @@ export default function ShevonStatus() {
             "Phase 2",
           ],
           [
-            "err-jump / ind-*",
-            "◀▶ does not jump to the fault token; STAT ▲▼ and Disp still dim",
-            "vis-errors · vis-indicators",
+            "ind-*",
+            "STAT ▲▼ and Disp still dim; CMPLX/MAT/VCT wait on Phase 3",
+            "vis-indicators",
           ],
           [
-            "Calculator.tsx is still a monolith",
-            "Engine/modes extracted, but the UI shell still holds COMP/STAT/EQN, LCD, keys, and history",
-            "backlog.md · Architecture",
+            "Calculator.tsx shell split",
+            "LCD, keyboard, one store, and mode router extracted; STAT recall still jumps to COMP",
+            "debt-shell landed · p2-stat-mode next for stay-in-STAT",
           ],
         ]}
         striped
@@ -213,24 +212,24 @@ export default function ShevonStatus() {
         columnAlign={["left", "left", "left"]}
         rows={[
           [
-            "Finish visual leftovers",
-            "STAT ▲▼; vis-errors jump-to-token (blocked on evaluator fault offset)",
-            "roadmap.md → Now",
+            "Tech debt C",
+            "CalcValue real|complex|pair; COMP must look the same",
+            "roadmap.md → Now §1",
           ],
           [
-            "Rest of Phase 2",
-            "p2-solve landed; next Ins/Del-A, Dist, stay in STAT, linear/cubic EQN",
+            "Sanity on landed COMP/STAT/EQN/SOLVE",
+            "After each slice: npm test, lint, browser smoke",
+            "docs/prompts/sanity-landed.md",
+          ],
+          [
+            "Remaining Phase 2",
+            "p2-edit, Dist, stay in STAT, linear/cubic EQN",
             "Phase 2",
           ],
           [
-            "Letter-shortcut audit",
-            "A–F / M keyboard vs physical-key History contract (X/Y already done)",
-            "roadmap.md → Emulator extras",
-          ],
-          [
-            "Exact result forms / packaging",
-            "n√m, p/q·π; Pages / PWA / exe",
-            "Phase 4",
+            "Packaging (pulled forward)",
+            "Pages / PWA / portable exe / icon — after Phase 2, before Phase 3",
+            "p4-packaging",
           ],
         ]}
         striped
@@ -300,6 +299,26 @@ export default function ShevonStatus() {
           }
         >
           Roadmap canvas
+        </Pill>
+        <Pill
+          onClick={() =>
+            dispatch({
+              type: "openFile",
+              path: "canvases/tech-debt.canvas.tsx",
+            })
+          }
+        >
+          Tech-debt canvas
+        </Pill>
+        <Pill
+          onClick={() =>
+            dispatch({
+              type: "openFile",
+              path: "docs/prompts/debt-source-map.md",
+            })
+          }
+        >
+          Slice A prompt
         </Pill>
         <Pill
           onClick={() =>

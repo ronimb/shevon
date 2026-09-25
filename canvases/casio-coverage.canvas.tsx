@@ -125,7 +125,7 @@ const FEATURES: Feature[] = [
   { area: "Constants", name: "40 scientific constants", manual: "E-35 SHIFT 7", status: "missing", inCode: "None", gap: "CODATA 2007 two-digit catalog" },
   { area: "Constants", name: "40 metric conversions", manual: "E-37 SHIFT 8", status: "missing", inCode: "None", gap: "NIST SP 811 pairs; banned in BASE-N and TABLE" },
 
-  { area: "Errors", name: "Math ERROR / Syntax ERROR", manual: "E-40", status: "partial", inCode: "LCD strings; NaN/Infinity → Math ERROR", gap: "◀▶ jump to error token; AC clears expression on Casio" },
+  { area: "Errors", name: "Math ERROR / Syntax ERROR", manual: "E-40", status: "partial", inCode: "LCD strings; NaN/Infinity → Math ERROR; ◀▶ jumps to CalcError.offset", gap: "Stack / Argument screens still missing" },
   { area: "Errors", name: "Stack / Argument / Dimension", manual: "E-40", status: "missing", inCode: "None", gap: "Needed once MATRIX/VECTOR/deep nests exist" },
   { area: "Errors", name: "Variable / Can’t Solve / Time Out", manual: "E-41", status: "partial", inCode: "Variable ERROR and Can’t Solve via CalcError", gap: "Time Out for slow ∫ / d/dx (backlog)" },
   { area: "Errors", name: "Calculation range ±1×10^99", manual: "E-38", status: "partial", inCode: "Overflow beyond ±10¹⁰⁰ raises Math ERROR", gap: "Per-function ranges from E-38–39; factorial 69" },
@@ -200,7 +200,7 @@ export default function CasioCoverage() {
       <Stack gap={8}>
         <H1>Casio fx-991ES PLUS coverage</H1>
         <Text tone="secondary">
-          View of `docs/coverage.md` (refreshed 24 Sep 2026). Status is
+          View of `docs/coverage.md` (refreshed 25 Sep 2026). Status is
           behavior, not whether a menu label exists. Scheduled work is in
           `roadmap.md`; bugs are in `issues.md`.
         </Text>

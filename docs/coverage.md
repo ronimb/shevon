@@ -147,7 +147,7 @@ MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
 
 | Feature | Manual | Status | In the emulator | Gap |
 |---------|--------|--------|-----------------|-----|
-| Math ERROR / Syntax ERROR | E-40 | Partial | LCD strings; NaN/Infinity → Math ERROR | ◀▶ jump to error token; AC clears expression on Casio |
+| Math ERROR / Syntax ERROR | E-40 | Partial | LCD strings; NaN/Infinity → Math ERROR; ◀▶ jumps to `CalcError.offset` | AC already clears the expression; Stack / Argument screens still missing |
 | Stack / Argument / Dimension | E-40 | Missing | None | Needed once MATRIX/VECTOR/deep nests exist |
 | Variable / Can’t Solve / Time Out | E-41 | Partial | Variable ERROR and Can’t Solve via `CalcError` | Time Out for slow ∫ / d/dx (backlog) |
 | Calculation range ±1×10^99 | E-38 | Partial | Overflow beyond ±10¹⁰⁰ raises Math ERROR | Per-function ranges from E-38–39; factorial 69 |

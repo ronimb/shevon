@@ -53,7 +53,7 @@ export interface Vars {
   [key: string]: any;
 }
 
-/** Two-bucket (and SOLVE) LCD errors. offset is reserved for vis-errors. */
+/** LCD errors. offset is the caret-stripped original index of the fault token. */
 export type CalcErrorKind = 'syntax' | 'math' | 'variable' | 'cantSolve';
 
 export const CALC_ERROR_LABEL: Record<CalcErrorKind, string> = {

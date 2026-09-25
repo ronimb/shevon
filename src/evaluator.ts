@@ -1,6 +1,110 @@
-import { parse, type AstNode } from './parser.ts';
+import { parse, ParseError, type AstNode } from './parser.ts';
 import { DEFAULT_FORMAT, roundToFormat, type DisplayFormat } from './format.ts';
 import { CalcError, type AngleMode, type Vars } from './types.ts';
+
+/** Rewrite text plus a parallel map: map[i] is the caret-stripped original index of text[i]. */
+type Mapped = { text: string; map: number[] };
+
+function mappedFromOriginal(original: string): Mapped {
+  let text = '';
+  const map: number[] = [];
+  for (let i = 0; i < original.length; ) {
+    const cp = original.codePointAt(i)!;
+    const ch = String.fromCodePoint(cp);
+    const nfd = ch.normalize('NFD');
+    for (const unit of nfd) {
+      text += unit;
+      map.push(i);
+    }
+    i += ch.length;
+  }
+  return { text, map };
+}
+
+function sliceMapped(m: Mapped, start: number, end: number = m.text.length): Mapped {
+  return { text: m.text.slice(start, end), map: m.map.slice(start, end) };
+}
+
+function mappedLit(text: string, orig: number): Mapped {
+  return { text, map: Array.from({ length: text.length }, () => orig) };
+}
+
+function concatMapped(parts: Mapped[]): Mapped {
+  if (parts.length === 0) return { text: '', map: [] };
+  if (parts.length === 1) return parts[0];
+  let text = '';
+  const map: number[] = [];
+  for (const p of parts) {
+    text += p.text;
+    for (let i = 0; i < p.map.length; i++) map.push(p.map[i]);
+  }
+  return { text, map };
+}
+
+function replaceLiteral(m: Mapped, search: string, replacement: string): Mapped {
+  if (!search || !m.text.includes(search)) return m;
+  const parts: Mapped[] = [];
+  let i = 0;
+  while (i < m.text.length) {
+    const idx = m.text.indexOf(search, i);
+    if (idx === -1) {
+      parts.push(sliceMapped(m, i));
+      break;
+    }
+    if (idx > i) parts.push(sliceMapped(m, i, idx));
+    parts.push(mappedLit(replacement, m.map[idx] ?? 0));
+    i = idx + search.length;
+  }
+  return concatMapped(parts);
+}
+
+function replaceRegex(m: Mapped, re: RegExp, replacer: (match: RegExpExecArray) => string): Mapped {
+  const g = re.global ? re : new RegExp(re.source, `${re.flags}g`);
+  const parts: Mapped[] = [];
+  let last = 0;
+  g.lastIndex = 0;
+  const src = m.text;
+  let match: RegExpExecArray | null;
+  while ((match = g.exec(src)) !== null) {
+    if (match.index > last) parts.push(sliceMapped(m, last, match.index));
+    parts.push(mappedLit(replacer(match), m.map[match.index] ?? 0));
+    last = match.index + match[0].length;
+    if (match[0].length === 0) g.lastIndex++;
+  }
+  if (last < src.length) parts.push(sliceMapped(m, last));
+  return parts.length ? concatMapped(parts) : m;
+}
+
+function toOrig(map: number[], pos: number, origLen: number): number {
+  if (pos < 0) return 0;
+  if (pos >= map.length) return origLen;
+  return map[pos];
+}
+
+function remapAstOffsets(node: AstNode, map: number[], origLen: number): AstNode {
+  const offset = toOrig(map, node.offset, origLen);
+  switch (node.type) {
+    case 'num':
+    case 'var':
+      return { ...node, offset };
+    case 'unary':
+      return { ...node, offset, operand: remapAstOffsets(node.operand, map, origLen) };
+    case 'binary':
+      return {
+        ...node,
+        offset,
+        left: remapAstOffsets(node.left, map, origLen),
+        right: remapAstOffsets(node.right, map, origLen),
+      };
+    case 'call':
+      return { ...node, offset, args: node.args.map((a) => remapAstOffsets(a, map, origLen)) };
+  }
+}
+
+type NumFn = (...args: number[]) => number;
+type LambdaFn = (f: (v: number) => number, ...rest: number[]) => number;
+type HelperFn = NumFn | LambdaFn;
+type HelperBag = Record<string, number | HelperFn | typeof Math>;
 
 export const factorial = (n: number): number => {
   const v = Math.round(n);
@@ -106,7 +210,7 @@ export const evaluateExpression = (expr: string, scope: Vars, ans: number, angle
     return x;
   };
 
-  const h: any = {
+  const h: HelperBag = {
     pi: Math.PI, e: Math.E,
     __sin: (x: number) => Math.sin(toRad(x)),
     __cos: (x: number) => Math.cos(toRad(x)),
@@ -398,80 +502,62 @@ export const evaluateExpression = (expr: string, scope: Vars, ans: number, angle
     return curr;
   };
 
-  let proc = expr.replace(/[‸⬚]/g, '').normalize('NFD');
+  const original = expr.replace(/[‸⬚]/g, '');
+  const origLen = original.length;
+  let mapped = mappedFromOriginal(original);
 
   // Sexagesimal (degrees-minutes-seconds) input: d°m°s° → decimal degrees.
   // The °′″ key emits a single ° between each field, so 2°30°0° means 2°30′00″.
   // Longest match first so the 2- and 1-field fallbacks don't split a triple.
-  proc = proc
-    .replace(/(\d+(?:\.\d+)?)°(\d+(?:\.\d+)?)°(\d+(?:\.\d+)?)°?/g,
-      (_m, d, mnt, s) => `(${d}+(${mnt})/60+(${s})/3600)`)
-    .replace(/(\d+(?:\.\d+)?)°(\d+(?:\.\d+)?)°?/g,
-      (_m, d, mnt) => `(${d}+(${mnt})/60)`)
-    .replace(/(\d+(?:\.\d+)?)°/g, (_m, d) => `(${d})`);
+  mapped = replaceRegex(mapped, /(\d+(?:\.\d+)?)°(\d+(?:\.\d+)?)°(\d+(?:\.\d+)?)°?/g,
+    (m) => `(${m[1]}+(${m[2]})/60+(${m[3]})/3600)`);
+  mapped = replaceRegex(mapped, /(\d+(?:\.\d+)?)°(\d+(?:\.\d+)?)°?/g,
+    (m) => `(${m[1]}+(${m[2]})/60)`);
+  mapped = replaceRegex(mapped, /(\d+(?:\.\d+)?)°/g, (m) => `(${m[1]})`);
 
   // Convert statistical power/summation variables FIRST to avoid any word boundary or symbol conflicts with x, y, n, etc.
-  proc = proc
-    .replace(/Σx²/g, 'stat_sigx2')
-    .replace(/Σx⁴/g, 'stat_sigx4')
-    .replace(/Σx³/g, 'stat_sigx3')
-    .replace(/Σx²y/g, 'stat_sigx2y')
-    .replace(/Σxy/g, 'stat_sigxy')
-    .replace(/Σx/g, 'stat_sigx')
-    .replace(/x\u0304/g, 'stat_xbar')
-    .replace(/x\u0305/g, 'stat_xbar')
-    .replace(/x̄/g, 'stat_xbar')
-    .replace(/x̅/g, 'stat_xbar')
-    .replace(/X\u0304/g, 'stat_xbar')
-    .replace(/X\u0305/g, 'stat_xbar')
-    .replace(/X̄/g, 'stat_xbar')
-    .replace(/X̅/g, 'stat_xbar')
-    .replace(/σx/g, 'stat_sigmax')
-    .replace(/\u03C3x/g, 'stat_sigmax')
-    .replace(/\bsx\b/g, 'stat_sx')
-    .replace(/Σy²/g, 'stat_sigy2')
-    .replace(/Σy/g, 'stat_sigy')
-    .replace(/y\u0304/g, 'stat_ybar')
-    .replace(/y\u0305/g, 'stat_ybar')
-    .replace(/ȳ/g, 'stat_ybar')
-    .replace(/y̅/g, 'stat_ybar')
-    .replace(/Y\u0304/g, 'stat_ybar')
-    .replace(/Y\u0305/g, 'stat_ybar')
-    .replace(/Ȳ/g, 'stat_ybar')
-    .replace(/Y̅/g, 'stat_ybar')
-    .replace(/σy/g, 'stat_sigmay')
-    .replace(/\u03C3y/g, 'stat_sigmay')
-    .replace(/\bsy\b/g, 'stat_sy')
-    .replace(/\bn\b/g, 'N')
-    .replace(/\br\b/g, 'R')
-    .replace(/minX/g, 'stat_minx')
-    .replace(/maxX/g, 'stat_maxx')
-    .replace(/minY/g, 'stat_miny')
-    .replace(/maxY/g, 'stat_maxy');
+  const statLit: Array<[string, string]> = [
+    ['Σx²', 'stat_sigx2'], ['Σx⁴', 'stat_sigx4'], ['Σx³', 'stat_sigx3'],
+    ['Σx²y', 'stat_sigx2y'], ['Σxy', 'stat_sigxy'], ['Σx', 'stat_sigx'],
+    ['x\u0304', 'stat_xbar'], ['x\u0305', 'stat_xbar'], ['x̄', 'stat_xbar'], ['x̅', 'stat_xbar'],
+    ['X\u0304', 'stat_xbar'], ['X\u0305', 'stat_xbar'], ['X̄', 'stat_xbar'], ['X̅', 'stat_xbar'],
+    ['σx', 'stat_sigmax'], ['\u03C3x', 'stat_sigmax'],
+    ['Σy²', 'stat_sigy2'], ['Σy', 'stat_sigy'],
+    ['y\u0304', 'stat_ybar'], ['y\u0305', 'stat_ybar'], ['ȳ', 'stat_ybar'], ['y̅', 'stat_ybar'],
+    ['Y\u0304', 'stat_ybar'], ['Y\u0305', 'stat_ybar'], ['Ȳ', 'stat_ybar'], ['Y̅', 'stat_ybar'],
+    ['σy', 'stat_sigmay'], ['\u03C3y', 'stat_sigmay'],
+    ['minX', 'stat_minx'], ['maxX', 'stat_maxx'], ['minY', 'stat_miny'], ['maxY', 'stat_maxy'],
+  ];
+  for (const [from, to] of statLit) mapped = replaceLiteral(mapped, from, to);
+  mapped = replaceRegex(mapped, /\bsx\b/g, () => 'stat_sx');
+  mapped = replaceRegex(mapped, /\bsy\b/g, () => 'stat_sy');
+  mapped = replaceRegex(mapped, /\bn\b/g, () => 'N');
+  mapped = replaceRegex(mapped, /\br\b/g, () => 'R');
 
   // Robust xHat/yHat replacement
   for (const sym of ['x̂1', 'x̂2', 'x̂', 'ŷ'].map(s => s.normalize('NFD'))) {
-    let sIdx;
-    while ((sIdx = proc.indexOf(sym)) !== -1) {
-      let before = proc.substring(0, sIdx);
-      let after = proc.substring(sIdx + sym.length);
+    let sIdx: number;
+    while ((sIdx = mapped.text.indexOf(sym)) !== -1) {
+      const hatOrig = mapped.map[sIdx] ?? 0;
+      let before = sliceMapped(mapped, 0, sIdx);
+      const after = sliceMapped(mapped, sIdx + sym.length);
       let operand = '';
-      if (before.endsWith(')')) {
+      if (before.text.endsWith(')')) {
         let parenCount = 0;
-        for (let i = before.length - 1; i >= 0; i--) {
-          if (before[i] === ')') parenCount++;
-          else if (before[i] === '(') parenCount--;
+        for (let i = before.text.length - 1; i >= 0; i--) {
+          if (before.text[i] === ')') parenCount++;
+          else if (before.text[i] === '(') parenCount--;
           if (parenCount === 0) {
-            operand = before.substring(i);
-            before = before.substring(0, i);
+            operand = before.text.substring(i);
+            before = sliceMapped(before, 0, i);
             break;
           }
         }
       } else {
-        let match = before.match(/(\d+\.?\d*|Ans|[A-Zπe])$/);
+        const match = before.text.match(/(\d+\.?\d*|Ans|[A-Zπe])$/);
         if (match) {
           operand = match[0];
-          before = before.substring(0, before.length - operand.length);
+          before = sliceMapped(before, 0, before.text.length - operand.length);
         }
       }
       if (operand) {
@@ -479,21 +565,29 @@ export const evaluateExpression = (expr: string, scope: Vars, ans: number, angle
         if (sym === 'x̂1'.normalize('NFD')) fn = '__xhat1';
         else if (sym === 'x̂2'.normalize('NFD')) fn = '__xhat2';
         else if (sym === 'x̂'.normalize('NFD')) fn = '__xhat';
-        proc = before + `${fn}(${operand})` + after;
+        mapped = concatMapped([before, mappedLit(`${fn}(${operand})`, hatOrig), after]);
       } else {
-        proc = before + '0' + after;
+        mapped = concatMapped([before, mappedLit('0', hatOrig), after]);
       }
     }
   }
-  
-  if (proc.includes('=') && !proc.includes('→')) {
-    let parts = proc.split('=');
-    if (parts.length === 2) {
-      proc = `(${parts[0]}) - (${parts[1]})`;
+
+  if (mapped.text.includes('=') && !mapped.text.includes('→')) {
+    const eq = mapped.text.indexOf('=');
+    if (eq !== -1 && mapped.text.indexOf('=', eq + 1) === -1) {
+      const eqOrig = mapped.map[eq] ?? 0;
+      mapped = concatMapped([
+        mappedLit('(', eqOrig),
+        sliceMapped(mapped, 0, eq),
+        mappedLit(') - (', eqOrig),
+        sliceMapped(mapped, eq + 1),
+        mappedLit(')', eqOrig),
+      ]);
     }
   }
 
-  const mathTemplates = [
+  type MathTemplate = { name: string; replace: (args: string[]) => string };
+  const mathTemplates: MathTemplate[] = [
     // diff/int/Σ are lowered to plain calls; their first argument is left as a
     // sub-expression in the IR and evaluated as a function of X by the AST
     // walker (see LAMBDA_FORMS below). This avoids emitting JS arrow functions.
@@ -539,106 +633,170 @@ export const evaluateExpression = (expr: string, scope: Vars, ans: number, angle
     { name: 'sqrt', replace: (args: string[]) => `__sqrt(${args[0]})` },
   ];
 
-  const processTemplatesForJS = (s: string): string => {
-    let result = '';
+  const processTemplatesForJS = (s: Mapped): Mapped => {
+    const parts: Mapped[] = [];
     let curr = s;
-    while (curr.length > 0) {
+    while (curr.text.length > 0) {
       let earliestIdx = Infinity;
-      let bestT: any = null;
-      
-      // Look for the first template in the string
+      let bestT: MathTemplate | null = null;
+
       for (const t of mathTemplates) {
-        let idx = curr.indexOf(t.name + '(');
+        const idx = curr.text.indexOf(t.name + '(');
         if (idx !== -1 && idx < earliestIdx) {
           earliestIdx = idx;
           bestT = t;
         }
       }
-      
+
       if (bestT) {
-        // Add everything before the template to the result
-        result += curr.substring(0, earliestIdx);
-        const bal = getBalanced(curr, earliestIdx + bestT.name.length);
+        if (earliestIdx > 0) parts.push(sliceMapped(curr, 0, earliestIdx));
+        const stemOrig = curr.map[earliestIdx] ?? 0;
+        const bal = getBalanced(curr.text, earliestIdx + bestT.name.length);
         if (bal) {
-          // Process the content of the template recursively
-          const inner = processTemplatesForJS(bal.content);
-          const args = splitTopLevelArgs(inner);
-          const replaced = bestT.replace(args);
-          result += replaced;
-          // Continue scanning FROM AFTER the template we just processed
-          curr = curr.substring(bal.endIdx + 1);
+          const inner = processTemplatesForJS(sliceMapped(curr, earliestIdx + bestT.name.length + 1, bal.endIdx));
+          const args = splitTopLevelArgs(inner.text);
+          parts.push(mappedLit(bestT.replace(args), stemOrig));
+          curr = sliceMapped(curr, bal.endIdx + 1);
         } else {
-          // Mismatched paren? Just consume the name and continue
-          result += bestT.name + '(';
-          curr = curr.substring(earliestIdx + bestT.name.length + 1);
+          parts.push(sliceMapped(curr, earliestIdx, earliestIdx + bestT.name.length + 1));
+          curr = sliceMapped(curr, earliestIdx + bestT.name.length + 1);
         }
       } else {
-        // No templates found, add the rest of the string
-        result += curr;
-        curr = '';
+        parts.push(curr);
+        curr = { text: '', map: [] };
       }
     }
-    return result;
+    return concatMapped(parts);
   };
 
-  proc = processTemplatesForJS(proc);
+  mapped = processTemplatesForJS(mapped);
 
   // Robust Factorial Replacement
-  let fIdx;
-  while ((fIdx = proc.indexOf('!')) !== -1) {
-      let before = proc.substring(0, fIdx);
-      let after = proc.substring(fIdx + 1);
-      let operand = '';
-      if (before.endsWith(')')) {
-          let parenCount = 0;
-          for (let i = before.length - 1; i >= 0; i--) {
-              if (before[i] === ')') parenCount++;
-              else if (before[i] === '(') parenCount--;
-              if (parenCount === 0) {
-                  operand = before.substring(i);
-                  before = before.substring(0, i);
-                  break;
-              }
-          }
-      } else {
-          let match = before.match(/(\d+\.?\d*|Ans|[A-Zπe])$/);
-          if (match) {
-              operand = match[0];
-              before = before.substring(0, before.length - operand.length);
-          }
+  let fIdx: number;
+  while ((fIdx = mapped.text.indexOf('!')) !== -1) {
+    const bangOrig = mapped.map[fIdx] ?? 0;
+    let before = sliceMapped(mapped, 0, fIdx);
+    const after = sliceMapped(mapped, fIdx + 1);
+    let operand = '';
+    if (before.text.endsWith(')')) {
+      let parenCount = 0;
+      for (let i = before.text.length - 1; i >= 0; i--) {
+        if (before.text[i] === ')') parenCount++;
+        else if (before.text[i] === '(') parenCount--;
+        if (parenCount === 0) {
+          operand = before.text.substring(i);
+          before = sliceMapped(before, 0, i);
+          break;
+        }
       }
-      if (operand) {
-          proc = before + `__factorial(${operand})` + after;
-      } else {
-          // No valid operand found, handle this ! manually or skip
-          proc = before + '__factorial(NaN)' + after;
+    } else {
+      const match = before.text.match(/(\d+\.?\d*|Ans|[A-Zπe])$/);
+      if (match) {
+        operand = match[0];
+        before = sliceMapped(before, 0, before.text.length - operand.length);
       }
+    }
+    if (operand) {
+      mapped = concatMapped([before, mappedLit(`__factorial(${operand})`, bangOrig), after]);
+    } else {
+      mapped = concatMapped([before, mappedLit('__factorial(NaN)', bangOrig), after]);
+    }
   }
 
-  proc = proc.replace(/×/g, '*')
-    .replace(/÷/g, '/')
-    .replace(/Ran#/g, '__ranhash()')
-    .replace(/%/g, '/100')
-    .replace(/×10\^/g, '*10**');
+  mapped = replaceLiteral(mapped, '×', '*');
+  mapped = replaceLiteral(mapped, '÷', '/');
+  mapped = replaceLiteral(mapped, 'Ran#', '__ranhash()');
+  mapped = replaceLiteral(mapped, '%', '/100');
+  mapped = replaceLiteral(mapped, '×10^', '*10**');
 
-  proc = resolveExponents(proc);
+  const resolveExponentsMapped = (m: Mapped): Mapped => {
+    let curr = m;
+    while (true) {
+      const idxPower = curr.text.lastIndexOf('^');
+      const idxSqr = curr.text.lastIndexOf('²');
+      const idxCube = curr.text.lastIndexOf('³');
+      const maxIdx = Math.max(idxPower, idxSqr, idxCube);
+      if (maxIdx === -1) break;
 
-  // Enhanced implicit multiplication.
-  // Digits that belong to a helper name (e.g. `__log10(`) must not become
-  // `digit × (` — that rewrote `__log10(100)` into `__log10*(100)` (Syntax ERROR).
-  const funcOrVar = '(Ans|[A-Zπe]|stat_[a-z0-9_]+|__[a-z]+[A-Za-z0-9]*\\()';
-  proc = proc.replace(new RegExp(`(\\d+)${funcOrVar}`, 'g'), '$1*$2')
-             .replace(new RegExp(`(\\bAns\\b|[A-Zπe])${funcOrVar}`, 'g'), '$1*$2')
-             .replace(/(\bAns\\b|[A-Zπe])(\d+)/g, '$1*$2')
-             .replace(new RegExp(`(\\))(\\d+|${funcOrVar})`, 'g'), ')*$2')
-             .replace(/(\)|Ans|[A-Zπe])(\()/g, '$1*(')
-             // Require the digit run not to continue an identifier (`__log10(`).
-             .replace(/(?<![A-Za-z0-9_])(\d+)(\()/g, '$1*(');
+      const op = curr.text[maxIdx];
+      const opOrig = curr.map[maxIdx] ?? 0;
+      const beforeText = curr.text.substring(0, maxIdx);
+      const afterText = curr.text.substring(maxIdx + 1);
+      const base = findPrecedingOperand(beforeText);
+      if (!base) {
+        const fallback = op === '^' ? '**' : (op === '²' ? '**2' : '**3');
+        curr = concatMapped([
+          sliceMapped(curr, 0, maxIdx),
+          mappedLit(fallback, opOrig),
+          sliceMapped(curr, maxIdx + 1),
+        ]);
+        continue;
+      }
 
-  proc = proc.replace(/π/g, 'pi')
-    .replace(/\be\b/g, 'e')
-    .replace(/\bx\b/g, 'X')
-    .replace(/\by\b/g, 'Y');
+      let exponent = '';
+      let afterEnd = maxIdx + 1;
+      if (op === '²') {
+        exponent = '2';
+      } else if (op === '³') {
+        exponent = '3';
+      } else if (afterText.startsWith('(')) {
+        const bal = getBalanced(curr.text, maxIdx + 1);
+        if (bal) {
+          exponent = bal.content;
+          afterEnd = bal.endIdx + 1;
+        } else {
+          const match = afterText.match(/^(\([^)]*\)|[a-zA-Z0-9_]+)/);
+          if (match) {
+            exponent = match[0];
+            afterEnd = maxIdx + 1 + match[0].length;
+          } else {
+            exponent = 'NaN';
+          }
+        }
+      } else {
+        const fNameMatch = afterText.match(/^[a-zA-Z0-9_]+\(/);
+        if (fNameMatch) {
+          const fNameLength = fNameMatch[0].length - 1;
+          const bal = getBalanced(afterText, fNameLength);
+          if (bal) {
+            exponent = afterText.substring(0, bal.endIdx + 1);
+            afterEnd = maxIdx + 1 + bal.endIdx + 1;
+          } else {
+            exponent = 'NaN';
+          }
+        } else {
+          const match = afterText.match(/^([a-zA-Z0-9_]+|\([^)]*\))/);
+          if (match) {
+            exponent = match[0];
+            afterEnd = maxIdx + 1 + match[0].length;
+          } else {
+            exponent = 'NaN';
+          }
+        }
+      }
+
+      const parsedBase = resolveExponents(base);
+      const parsedExponent = resolveExponents(exponent);
+      curr = concatMapped([
+        sliceMapped(curr, 0, maxIdx - base.length),
+        mappedLit(`__pow(${parsedBase},${parsedExponent})`, opOrig),
+        sliceMapped(curr, afterEnd),
+      ]);
+    }
+    return curr;
+  };
+
+  mapped = resolveExponentsMapped(mapped);
+
+  // Implicit multiply lives in the parser (token-level). Do not re-insert `*`
+  // here — that used to turn `__log10(100)` into `__log10*(100)`.
+
+  mapped = replaceLiteral(mapped, 'π', 'pi');
+  mapped = replaceRegex(mapped, /\be\b/g, () => 'e');
+  mapped = replaceRegex(mapped, /\bx\b/g, () => 'X');
+  mapped = replaceRegex(mapped, /\by\b/g, () => 'Y');
+
+  const proc = mapped.text;
 
   // Identifiers that resolve to a value (variables and constants). Function
   // names live in `h` and are looked up separately when a call node is walked.
@@ -659,51 +817,63 @@ export const evaluateExpression = (expr: string, scope: Vars, ans: number, angle
         if (Object.prototype.hasOwnProperty.call(env, node.name)) {
           return Number(env[node.name]);
         }
-        throw new Error(`Undefined variable "${node.name}"`);
+        throw new CalcError('syntax', node.offset);
       }
       case 'unary': {
         const v = evalNode(node.operand, env);
-        return node.op === '-' ? -v : +v;
+        const val = node.op === '-' ? -v : +v;
+        if (!Number.isFinite(val)) throw new CalcError('math', node.offset);
+        return val;
       }
       case 'binary': {
         const l = evalNode(node.left, env);
         const r = evalNode(node.right, env);
+        let val: number;
         switch (node.op) {
-          case '+': return l + r;
-          case '-': return l - r;
-          case '*': return l * r;
-          case '/': return l / r;
-          case '**': return Math.pow(l, r);
+          case '+': val = l + r; break;
+          case '-': val = l - r; break;
+          case '*': val = l * r; break;
+          case '/': val = l / r; break;
+          case '**': val = Math.pow(l, r); break;
         }
-        // Unreachable, but keeps the type checker happy.
-        throw new Error(`Unknown operator "${(node as any).op}"`);
+        if (!Number.isFinite(val) || Math.abs(val) >= 1e100) {
+          throw new CalcError('math', node.offset);
+        }
+        return val;
       }
       case 'call': {
         const fn = h[node.name];
         if (typeof fn !== 'function') {
-          throw new Error(`Undefined function "${node.name}"`);
+          throw new CalcError('syntax', node.offset);
         }
+        let val: number;
         if (LAMBDA_FORMS.has(node.name)) {
           const [bodyNode, ...restNodes] = node.args;
           const f = (x: number) => evalNode(bodyNode, { ...env, X: x });
           const rest = restNodes.map((a) => evalNode(a, env));
-          return fn(f, ...rest);
+          val = (fn as LambdaFn)(f, ...rest);
+        } else {
+          const args = node.args.map((a) => evalNode(a, env));
+          val = (fn as NumFn)(...args);
         }
-        const args = node.args.map((a) => evalNode(a, env));
-        return fn(...args);
+        if (!Number.isFinite(val) || Math.abs(val) >= 1e100) {
+          throw new CalcError('math', node.offset);
+        }
+        return val;
       }
     }
   };
 
   try {
-    const ast = parse(proc);
+    const ast = remapAstOffsets(parse(proc), mapped.map, origLen);
     const val = evalNode(ast, baseEnv);
     if (!Number.isFinite(val) || Math.abs(val) >= 1e100) {
-      throw new CalcError('math');
+      throw new CalcError('math', ast.offset);
     }
     return val;
   } catch (e) {
     if (e instanceof CalcError) throw e;
+    if (e instanceof ParseError) throw new CalcError('syntax', toOrig(mapped.map, e.pos, origLen));
     throw new CalcError('syntax');
   }
 };

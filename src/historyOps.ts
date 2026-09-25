@@ -1,4 +1,4 @@
-import type { CalcMode, HistoryItem } from './types.ts';
+import type { CalcErrorKind, CalcMode, HistoryItem } from './types.ts';
 import { reconstructSequence, STO_LETTER_KEY } from './modes/comp.ts';
 
 export const MODE_LABEL: Record<string, string> = {
@@ -19,6 +19,9 @@ export type LiveOpState = {
   isSto: boolean;
   isRcl: boolean;
   currentInput: string;
+  isShift?: boolean;
+  solveScreen?: null | 'confirm' | 'result' | 'continue';
+  lcdErrorKind?: CalcErrorKind | null;
 };
 
 /** Final physical-key recipe for whatever operation is in progress. */
@@ -49,6 +52,15 @@ export function liveOperationSequence(s: LiveOpState): string[] {
   const seq = raw ? reconstructSequence(raw) : [];
   if (s.isSto && !raw.includes('→')) seq.push('SHIFT', 'RCL');
   else if (s.isRcl) seq.push('RCL');
+  else if (
+    s.solveScreen ||
+    s.lcdErrorKind === 'variable' ||
+    s.lcdErrorKind === 'cantSolve'
+  ) {
+    seq.push('SHIFT', 'CALC');
+  } else if (s.isShift) {
+    seq.push('SHIFT');
+  }
   return seq;
 }
 

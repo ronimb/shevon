@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { collectSolvePromptVars, expressionHasSolveUnknown, newtonSolveX, reconstructSequence, wrapPrecedingBinary } from './modes/comp.ts';
+import { collectSolvePromptVars, expressionHasSolveUnknown, moveCompCursorRight, newtonSolveX, placeCaretAtOffset, reconstructSequence, wrapPrecedingBinary } from './modes/comp.ts';
 import { chipFamily, renderMiniButton } from './historyKeys.tsx';
 import { liveOperationSequence, setupCommitSequence } from './historyOps.ts';
 import { evaluateExpression, toFraction } from './evaluator.ts';
@@ -438,6 +438,56 @@ describe('Phase 2 — SOLVE errors and L−R (E-20, E-21, E-41)', () => {
   });
 });
 
+describe('E-40 — CalcError.offset and jump-to-token (debt-source-map)', () => {
+  function syntaxOf(expr: string): CalcError {
+    try {
+      evalComp(expr);
+      throw new Error('expected CalcError');
+    } catch (e) {
+      expect(e).toBeInstanceOf(CalcError);
+      return e as CalcError;
+    }
+  }
+
+  it('log10(100) stays 2 after implicit multiply moved to the parser', () => {
+    expect(evalComp('log10(100)')).toBeCloseTo(2, 10);
+    expect(evalComp('2log10(100)')).toBeCloseTo(4, 10);
+  });
+
+  it('Syntax ERROR offset is the fault token in the original string', () => {
+    const err = syntaxOf('2+');
+    expect(err.kind).toBe('syntax');
+    expect(err.offset).toBe(1);
+  });
+
+  it('rewritten stem keeps the original start as Math ERROR offset', () => {
+    const err = syntaxOf('1+sqrt(-1)');
+    expect(err.kind).toBe('math');
+    expect(err.offset).toBe(2);
+  });
+
+  it('left/right jump places the caret at the fault token', () => {
+    const trailing = syntaxOf('2+');
+    expect(placeCaretAtOffset('2+‸', trailing.offset ?? 0)).toBe('2‸+');
+
+    const stem = syntaxOf('1+sqrt(-1)');
+    expect(placeCaretAtOffset('1+sqrt(-1)‸', stem.offset ?? 0)).toBe('1+‸sqrt(-1)');
+  });
+
+  it('Variable ERROR / Can\'t Solve have no token offset (◀▶ dismiss, expression stays)', () => {
+    expect(new CalcError('variable').offset).toBeUndefined();
+    expect(new CalcError('cantSolve').offset).toBeUndefined();
+    expect(placeCaretAtOffset('2+2‸', 0)).toBe('‸2+2');
+  });
+
+  it('▶ exits painted abs bars by closing the IR', () => {
+    expect(moveCompCursorRight('abs(X‸')).toBe('abs(X)‸');
+    expect(moveCompCursorRight('1+abs(X‸')).toBe('1+abs(X)‸');
+    expect(moveCompCursorRight('abs(X)‸')).toBe('abs(X)‸');
+    expect(moveCompCursorRight('sin(30‸')).toBe('sin(30‸');
+  });
+});
+
 describe('History sequences use physical faceplate keys', () => {
   it('variable X is ALPHA + ) (the key that wears the red X)', () => {
     expect(reconstructSequence('X')).toEqual(['ALPHA', ')']);
@@ -580,5 +630,25 @@ describe('Non-calculation operations in live keys / history', () => {
 
   it('completed SETUP Deg is SHIFT MODE 3', () => {
     expect(setupCommitSequence('deg')).toEqual(['SHIFT', 'MODE', '3']);
+  });
+
+  it('pending SHIFT and SOLVE append SHIFT CALC after the expression', () => {
+    const expr = {
+      ...idle,
+      calcMode: 'COMP' as const,
+      currentInput: 'abs(X)+1=0‸',
+    };
+    expect(liveOperationSequence(expr)).toEqual([
+      'SHIFT', 'hyp', 'ALPHA', ')', '+', '1', 'ALPHA', 'CALC', '0',
+    ]);
+    expect(liveOperationSequence({ ...expr, isShift: true })).toEqual([
+      'SHIFT', 'hyp', 'ALPHA', ')', '+', '1', 'ALPHA', 'CALC', '0', 'SHIFT',
+    ]);
+    expect(liveOperationSequence({ ...expr, solveScreen: 'confirm' })).toEqual([
+      'SHIFT', 'hyp', 'ALPHA', ')', '+', '1', 'ALPHA', 'CALC', '0', 'SHIFT', 'CALC',
+    ]);
+    expect(liveOperationSequence({ ...expr, lcdErrorKind: 'cantSolve' })).toEqual([
+      'SHIFT', 'hyp', 'ALPHA', ')', '+', '1', 'ALPHA', 'CALC', '0', 'SHIFT', 'CALC',
+    ]);
   });
 });

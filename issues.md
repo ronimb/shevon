@@ -38,8 +38,8 @@ Status: `[ ]` open · `[x]` fixed (move to **Closed** at the next wrap-up).
 - [ ] `stat-del` — In the STAT editor, DEL edits the cell; on the hardware it
       deletes the line. Ins / Del-A are missing.
       **Associated:** `p2-edit`.
-- [ ] `stat-jump-comp` — Recalling a STAT variable (`insertStatVar`) forces
-      COMP. The unit stays in STAT.
+- [ ] `stat-jump-comp` — Recalling a STAT variable (`insertStatVar` in
+      `src/modes/stat.tsx`) forces COMP. The unit stays in STAT.
       **Associated:** `p2-stat-mode`.
 
 ---
@@ -71,13 +71,11 @@ Status: `[ ]` open · `[x]` fixed (move to **Closed** at the next wrap-up).
       from caret navigability, and ▲/▼ light for COMP history replay (not only
       the EQN result). STAT row-nav lighting is the remaining gap.
       **Associated:** `vis-indicators`.
-- [ ] `err-jump` — Syntax / Math ERROR: ◀▶ dismisses the error and returns to
-      the expression; they do not jump the caret to the fault token (E-40).
-      Stack / Argument ERROR screens are missing.
-      **Associated:** `vis-errors`. **Blocked (Now slice):** true jump-to-token
-      needs the evaluator to surface the fault offset; the Now visual slice must
-      not touch the evaluator (`docs/prompts/now-visual-slice.md`), so this is
-      deferred until a fault index is available.
+- [x] `err-jump` — Syntax / Math ERROR: ◀▶ now jumps the caret to
+      `CalcError.offset` (E-40). AC still clears the error and the expression.
+      Variable ERROR / Can’t Solve still dismiss without a jump (no token).
+      Stack / Argument ERROR screens remain missing (`vis-errors`).
+      **Associated:** `vis-errors`, `debt-source-map`.
 - [x] `ascii-tokens` — Remaining function glyphs (trig/hyp/`ln`) now paint a
       styled hardware-style name via the shared template table in
       `src/display.tsx`; the LCD no longer emits the ASCII stem (`sin(`, `ln(`,
@@ -135,11 +133,17 @@ Status: `[ ]` open · `[x]` fixed (move to **Closed** at the next wrap-up).
 
 - [ ] `comp-keys` — Unmapped letter keys steal typing into the overlay; Shift
       on the PC keyboard is hold, while the overlay SHIFT is a toggle.
+      Letter shortcuts (L/R/Q/C/T/S/A/X/Y) and keys that do not need Shift
+      to type (`.`, `-`, `/`, `0`, `1`, `9`) now call the same handlers as
+      the faceplate. `+` `*` `(` `)` `^` still insert the unshifted symbol
+      because those characters are typed with a held Shift (otherwise
+      `+` would become Pol).
       **Associated:** `comp-keys` (COMP leftovers).
 - [ ] `hist-letters` — Remaining letter shortcuts (A–F / M) are not fully
       audited against the physical-key History sequence contract (`ALPHA` +
       the faceplate key, not a chip labelled A–F). X/Y already log
-      `ALPHA`, `)` / `ALPHA`, `S⇔D`.
+      `ALPHA`, `)` / `ALPHA`, `S⇔D`. `L` now matches the log key (`log10`),
+      not log□ / Sum.
       **Associated:** Now → Current history.
 - [x] `replay-no-result` — ▲ recalled the expression but cleared the answer
       line. Replay now shows the stored result underneath.

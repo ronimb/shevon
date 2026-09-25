@@ -103,9 +103,34 @@ export function newtonSolveX(expr: string, vars: Vars, ans: number, angleMode: A
   throw new CalcError('cantSolve');
 }
 
+/** E-40: put the COMP caret at `offset` in the caret-stripped expression. */
+export function placeCaretAtOffset(input: string, offset: number): string {
+  const raw = input.replace(/[‸⬚]/g, '');
+  const o = Math.max(0, Math.min(Math.floor(offset), raw.length));
+  return `${raw.slice(0, o)}‸${raw.slice(o)}`;
+}
+
+/** Unclosed `abs(` paints both bars (`|X|`), so ▶ at the end must close it. */
+function unclosedAbsAtEnd(before: string): boolean {
+  let depth = 0;
+  for (let i = before.length - 1; i >= 0; i--) {
+    const c = before[i];
+    if (c === ')') depth++;
+    else if (c === '(') {
+      if (depth === 0) return before.slice(0, i).endsWith('abs');
+      depth--;
+    }
+  }
+  return false;
+}
+
 export function moveCompCursorRight(currentInput: string): string {
   let i = currentInput.indexOf('‸');
-  if (i === -1 || i >= currentInput.length - 1) return currentInput;
+  if (i === -1) return currentInput;
+  if (i >= currentInput.length - 1) {
+    const before = currentInput.substring(0, i);
+    return unclosedAbsAtEnd(before) ? `${before})‸` : currentInput;
+  }
 
   let before = currentInput.substring(0, i);
   let after = currentInput.substring(i + 1);
