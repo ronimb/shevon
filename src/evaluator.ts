@@ -1,6 +1,6 @@
 import { parse, type AstNode } from './parser.ts';
 import { DEFAULT_FORMAT, roundToFormat, type DisplayFormat } from './format.ts';
-import type { AngleMode, Vars } from './types.ts';
+import { CalcError, type AngleMode, type Vars } from './types.ts';
 
 export const factorial = (n: number): number => {
   const v = Math.round(n);
@@ -697,9 +697,13 @@ export const evaluateExpression = (expr: string, scope: Vars, ans: number, angle
 
   try {
     const ast = parse(proc);
-    return evalNode(ast, baseEnv);
+    const val = evalNode(ast, baseEnv);
+    if (!Number.isFinite(val) || Math.abs(val) >= 1e100) {
+      throw new CalcError('math');
+    }
+    return val;
   } catch (e) {
-    console.warn("Evaluation error for expression:", proc, e);
-    throw e;
+    if (e instanceof CalcError) throw e;
+    throw new CalcError('syntax');
   }
 };

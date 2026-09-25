@@ -46,6 +46,10 @@ Status: `[ ]` open · `[x]` fixed (move to **Closed** at the next wrap-up).
 
 ## Display / LCD
 
+- [x] `ncr-empty-box` — SHIFT × / ÷ (nPr / nCr) with no n painted `C⬚` / `P⬚`.
+      Hardware is infix (`10C4`); a lone press is just C/P with the caret after
+      the letter, no empty-slot box.
+
 - [x] `root-sup-collision` — Superscript inside a radical used to strike the
       vinculum. Radicals now wrap in `.root` (flex) so the exponent sits in the
       body box under the bar. Round-2 re-smoke (24 Sep 2026).
@@ -106,9 +110,11 @@ Status: `[ ]` open · `[x]` fixed (move to **Closed** at the next wrap-up).
 - [ ] `sigma-bounds` — Σ end is capped at `start+1000`, not the manual ±1e10
       bounds; nested Pol/∫/d/dx/Σ is not banned.
       **Associated:** `comp-range`.
-- [ ] `solve-errors` — SOLVE failures surface as Syntax ERROR instead of
-      Variable ERROR / Can’t Solve. No L−R residual or Continue screen.
+- [x] `solve-errors` — SOLVE failures were Syntax ERROR. Now Variable ERROR
+      (no X), Can’t Solve (Newton miss), initial-X prompt, L−R, and Continue
+      match E-20/E-21/E-41. LCD uses `CalcError` / `lcdError`.
       **Associated:** `p2-solve`.
+      Kickoff: [`docs/prompts/p2-solve-errors.md`](docs/prompts/p2-solve-errors.md).
 
 ---
 
@@ -130,8 +136,10 @@ Status: `[ ]` open · `[x]` fixed (move to **Closed** at the next wrap-up).
 - [ ] `comp-keys` — Unmapped letter keys steal typing into the overlay; Shift
       on the PC keyboard is hold, while the overlay SHIFT is a toggle.
       **Associated:** `comp-keys` (COMP leftovers).
-- [ ] `hist-letters` — Remaining letter shortcuts (A–F / M and SHIFT/ALPHA
-      overlays) are not fully audited against the History sequence contract.
+- [ ] `hist-letters` — Remaining letter shortcuts (A–F / M) are not fully
+      audited against the physical-key History sequence contract (`ALPHA` +
+      the faceplate key, not a chip labelled A–F). X/Y already log
+      `ALPHA`, `)` / `ALPHA`, `S⇔D`.
       **Associated:** Now → Current history.
 - [x] `replay-no-result` — ▲ recalled the expression but cleared the answer
       line. Replay now shows the stored result underneath.

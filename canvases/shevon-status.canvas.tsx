@@ -29,22 +29,24 @@ export default function ShevonStatus() {
           Casio fx-991ES PLUS hardware overlay emulator. Behavior spec: the
           official user guide (`fx-570_991ES_PLUS_EN.pdf`). This canvas is a
           snapshot of `roadmap.md`, `issues.md`, and `docs/coverage.md`
-          (refreshed 12 Sep 2026).
+          (refreshed 24 Sep 2026).
         </Text>
       </Stack>
 
       <Grid columns={4} gap={16}>
-        <Stat value="34/76" label="Coverage done" tone="warning" />
+        <Stat value="36/76" label="Coverage done" tone="warning" />
         <Stat value="3 / 8" label="Modes with real logic" />
         <Stat value="AST" label="Engine (no new Function)" tone="success" />
-        <Stat value="56" label="Tests (40 golden + 16 parser)" tone="success" />
+        <Stat value="86" label="Tests (70 golden + 16 parser)" tone="success" />
       </Grid>
 
       <Callout tone="success" title="Phase 1 landed · Phase 2 in progress">
         COMP/SETUP are honest for Fix/Sci/Norm, hyp, Ran#, ENG, DMS, Rnd,
-        Gauss–Kronrod ∫, and CLR. STAT FREQ and the EQN quadratic editor
-        (a/b/c, caret, bottom-left entry) have started Phase 2. Next:
-        finish STAT and EQN before opening new modes.
+        Gauss–Kronrod ∫, and CLR. STAT FREQ, the EQN quadratic editor
+        (a/b/c, caret, bottom-left entry), and quadratic a+bi roots have
+        started Phase 2. The Now visual slice mostly landed: IR stems never
+        reach the LCD, and ◀▶ plus COMP-history ▲▼ light from real state.
+        Next: finish STAT and EQN before opening new modes.
       </Callout>
 
       <Stack gap={8}>
@@ -59,8 +61,8 @@ export default function ShevonStatus() {
         </Text>
         <Text tone="secondary">
           COMP is usable for everyday scientific work. STAT is the next most
-          complete mode. EQN only solves real quadratics. CMPLX, BASE-N,
-          MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
+          complete mode. EQN solves quadratics (real and a+bi). CMPLX,
+          BASE-N, MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
         </Text>
       </Stack>
 
@@ -71,7 +73,7 @@ export default function ShevonStatus() {
         segments={[
           { id: "COMP", value: 85, color: "green" },
           { id: "STAT", value: 75, color: "blue" },
-          { id: "EQN", value: 35, color: "yellow" },
+          { id: "EQN", value: 45, color: "yellow" },
           { id: "SETUP", value: 75, color: "orange" },
           { id: "CMPLX", value: 2, color: "gray" },
           { id: "BASE-N", value: 2, color: "gray" },
@@ -93,17 +95,22 @@ export default function ShevonStatus() {
           [
             "src/Calculator.tsx",
             "UI shell",
-            "COMP/STAT/EQN handlers, LCD, keys, history pane, keyboard, debug overlay — the remaining monolith",
+            "COMP/STAT/EQN handlers, LCD, keys, history pane, keyboard — remaining monolith (~1878 lines)",
           ],
           [
             "src/parser.ts + src/evaluator.ts",
             "Expression engine",
-            "Tokenizer + recursive-descent AST parser; evaluator lowers the template IR and walks the AST",
+            "Tokenizer + recursive-descent AST; evaluator rewrites template IR then walks the AST",
           ],
           [
             "src/display.tsx, format.ts, keys.ts, types.ts, modes/",
             "Display, formats, key maps, types, modes",
-            "formatMath / toLaTeX, Fix/Sci/ENG/DMS, PATS, COMP / STAT / EQN helpers",
+            "Shared paintTemplates table; Fix/Sci/ENG/DMS; COMP / STAT / EQN helpers",
+          ],
+          [
+            "src/historyKeys.tsx + historyOps.ts",
+            "Current history",
+            "Physical-key chips and live/non-calc sequences (landed extra)",
           ],
           [
             "src/index.css",
@@ -111,24 +118,9 @@ export default function ShevonStatus() {
             "Natural-display templates, hitbox geometry, mini-key history glyphs",
           ],
           [
-            "src/calculator_new.png",
-            "Hardware faceplate",
-            "Committed under src/",
-          ],
-          [
-            "electron-main.cjs",
-            "Portable desktop shell",
-            "480×850 window, loads Vite in dev and dist/index.html when packed",
-          ],
-          [
             "README.md + markdown plan",
             "Docs",
             "roadmap.md scheduled work · issues.md bugs · backlog.md unassigned ideas",
-          ],
-          [
-            "fx-570_991ES_PLUS_EN.pdf",
-            "Behavior spec",
-            "Gitignored. Keep it local; do not commit.",
           ],
         ]}
         striped
@@ -146,13 +138,15 @@ export default function ShevonStatus() {
               <Text>
                 Natural-display input for fractions, mixed numbers, powers,
                 roots, logs, trig, hyp, integrals, derivatives, and sums.
-                Cursor walks templates. DEL is atomic on function stems.
+                Cursor walks templates. DEL is atomic on function stems. IR
+                stems never leak onto the LCD.
               </Text>
               <Text tone="secondary">
-                Ans, A–F / X / Y, independent M, STO/RCL, S⇔D, DEG/RAD/GRA,
-                Fix/Sci/Norm, ENG, DMS, Rnd, Ran#/RanInt#, CALC prompts,
-                SOLVE via Newton–Raphson, percent, nPr/nCr, Pol/Rec, π and e,
-                SHIFT 9 CLR.
+                Ans, A–F / X / Y, independent M, STO/RCL, S⇔D (exact p/q
+                only), DEG/RAD/GRA, Fix/Sci/Norm, ENG, DMS, Rnd, Ran#/RanInt#,
+                CALC prompts, SOLVE (initial X, L−R, Continue, Variable ERROR /
+                Can’t Solve), percent, nPr/nCr,
+                Pol/Rec, π and e, SHIFT 9 CLR.
               </Text>
             </Stack>
           </CardBody>
@@ -170,9 +164,9 @@ export default function ShevonStatus() {
               </Text>
               <Text tone="secondary">
                 EQN quadratic a/b/c editor, caret, bottom-left entry, real
-                roots. History pane can reload an expression and copy LaTeX.
-                PC keyboard maps Enter, arrows, Shift, Alt, and letter
-                shortcuts for X/Y.
+                and a+bi roots. Live Current keys strip plus History pane
+                with physical-key Show Keys. PC keyboard maps Enter, arrows,
+                Shift, Alt, and X/Y.
               </Text>
             </Stack>
           </CardBody>
@@ -200,9 +194,9 @@ export default function ShevonStatus() {
             "Phase 2",
           ],
           [
-            "err-jump / ascii-tokens / ind-*",
-            "◀▶ does not jump to the fault token; remaining ASCII glyphs; dim indicators",
-            "vis-errors · vis-no-literal · vis-indicators",
+            "err-jump / ind-*",
+            "◀▶ does not jump to the fault token; STAT ▲▼ and Disp still dim",
+            "vis-errors · vis-indicators",
           ],
           [
             "Calculator.tsx is still a monolith",
@@ -219,18 +213,18 @@ export default function ShevonStatus() {
         columnAlign={["left", "left", "left"]}
         rows={[
           [
-            "Visual leftovers",
-            "Disp/◀▶/▲▼ from real COMP state; error jump-to-token; remaining ASCII glyphs",
+            "Finish visual leftovers",
+            "STAT ▲▼; vis-errors jump-to-token (blocked on evaluator fault offset)",
             "roadmap.md → Now",
           ],
           [
-            "SOLVE UX, then rest of Phase 2",
-            "p2-solve first; then Ins/Del-A, Dist, stay in STAT, linear/cubic EQN",
+            "Rest of Phase 2",
+            "p2-solve landed; next Ins/Del-A, Dist, stay in STAT, linear/cubic EQN",
             "Phase 2",
           ],
           [
-            "Current history",
-            "Live key-order overlay — parked extra, not this slice",
+            "Letter-shortcut audit",
+            "A–F / M keyboard vs physical-key History contract (X/Y already done)",
             "roadmap.md → Emulator extras",
           ],
           [
@@ -245,10 +239,9 @@ export default function ShevonStatus() {
       <H2>Emulator extras (not on the Casio)</H2>
       <Text>
         Side pane with calculation history, LaTeX copy, reconstructed key
-        sequences, PC keyboard, PWA install copy, Electron portable build,
-        and a triple-click LCD calibration mode that lets you drag/resize
-        hitboxes and copy CSS. Live Current history is a scheduled extra in
-        `roadmap.md` (Emulator extras), not the current slice.
+        sequences, PC keyboard, PWA install copy, and Electron portable
+        build. Live Current history is a top-of-page strip (landed). Remaining
+        extra work is the A–F / M letter-shortcut audit.
       </Text>
 
       <Divider />

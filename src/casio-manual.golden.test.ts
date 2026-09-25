@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { reconstructSequence } from './modes/comp.ts';
+import { collectSolvePromptVars, expressionHasSolveUnknown, newtonSolveX, reconstructSequence, wrapPrecedingBinary } from './modes/comp.ts';
+import { chipFamily, renderMiniButton } from './historyKeys.tsx';
+import { liveOperationSequence, setupCommitSequence } from './historyOps.ts';
 import { evaluateExpression, toFraction } from './evaluator.ts';
+import { CalcError, calcErrorLabel } from './types.ts';
 import { appendStatRowIfRoom, calculateStatVars, getStatMaxRows, StatDataScreen } from './modes/stat.tsx';
 import { EqnQuadEntry, EqnQuadScreen, EqnResultValue, solveQuadratic } from './modes/eqn.tsx';
 import { formatMath, toLaTeX } from './display.tsx';
@@ -46,6 +49,20 @@ describe('Casio fx-991ES PLUS sample operations', () => {
 
   it('E-18: 10 nCr 4 = 210', () => {
     expect(evalComp('nCr(10,4)')).toBe(210);
+  });
+
+  it('nCr / nPr alone are infix C/P with no ⬚ box', () => {
+    expect(wrapPrecedingBinary('‸', false, 'nCr')).toEqual({ input: 'nCr(,‸)', showingResult: false });
+    expect(wrapPrecedingBinary('‸', false, 'nPr')).toEqual({ input: 'nPr(,‸)', showingResult: false });
+    const cr = formatMath('nCr(,‸)');
+    const pr = formatMath('nPr(,‸)');
+    expect(cr).not.toContain('empty-slot');
+    expect(cr).not.toContain('⬚');
+    expect(pr).not.toContain('empty-slot');
+    expect(pr).not.toContain('⬚');
+    expect(cr).toContain('comb-perm-sym');
+    expect(formatMath('nCr(10,4)')).toContain('10');
+    expect(formatMath('nCr(10,4)')).toContain('4');
   });
 
   it('E-24: 1-VAR mean and σx for {1,2,2,3,3,3,4,4,5}', () => {
@@ -158,11 +175,13 @@ describe('Phase 1 — display formatting', () => {
 });
 
 describe('Phase 1 — COMP LCD templates', () => {
-  it('abs( renders as Abs with a ⬚ slot, not raw ASCII abs(', () => {
+  it('abs( renders as |⬚|, not Abs( or raw ASCII abs(', () => {
     const html = formatMath('abs(‸)');
-    expect(html).toContain('Abs');
+    expect(html).toContain('abs-template');
+    expect(html).not.toContain('Abs');
     expect(html).not.toContain('abs(');
     expect(html).toContain('cursor');
+    expect(html.replace(/<[^>]+>/g, '')).toBe('||');
   });
 
   it('Ran# renders as a function token, not a raw code fragment', () => {
@@ -208,11 +227,13 @@ describe('vis-no-literal / ir-leak — IR stems never reach the LCD', () => {
     expect(html.replace(/<[^>]+>/g, '')).toBe('sin(30');
   });
 
-  it('open log / ln / hyp / Abs also omit the closing paren', () => {
+  it('open log / ln / hyp omit the closing paren; abs is | |', () => {
     expect(formatMath('log10(100‸').replace(/<[^>]+>/g, '')).toBe('log(100');
     expect(formatMath('ln(2‸').replace(/<[^>]+>/g, '')).toBe('ln(2');
     expect(formatMath('sinh(1‸').replace(/<[^>]+>/g, '')).toBe('sinh(1');
-    expect(formatMath('abs(3‸').replace(/<[^>]+>/g, '')).toBe('Abs(3');
+    expect(formatMath('abs(3‸').replace(/<[^>]+>/g, '')).toBe('|3|');
+    expect(formatMath('abs(X)')).not.toContain('Abs');
+    expect(formatMath('abs(X)').replace(/<[^>]+>/g, '')).toBe('|X|');
   });
 
   it('closed sin(30) does not print the ASCII stem sin(', () => {
@@ -362,18 +383,202 @@ describe('Phase 1 — Casio-accurate numerics', () => {
   });
 
   it('overflow beyond ±10¹⁰⁰ is out of Casio range', () => {
-    expect(Math.abs(evalComp('pwr(10,150)'))).toBeGreaterThanOrEqual(1e100);
+    expect(() => evalComp('pwr(10,150)')).toThrow(CalcError);
+    try {
+      evalComp('pwr(10,150)');
+    } catch (e) {
+      expect(e).toBeInstanceOf(CalcError);
+      expect((e as CalcError).kind).toBe('math');
+    }
   });
 });
 
-describe('History sequences match keyboard shortcuts', () => {
-  it('variable X logs ALPHA, X (keyboard x), not the physical ) key', () => {
-    expect(reconstructSequence('X')).toEqual(['ALPHA', 'X']);
-    expect(reconstructSequence('2X')).toEqual(['2', 'ALPHA', 'X']);
+describe('Phase 2 — SOLVE errors and L−R (E-20, E-21, E-41)', () => {
+  it('SOLVE without X is Variable ERROR, not Syntax ERROR', () => {
+    expect(expressionHasSolveUnknown('2+2')).toBe(false);
+    expect(expressionHasSolveUnknown('A+B')).toBe(false);
+    expect(expressionHasSolveUnknown('X+1')).toBe(true);
+    expect(expressionHasSolveUnknown('Y=X+10')).toBe(true);
+    expect(calcErrorLabel('variable')).toBe('Variable ERROR');
+    expect(calcErrorLabel('syntax')).toBe('Syntax ERROR');
   });
 
-  it('variable Y logs ALPHA, Y (keyboard y), not S⇔D', () => {
-    expect(reconstructSequence('Y')).toEqual(['ALPHA', 'Y']);
-    expect(reconstructSequence('X+Y')).toEqual(['ALPHA', 'X', '+', 'ALPHA', 'Y']);
+  it('E-41: non-converging Newton reports Can\'t Solve', () => {
+    expect(() => newtonSolveX('abs(X)+1=0', { ...EMPTY_VARS }, 0, 'DEG', {})).toThrow(CalcError);
+    try {
+      newtonSolveX('abs(X)+1=0', { ...EMPTY_VARS }, 0, 'DEG', {});
+    } catch (e) {
+      expect(e).toBeInstanceOf(CalcError);
+      expect((e as CalcError).kind).toBe('cantSolve');
+    }
+    try {
+      newtonSolveX('X×0+1=2', { ...EMPTY_VARS }, 0, 'DEG', {});
+    } catch (e) {
+      expect(e).toBeInstanceOf(CalcError);
+      expect((e as CalcError).kind).toBe('cantSolve');
+    }
+    expect(calcErrorLabel('cantSolve')).toBe("Can't Solve");
+  });
+
+  it('E-20: Y=X+10 with Y=12 solves X=2 and L−R ≈ 0', () => {
+    expect(collectSolvePromptVars('Y=X+10')).toEqual(['Y']);
+    const r = newtonSolveX('Y=X+10', { ...EMPTY_VARS, Y: 12, X: 0 }, 0, 'DEG', {});
+    expect(r.x).toBeCloseTo(2, 8);
+    expect(r.residual).toBeCloseTo(0, 8);
+  });
+
+  it('evaluateExpression routes parse failure to Syntax ERROR', () => {
+    try {
+      evalComp('bogus(2)');
+      throw new Error('expected CalcError');
+    } catch (e) {
+      expect(e).toBeInstanceOf(CalcError);
+      expect((e as CalcError).kind).toBe('syntax');
+    }
+  });
+});
+
+describe('History sequences use physical faceplate keys', () => {
+  it('variable X is ALPHA + ) (the key that wears the red X)', () => {
+    expect(reconstructSequence('X')).toEqual(['ALPHA', ')']);
+    expect(reconstructSequence('2X')).toEqual(['2', 'ALPHA', ')']);
+  });
+
+  it('variable Y is ALPHA + S⇔D', () => {
+    expect(reconstructSequence('Y')).toEqual(['ALPHA', 'S⇔D']);
+    expect(reconstructSequence('X+Y')).toEqual(['ALPHA', ')', '+', 'ALPHA', 'S⇔D']);
+  });
+
+  it('digits are one chip each, not a grouped number', () => {
+    expect(reconstructSequence('cos(60)+1')).toEqual(['cos', '6', '0', '+', '1']);
+  });
+
+  it('equals in an equation is ALPHA + CALC, not a chip labelled =', () => {
+    expect(reconstructSequence('abs(X)+1=0')).toEqual([
+      'SHIFT', 'hyp', 'ALPHA', ')', '+', '1', 'ALPHA', 'CALC', '0',
+    ]);
+    expect(reconstructSequence('5X+3=4')).toEqual([
+      '5', 'ALPHA', ')', '+', '3', 'ALPHA', 'CALC', '4',
+    ]);
+  });
+
+  it('power template after X matches the faceplate x^□ key', () => {
+    expect(reconstructSequence('cos(60)+X^(4)')).toEqual([
+      'cos', '6', '0', '+', 'ALPHA', ')', 'xⁿ', '4',
+    ]);
+  });
+
+  it('log / ln are the unshifted keys; 10^ and e^ add SHIFT', () => {
+    expect(reconstructSequence('log10(100)')).toEqual(['log', '1', '0', '0']);
+    expect(reconstructSequence('ln(2)')).toEqual(['ln', '2']);
+    expect(reconstructSequence('10^(2)')).toEqual(['SHIFT', 'log', '2']);
+    expect(reconstructSequence('e^(1)')).toEqual(['SHIFT', 'ln', '1']);
+  });
+
+  it('sqrt and hyp menu use the keys actually pressed', () => {
+    expect(reconstructSequence('sqrt(16)')).toEqual(['√', '1', '6']);
+    expect(reconstructSequence('sinh(1)')).toEqual(['hyp', '1', '1']);
+    expect(reconstructSequence('sin⁻¹(0.5)')).toEqual(['SHIFT', 'sin', '0', '.', '5']);
+  });
+
+  it('A–F / M / π / e map to ALPHA or SHIFT plus the physical key', () => {
+    expect(reconstructSequence('A')).toEqual(['ALPHA', '(-)']);
+    expect(reconstructSequence('M')).toEqual(['ALPHA', 'M+']);
+    expect(reconstructSequence('2π')).toEqual(['2', 'SHIFT', '×10ˣ']);
+    expect(reconstructSequence('e')).toEqual(['ALPHA', '×10ˣ']);
+  });
+
+  it('STO uses SHIFT RCL and the letter key, not ALPHA', () => {
+    expect(reconstructSequence('5→A')).toEqual(['5', 'SHIFT', 'RCL', '(-)']);
+    expect(reconstructSequence('Ans→X')).toEqual(['Ans', 'SHIFT', 'RCL', ')']);
+  });
+
+  it('Show Keys chips paint faceplate legends, not logical letters', () => {
+    const x = renderToStaticMarkup(renderMiniButton(')', 'x') as React.ReactElement);
+    expect(x).toContain(')');
+    expect(x).not.toContain('>X<');
+    const pwr = renderToStaticMarkup(renderMiniButton('xⁿ', 'p') as React.ReactElement);
+    expect(pwr).toContain('mini-box');
+    expect(pwr).toContain('>x<');
+    const cos = renderToStaticMarkup(renderMiniButton('cos', 'c') as React.ReactElement);
+    expect(cos).toContain('cos');
+    expect(cos).not.toContain('COS');
+    const shift = renderToStaticMarkup(renderMiniButton('SHIFT', 's') as React.ReactElement);
+    expect(shift).toContain('shape-shift');
+    const alpha = renderToStaticMarkup(renderMiniButton('ALPHA', 'a') as React.ReactElement);
+    expect(alpha).toContain('shape-alpha');
+    const six = renderToStaticMarkup(renderMiniButton('6', '6') as React.ReactElement);
+    expect(six).toContain('shape-numpad');
+    expect(six).toContain('mini-btn num');
+    const plus = renderToStaticMarkup(renderMiniButton('+', 'p') as React.ReactElement);
+    expect(plus).toContain('shape-numpad');
+    expect(plus).toContain('mini-btn num');
+    expect(plus).not.toContain('shape-sci');
+    const calc = renderToStaticMarkup(renderMiniButton('CALC', 'k') as React.ReactElement);
+    expect(calc).toContain('CALC');
+    expect(calc).toContain('shape-sci');
+    expect(calc).not.toContain('>=<');
+    const sine = renderToStaticMarkup(renderMiniButton('sin', 'si') as React.ReactElement);
+    expect(sine).toContain('shape-sci');
+    const close = renderToStaticMarkup(renderMiniButton(')', 'rp') as React.ReactElement);
+    expect(close).toContain('shape-sci');
+    const ac = renderToStaticMarkup(renderMiniButton('AC', 'ac') as React.ReactElement);
+    expect(ac).toContain('shape-numpad');
+    expect(ac).toContain('mini-btn ac');
+  });
+
+  it('every physical keychip uses its faceplate family', () => {
+    const families: Record<string, string[]> = {
+      numpad: ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '+', '-', '×', '÷', 'Ans', '×10ˣ', '='],
+      del: ['DEL'],
+      ac: ['AC'],
+      shift: ['SHIFT'],
+      alpha: ['ALPHA'],
+      mode: ['MODE'],
+      'nav-up': ['UP', '↑'],
+      'nav-down': ['DOWN', '↓'],
+      'nav-left': ['LEFT', '←'],
+      'nav-right': ['RIGHT', '→'],
+      sci: [
+        'CALC', '∫', 'x-1', 'log_box', 'log', 'ln', 'sin', 'cos', 'tan', 'hyp',
+        '√', 'frac', 'x²', 'xⁿ', '(', ')', 'S⇔D', '°\'"', '(-)', 'RCL', 'M+',
+      ],
+    };
+    for (const [family, labels] of Object.entries(families)) {
+      for (const label of labels) {
+        expect(chipFamily(label), label).toBe(family);
+      }
+    }
+    expect(chipFamily('+')).not.toBe('sci');
+    expect(chipFamily('(-)')).toBe('sci');
+  });
+});
+
+describe('Non-calculation operations in live keys / history', () => {
+  const idle = {
+    setupPage: 0 as const,
+    setupPrompt: null,
+    isSto: false,
+    isRcl: false,
+    currentInput: '‸',
+  };
+
+  it('MODE menu and SETUP are live key recipes, not empty', () => {
+    expect(liveOperationSequence({ ...idle, calcMode: 'MENU' })).toEqual(['MODE']);
+    expect(liveOperationSequence({ ...idle, calcMode: 'SETUP' })).toEqual(['SHIFT', 'MODE']);
+    expect(liveOperationSequence({ ...idle, calcMode: 'SETUP', setupPrompt: 'fix' })).toEqual(['SHIFT', 'MODE', '6']);
+  });
+
+  it('pending STO appends SHIFT RCL until the letter is pressed', () => {
+    expect(liveOperationSequence({
+      ...idle,
+      calcMode: 'COMP',
+      currentInput: '5‸',
+      isSto: true,
+    })).toEqual(['5', 'SHIFT', 'RCL']);
+  });
+
+  it('completed SETUP Deg is SHIFT MODE 3', () => {
+    expect(setupCommitSequence('deg')).toEqual(['SHIFT', 'MODE', '3']);
   });
 });

@@ -13,7 +13,7 @@ Status is about **behavior**, not whether a menu label exists.
 | Missing | MODE/SETUP row is decorative, or the key is a no-op / literal text dump |
 
 Scheduled work: [`roadmap.md`](../roadmap.md). Defects: [`issues.md`](../issues.md).
-Refreshed September 2026 from the roadmap, tests (56), and a code pass.
+Refreshed 25 Sep 2026 from the roadmap, tests (86), and a code pass.
 
 ---
 
@@ -21,9 +21,9 @@ Refreshed September 2026 from the roadmap, tests (56), and a code pass.
 
 | Status | Count |
 |--------|------:|
-| Done | 35 |
+| Done | 36 |
 | Partial | 16 |
-| Missing | 25 |
+| Missing | 24 |
 | **Total** | **76** |
 
 COMP, STAT, and EQN carry almost all of the working product. CMPLX, BASE-N,
@@ -70,7 +70,7 @@ MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
 | Sexagesimal ° ′ ″ | E-11 | Done | Input and result use ° ′ ″; °′″ key toggle | — |
 | Multi-statements : | E-11 ALPHA 7 | Missing | ALPHA CALC inserts = | Colon chain + Disp indicator |
 | Engineering notation | E-11 ENG | Done | ENG / SHIFT ENG shift the displayed result | — |
-| Calculation history replay | E-12 | Done | LCD ▲/▼ replay; side pane kept as extra | Live Current history overlay still open (roadmap Now) |
+| Calculation history replay | E-12 | Done | LCD ▲/▼ replay; live Current keys strip; side pane extra | Remaining A–F / M keyboard-shortcut audit (`hist-letters`) |
 
 ## Memory
 
@@ -107,7 +107,7 @@ MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
 | Feature | Manual | Status | In the emulator | Gap |
 |---------|--------|--------|-----------------|-----|
 | CALC | E-19 | Partial | Prompts every A–F/M/X/Y in the expression | Casio CALC UX, equalities, Linear input during prompt |
-| SOLVE | E-20 SHIFT CALC | Partial | Newton–Raphson 40 steps on X | Initial-guess prompt, L−R residual, Continue, Variable ERROR, Can’t Solve |
+| SOLVE | E-20 SHIFT CALC | Done | Prompts other letters; “solve for x”; Newton 40 steps; equation + x= + L-R=; Continue; Variable ERROR / Can’t Solve | Unshifted CALC UX is `comp-calc` |
 
 ## STAT
 
@@ -149,7 +149,7 @@ MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
 |---------|--------|--------|-----------------|-----|
 | Math ERROR / Syntax ERROR | E-40 | Partial | LCD strings; NaN/Infinity → Math ERROR | ◀▶ jump to error token; AC clears expression on Casio |
 | Stack / Argument / Dimension | E-40 | Missing | None | Needed once MATRIX/VECTOR/deep nests exist |
-| Variable / Can’t Solve / Time Out | E-41 | Missing | SOLVE fails as Syntax ERROR | Proper SOLVE and ∫/d/dx diagnostics |
+| Variable / Can’t Solve / Time Out | E-41 | Partial | Variable ERROR and Can’t Solve via `CalcError` | Time Out for slow ∫ / d/dx (backlog) |
 | Calculation range ±1×10^99 | E-38 | Partial | Overflow beyond ±10¹⁰⁰ raises Math ERROR | Per-function ranges from E-38–39; factorial 69 |
 
 ## Platform (emulator extras)
@@ -158,9 +158,9 @@ MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
 |---------|--------|--------|-----------------|-----|
 | Photo overlay + hitboxes | — | Done | Absolute keys; triple-click calibration; `calculator_new.png` | — |
 | PC keyboard | — | Partial | Enter, arrows, Shift/Alt, S/C/T/L/R/Q/A, X/Y vars | Letter keys steal typing; Shift hold vs overlay toggle |
-| History / LaTeX pane | — | Done | 50 items, Load, key-sequence reconstruction | Not Casio behavior; keep as extra. Live Current history still open |
+| History / LaTeX pane | — | Done | 50 items, Load, physical-key Show Keys; STO / MODE / SETUP actions | Not Casio behavior; keep as extra. Live Current keys strip is on top |
 | Electron + Pages + PWA | — | Partial | Scripts and workflow present | Verify portable exe, Pages deploy, and PWA install end-to-end |
-| Tests | E-16 examples | Partial | 40 golden + 16 parser = 56 | Remaining numbered sample operations in the PDF |
+| Tests | E-16 examples | Partial | 70 golden + 16 parser = 86 | Remaining numbered sample operations in the PDF |
 
 ---
 

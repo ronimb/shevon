@@ -28,6 +28,13 @@ const slot = (text: unknown): string => {
   return text;
 };
 
+/** nCr / nPr are infix (10C4), not boxed templates — empty args stay blank. */
+const infixSlot = (text: unknown): string => {
+  if (typeof text !== 'string') return '';
+  if (isEmpty(text) && !text.includes(CURSOR)) return '';
+  return text;
+};
+
 /** Find the `)` that balances the `(` at `startIdx`; null when it is unclosed. */
 const getBalanced = (s: string, startIdx: number): { content: string; endIdx: number } | null => {
   let count = 0;
@@ -94,12 +101,12 @@ const TEMPLATE_SPECS: TemplateSpec[] = [
   { stem: 'ln', html: namedFn('ln'), latex: a => `\\ln(${lx(a[0])})` },
   {
     stem: 'nCr',
-    html: a => `<span class="comb-perm">${slot(a[0])}<span class="comb-perm-sym">C</span>${slot(a[1] || '')}</span>`,
+    html: a => `<span class="comb-perm">${infixSlot(a[0])}<span class="comb-perm-sym">C</span>${infixSlot(a[1] || '')}</span>`,
     latex: a => `{\\textstyle \\binom{${lx(a[0])}}{${lx(a[1])}}}`,
   },
   {
     stem: 'nPr',
-    html: a => `<span class="comb-perm">${slot(a[0])}<span class="comb-perm-sym">P</span>${slot(a[1] || '')}</span>`,
+    html: a => `<span class="comb-perm">${infixSlot(a[0])}<span class="comb-perm-sym">P</span>${infixSlot(a[1] || '')}</span>`,
     latex: a => `{}^{${lx(a[0])}}P_{${lx(a[1])}}`,
   },
   {
@@ -168,7 +175,11 @@ const TEMPLATE_SPECS: TemplateSpec[] = [
     latex: a => `\\operatorname{RanInt}(${lx(a[0])},${lx(a[1])})`,
   },
   { stem: 'Rnd', html: (a, closed) => `<span class="trig-fun">Rnd</span>${parenBody(slot(a[0]), closed)}`, latex: a => `\\operatorname{Rnd}(${lx(a[0])})` },
-  { stem: 'abs', html: (a, closed) => `<span class="trig-fun">Abs</span>${parenBody(slot(a[0]), closed)}`, latex: a => `|${lx(a[0])}|` },
+  {
+    stem: 'abs',
+    html: a => `<span class="abs-template">|<span class="abs-body">${slot(a[0])}</span>|</span>`,
+    latex: a => `|${lx(a[0])}|`,
+  },
   // Legacy IR aliases still emitted by `toLaTeX` history; harmless on the LCD.
   { stem: 'factorial', html: a => `${slot(a[0])}!`, latex: a => `{${lx(a[0])}}!` },
   { stem: 'exp', html: a => `e<span class="sup">${slot(a[0])}</span>`, latex: a => `e^{${lx(a[0])}}` },

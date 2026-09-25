@@ -32,7 +32,7 @@ export default function ShevonRoadmap() {
       <Stack gap={8}>
         <H1>Roadmap</H1>
         <Text tone="secondary">
-          Visual view of `roadmap.md` (refreshed 12 Sep 2026). Markdown is
+          Visual view of `roadmap.md` (refreshed 24 Sep 2026). Markdown is
           the source of truth. This canvas is a phase board and launch pad,
           not a second plan.
         </Text>
@@ -69,9 +69,9 @@ export default function ShevonRoadmap() {
 
       <Row gap={24} align="end">
         <Stat value="Phase 2" label="Current phase" tone="warning" />
-        <Stat value="6" label="Phase 2 items open" />
-        <Stat value="16" label="Open issues" tone="warning" />
-        <Stat value="34/76" label="Coverage done" />
+        <Stat value="5" label="Phase 2 items open" />
+        <Stat value="15" label="Open issues" tone="warning" />
+        <Stat value="36/76" label="Coverage done" />
       </Row>
 
       <UsageBar
@@ -113,7 +113,7 @@ export default function ShevonRoadmap() {
           [
             "2 STAT / EQN",
             "In progress",
-            "Ins/Del-A, Dist, stay in STAT, linear/cubic EQN, SOLVE UX",
+            "Ins/Del-A, Dist, stay in STAT, linear/cubic EQN (SOLVE landed)",
           ],
           [
             "3 Remaining modes",
@@ -132,10 +132,11 @@ export default function ShevonRoadmap() {
       <Callout tone="info" title="Priority (12 Sep 2026)">
         Visual slice mostly landed: `vis-no-literal` done (no IR-stem leaks;
         trig/hyp/ln painted) and `vis-indicators` ◀▶ + COMP-history ▲▼ light.
-        Remaining before Phase 2: `vis-errors` jump-to-token (deferred — needs
-        an evaluator fault offset), STAT ▲▼, `vis-elements`. Then close Phase 2
-        with SOLVE first. Daily-driver bar is COMP + STAT + EQN. Phase 3 stays
-        gated. Lying menus wait for the matching feature.
+        Remaining visual: `vis-errors` jump-to-token (deferred — needs an
+        evaluator fault offset), STAT ▲▼, `vis-elements`. `p2-solve` landed
+        (typed `CalcError` + E-20 procedure). Close the rest of Phase 2 next.
+        Daily-driver bar is COMP + STAT + EQN. Phase 3 stays gated. Lying
+        menus wait for the matching feature.
       </Callout>
 
       <H2>Now — visual leftovers</H2>
@@ -177,15 +178,25 @@ export default function ShevonRoadmap() {
                 Open kickoff prompt
               </Button>
               <Button
-                variant="secondary"
+                variant="primary"
                 onClick={() =>
                   start(
-                    principles +
-                      "After the visual slice, close Phase 2 from roadmap.md. Do p2-solve first (SOLVE prompt, initial X, L−R residual, Continue, proper errors). Then p2-edit, p2-dist, p2-stat-mode, p2-eqn-linear, p2-eqn-cubic. Do not open Phase 3.",
+                    "Follow docs/prompts/p2-solve-errors.md exactly. That file is the kickoff prompt for typed errors + honest SOLVE (p2-solve / solve-errors). Do CalcError first, then Variable ERROR / Can't Solve / initial X / L−R / Continue. Do not start vis-errors jump-to-token, an IR rewrite, or the rest of Phase 2.",
                   )
                 }
               >
-                After that: Phase 2 (SOLVE first)
+                Start p2-solve (typed errors)
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() =>
+                  dispatch({
+                    type: "openFile",
+                    path: "docs/prompts/p2-solve-errors.md",
+                  })
+                }
+              >
+                Open SOLVE kickoff
               </Button>
             </Row>
           </Stack>
@@ -201,9 +212,9 @@ export default function ShevonRoadmap() {
         todos={[
           {
             id: "p2-solve",
-            status: "pending",
+            status: "completed",
             content:
-              "p2-solve — SOLVE prompt, initial X, L−R residual, Continue (issue solve-errors) · first after visual",
+              "p2-solve — typed CalcError + SOLVE UX landed (Variable ERROR / Can’t Solve / solve for x / x= + L-R= / Continue)",
           },
           {
             id: "p2-edit",
@@ -232,7 +243,7 @@ export default function ShevonRoadmap() {
             id: "p2-eqn-cubic",
             status: "pending",
             content:
-              "p2-eqn-cubic — EQN cubic; quadratic complex roots in Natural Display",
+              "p2-eqn-cubic — EQN cubic (quadratic a+bi already landed; exact √ form is p4-exact)",
           },
         ]}
         onTodoClick={(todo) =>

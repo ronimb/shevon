@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import calculatorImg from './calculator_new.png';
-import type { CalcMode, DisplayMode, AngleMode, StatType, StatEntry, EqnResult, KeyStyle, HistoryItem, Vars } from './types.ts';
+import type { CalcMode, DisplayMode, AngleMode, StatType, StatEntry, EqnResult, KeyStyle, HistoryItem, Vars, CalcErrorKind } from './types.ts';
+import { CalcError, calcErrorLabel } from './types.ts';
 import { INITIAL_KEY_STYLES } from './keys.ts';
+import { renderMiniButton } from './historyKeys.tsx';
+import { isReplayableHistory, liveOperationSequence, MODE_LABEL, setupCommitSequence } from './historyOps.ts';
 import { evaluateExpression, findPrecedingOperand, resultDisplayMode, toFraction } from './evaluator.ts';
 import { toLaTeX, formatMath, formatResultNumber, SciNotation } from './display.tsx';
 import {
@@ -17,6 +20,8 @@ import {
   moveCompCursorLeft,
   moveCompCursorRight,
   moveCompCursorUp,
+  collectSolvePromptVars,
+  expressionHasSolveUnknown,
   newtonSolveX,
   reconstructSequence,
   wrapFracTemplate,
@@ -117,10 +122,13 @@ const Calculator: React.FC = () => {
   const [eqnResults, setEqnResults] = useState<EqnResult[]>([]);
   const [eqnResultIdx, setEqnResultIdx] = useState<number>(0);
   const solveRef = useRef<() => void>(() => {});
-  const [syntaxError, setSyntaxError] = useState<boolean>(false);
-  const [mathError, setMathError] = useState<boolean>(false);
+  const [lcdError, setLcdError] = useState<CalcErrorKind | null>(null);
+  const [solveScreen, setSolveScreen] = useState<null | 'confirm' | 'result' | 'continue'>(null);
+  const [solveResidual, setSolveResidual] = useState<number>(0);
+  const solveAfterPromptsRef = useRef(false);
   const [currentSequence, setCurrentSequence] = useState<string[]>([]);
   const [showPane, setShowPane] = useState<boolean>(false);
+  const [showCurrentKeys, setShowCurrentKeys] = useState<boolean>(() => localStorage.getItem('calc_show_current_keys_on') === '1');
 
   // --- Phase 1: SETUP display format, engineering, DMS, hyp menu ---
   const [displayFormat, setDisplayFormat] = useState<DisplayFormat>(() => {
@@ -159,18 +167,30 @@ const Calculator: React.FC = () => {
 
   useEffect(() => {
     const handleResize = () => {
-      const vh = window.innerHeight;
-      const targetHeight = 1000 + 40; // Calculator height + padding
-      const newScale = Math.min(1, vh / targetHeight);
-      setScale(newScale);
+      const stripH = showCurrentKeys ? 110 : 0;
+      const paneW = showPane && window.innerWidth >= 768 ? 398 : 0;
+      const availH = Math.max(320, window.innerHeight - stripH - 40);
+      const availW = Math.max(280, window.innerWidth - paneW - 40);
+      setScale(Math.min(1, availH / 1000, availW / 504));
     };
 
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [showCurrentKeys, showPane]);
   const [paneView, setPaneView] = useState<'history' | 'help'>('history');
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem('calc_show_current_keys_on', showCurrentKeys ? '1' : '0');
+  }, [showCurrentKeys]);
+
+  const prependHistory = useCallback((item: Omit<HistoryItem, 'id'>) => {
+    setHistory(prev => [{
+      id: Math.random().toString(36).substr(2, 9),
+      ...item,
+    }, ...prev].slice(0, 50));
+  }, []);
 
   const statCursorRef = useRef(statCursor);
   useEffect(() => { statCursorRef.current = statCursor; }, [statCursor]);
@@ -183,8 +203,7 @@ const Calculator: React.FC = () => {
       };
       if (hypMap[val]) {
         setShowHypMenu(false);
-        setSyntaxError(false);
-        setMathError(false);
+        setLcdError(null);
         const next = insertCompValue(currentInput, showingResult, hypMap[val]);
         setCurrentInput(next.input);
         setShowingResult(next.showingResult);
@@ -202,6 +221,15 @@ const Calculator: React.FC = () => {
       return;
     }
     if (calcMode === 'MENU') {
+      const modeLabel = MODE_LABEL[val] ?? 'COMP';
+      prependHistory({
+        rawInput: modeLabel,
+        displayInput: modeLabel,
+        result: null,
+        latex: '',
+        sequence: ['MODE', val],
+        kind: 'action',
+      });
       if (val === '1') {
         setCalcMode('COMP');
         setStatType(null);
@@ -216,7 +244,16 @@ const Calculator: React.FC = () => {
     }
     if (calcMode === 'STAT_MENU') {
       if (STAT_TYPES[val]) {
-        setStatType(STAT_TYPES[val]);
+        const statLabel = STAT_TYPES[val];
+        prependHistory({
+          rawInput: `STAT ${statLabel}`,
+          displayInput: `STAT ${statLabel}`,
+          result: null,
+          latex: '',
+          sequence: ['MODE', '3', val],
+          kind: 'action',
+        });
+        setStatType(statLabel);
         setCalcMode('STAT_DATA');
         setStatData([{ x: '', y: '', freq: '1' }]);
         setStatCursor({ row: 0, col: 0 });
@@ -242,8 +279,7 @@ const Calculator: React.FC = () => {
     if (calcMode === 'STAT_RESULT_SUB') {
       const insertStatVar = (name: string) => {
         setCalcMode('COMP');
-        setSyntaxError(false);
-        setMathError(false);
+        setLcdError(null);
         if (showingResult || currentInput.includes('→')) {
           const isOperator = /[+×÷\-]/.test(name) || name === 'sqr(‸)' || name === 'cube(‸)' || name.startsWith('pwr(') || name.startsWith('root(') || name.startsWith('frac(');
           let nextInput = isOperator ? "Ans" + name : name;
@@ -273,6 +309,14 @@ const Calculator: React.FC = () => {
         if (setupPrompt === 'freq') {
           if (val === '1' || val === '2') {
             const on = val === '1';
+            prependHistory({
+              rawInput: `FREQ ${on ? 'ON' : 'OFF'}`,
+              displayInput: `FREQ ${on ? 'ON' : 'OFF'}`,
+              result: null,
+              latex: '',
+              sequence: setupCommitSequence('freq', val),
+              kind: 'action',
+            });
             setStatFrequencyEnabled(on);
             setStatData(prev => prev.slice(0, getStatMaxRows(statType, on)));
             setSetupPrompt(null);
@@ -283,9 +327,16 @@ const Calculator: React.FC = () => {
         }
         const d = parseInt(val, 10);
         if (!isNaN(d)) {
-          if (setupPrompt === 'fix') setDisplayFormat({ kind: 'fix', digits: Math.min(9, d) });
-          else if (setupPrompt === 'sci') setDisplayFormat({ kind: 'sci', digits: d === 0 ? 10 : Math.min(10, d) });
-          else if (setupPrompt === 'norm') setDisplayFormat({ kind: 'norm', n: d === 2 ? 2 : 1 });
+          if (setupPrompt === 'fix') {
+            setDisplayFormat({ kind: 'fix', digits: Math.min(9, d) });
+            prependHistory({ rawInput: `Fix ${d}`, displayInput: `Fix ${d}`, result: null, latex: '', sequence: setupCommitSequence('fix', val), kind: 'action' });
+          } else if (setupPrompt === 'sci') {
+            setDisplayFormat({ kind: 'sci', digits: d === 0 ? 10 : Math.min(10, d) });
+            prependHistory({ rawInput: `Sci ${d}`, displayInput: `Sci ${d}`, result: null, latex: '', sequence: setupCommitSequence('sci', val), kind: 'action' });
+          } else if (setupPrompt === 'norm') {
+            setDisplayFormat({ kind: 'norm', n: d === 2 ? 2 : 1 });
+            prependHistory({ rawInput: `Norm ${d === 2 ? 2 : 1}`, displayInput: `Norm ${d === 2 ? 2 : 1}`, result: null, latex: '', sequence: setupCommitSequence('norm', val), kind: 'action' });
+          }
           setSetupPrompt(null);
           setSetupPage(0);
           setCalcMode('COMP');
@@ -293,9 +344,18 @@ const Calculator: React.FC = () => {
         return;
       }
       if (setupPage === 0) {
-        if (val === '3') { setAngleMode('DEG'); setCalcMode('COMP'); }
-        else if (val === '4') { setAngleMode('RAD'); setCalcMode('COMP'); }
-        else if (val === '5') { setAngleMode('GRA'); setCalcMode('COMP'); }
+        if (val === '3') {
+          prependHistory({ rawInput: 'Deg', displayInput: 'Deg', result: null, latex: '', sequence: setupCommitSequence('deg'), kind: 'action' });
+          setAngleMode('DEG'); setCalcMode('COMP');
+        }
+        else if (val === '4') {
+          prependHistory({ rawInput: 'Rad', displayInput: 'Rad', result: null, latex: '', sequence: setupCommitSequence('rad'), kind: 'action' });
+          setAngleMode('RAD'); setCalcMode('COMP');
+        }
+        else if (val === '5') {
+          prependHistory({ rawInput: 'Gra', displayInput: 'Gra', result: null, latex: '', sequence: setupCommitSequence('gra'), kind: 'action' });
+          setAngleMode('GRA'); setCalcMode('COMP');
+        }
         else if (val === '6') setSetupPrompt('fix');
         else if (val === '7') setSetupPrompt('sci');
         else if (val === '8') setSetupPrompt('norm');
@@ -303,8 +363,14 @@ const Calculator: React.FC = () => {
         return;
       }
       // Second page: Disp — 1: ab/c, 2: d/c, 3: STAT FREQ ON/OFF
-      if (val === '1') { setMixedFraction(true); setSetupPage(0); setCalcMode('COMP'); }
-      else if (val === '2') { setMixedFraction(false); setSetupPage(0); setCalcMode('COMP'); }
+      if (val === '1') {
+        prependHistory({ rawInput: 'ab/c', displayInput: 'ab/c', result: null, latex: '', sequence: setupCommitSequence('mix'), kind: 'action' });
+        setMixedFraction(true); setSetupPage(0); setCalcMode('COMP');
+      }
+      else if (val === '2') {
+        prependHistory({ rawInput: 'd/c', displayInput: 'd/c', result: null, latex: '', sequence: setupCommitSequence('improper'), kind: 'action' });
+        setMixedFraction(false); setSetupPage(0); setCalcMode('COMP');
+      }
       else if (val === '3') setSetupPrompt('freq');
       else { setSetupPage(0); setCalcMode('COMP'); }
       return;
@@ -325,6 +391,15 @@ const Calculator: React.FC = () => {
       else if (val === '2') resetMemory();
       else if (val === '3') { resetSetup(); resetMemory(); }
       else return; // ignore other keys; AC exits
+      const clrLabel = val === '1' ? 'CLR Setup' : val === '2' ? 'CLR Memory' : 'CLR All';
+      prependHistory({
+        rawInput: clrLabel,
+        displayInput: clrLabel,
+        result: null,
+        latex: '',
+        sequence: ['SHIFT', '9', val],
+        kind: 'action',
+      });
       setCurrentInput('‸');
       setShowingResult(false);
       setCurrentSequence([]);
@@ -333,6 +408,14 @@ const Calculator: React.FC = () => {
     }
     if (calcMode === 'EQN_MENU') {
       if (val === '3') {
+        prependHistory({
+          rawInput: 'EQN quadratic',
+          displayInput: 'EQN quadratic',
+          result: null,
+          latex: '',
+          sequence: ['MODE', '5', '3'],
+          kind: 'action',
+        });
         setCalcMode('EQN_QUAD');
         setEqnCoeffs(["0", "0", "0"]);
         setEqnIndex(0);
@@ -351,15 +434,15 @@ const Calculator: React.FC = () => {
       return;
     }
 
-    setSyntaxError(false);
-    setMathError(false);
+    if (solveScreen) return;
+    setLcdError(null);
     setEngMode(null);
     setDmsResult(false);
     setReplayIndex(-1);
     const next = insertCompValue(currentInput, showingResult, val);
     setCurrentInput(next.input);
     setShowingResult(next.showingResult);
-  }, [calcMode, eqnIndex, showingResult, currentInput, promptVar, statType, statFrequencyEnabled, statCursor, showHypMenu, setupPrompt, setupPage]);
+  }, [calcMode, eqnIndex, showingResult, currentInput, promptVar, statType, statFrequencyEnabled, statCursor, showHypMenu, setupPrompt, setupPage, prependHistory, solveScreen]);
 
   const handleTemplateKey = useCallback((type: string) => {
     if (type === 'diff') handleInput("diff(‸,x,)");
@@ -410,11 +493,8 @@ const Calculator: React.FC = () => {
     if (val) setIsShift(false);
   }, []);
 
-  // Overlay ALPHA-legend vs primary key: when ALPHA/STO/RCL is latched, history
-  // logs the letter (X, Y, …) so it matches the PC shortcut (x → ALPHA, X).
-  const overlayHistoryLabel = (primary: string, alphaLetter: string) =>
-    (isAlpha || isSto || isRcl) ? alphaLetter : primary;
-
+  // History chips are the physical key. ALPHA/SHIFT are logged when those
+  // keys latch; do not substitute the red letter (X, Y) for the keycap.
   // Wrap button clicks with a history label (visual flash is applied on pointerdown)
   const withFlash = (fn: (e?: any) => void, label?: string) => (e: React.MouseEvent<HTMLButtonElement>) => {
     if (label) setCurrentSequence(prev => [...prev, label]);
@@ -432,68 +512,99 @@ const Calculator: React.FC = () => {
     }
   }, [isShift]);
 
-  const performEvaluation = useCallback(() => {
+  const performEvaluation = useCallback((scope?: Vars) => {
     if (!currentInput || currentInput.includes('→')) return null;
+    const usedVars = scope ?? vars;
     try {
-      setSyntaxError(false);
-      setMathError(false);
+      setLcdError(null);
       let s = currentInput;
       let openCount = (s.match(/\(/g) || []).length, closeCount = (s.match(/\)/g) || []).length;
       s += ')'.repeat(Math.max(0, openCount - closeCount));
       
       const statVars = calculateStatVars(statType, statData, statFrequencyEnabled);
-      let val = evaluateExpression(s, vars, ans, angleMode, statVars, displayFormat);
-      if (isNaN(val) || !isFinite(val) || Math.abs(val) >= 1e100) {
-        console.warn("Evaluation resulted in non-finite value:", val, {
-          inputExpression: s,
-          vars,
-          statType,
-          statData,
-          computedStatVars: statVars
-        });
-        throw "MathError";
-      }
+      let val = evaluateExpression(s, usedVars, ans, angleMode, statVars, displayFormat);
       
       const raw = currentInput.replace('‸', '');
       const finalSequence = reconstructSequence(raw);
 
       return { val, raw, finalSequence };
     } catch (e) {
-      console.warn("Calculator Evaluation Error details:", {
-        error: e,
-        inputExpression: currentInput,
-        vars,
-        statType,
-        statData,
-        stack: e instanceof Error ? e.stack : undefined
-      });
-      if (e === "MathError") {
-        setMathError(true);
-      } else {
-        setSyntaxError(true);
-      }
+      if (e instanceof CalcError) setLcdError(e.kind);
+      else setLcdError('syntax');
       return null;
     }
   }, [currentInput, vars, ans, angleMode, statType, statData, displayFormat, statFrequencyEnabled]);
 
+  const applyEvalSuccess = useCallback((evalRes: { val: number; raw: string; finalSequence: string[] }) => {
+    const { val, raw, finalSequence } = evalRes;
+    prependHistory({
+      rawInput: raw,
+      displayInput: formatMath(raw),
+      result: val,
+      latex: toLaTeX(raw),
+      sequence: finalSequence,
+      kind: 'calc',
+    });
+    setAns(val);
+    setCurrentSequence([]);
+    setLastValue(val);
+    setShowingResult(true);
+    setEngMode(null);
+    setDmsResult(false);
+    setReplayIndex(-1);
+    setDisplayMode(resultDisplayMode(val));
+  }, [prependHistory]);
+
+  const runSolveNewton = useCallback((scope: Vars) => {
+    try {
+      const sVars = calculateStatVars(statType, statData, statFrequencyEnabled);
+      const { x, residual } = newtonSolveX(
+        currentInput.replace(/[‸⬚]/g, ''),
+        scope,
+        ans,
+        angleMode,
+        sVars,
+      );
+      setVars({ ...scope, X: x });
+      setAns(x);
+      setLastValue(x);
+      setSolveResidual(residual);
+      setSolveScreen('result');
+      setShowingResult(true);
+      setLcdError(null);
+      setDisplayMode(resultDisplayMode(x));
+    } catch (e) {
+      if (e instanceof CalcError) setLcdError(e.kind);
+      else setLcdError('syntax');
+      setSolveScreen(null);
+      solveAfterPromptsRef.current = false;
+    }
+  }, [currentInput, ans, angleMode, statType, statData, statFrequencyEnabled]);
+
   const handleCalc = useCallback(() => {
     if (isShift) {
-      // SOLVE implementation
       setIsShift(false);
-      if (!currentInput.includes('X')) {
-        setSyntaxError(true);
+      setLcdError(null);
+      setSolveScreen(null);
+      setShowingResult(false);
+      const expr = currentInput.replace(/[‸⬚]/g, '');
+      if (!expressionHasSolveUnknown(expr)) {
+        setLcdError('variable');
+        solveAfterPromptsRef.current = false;
         return;
       }
-      
-      try {
-        const sVars = calculateStatVars(statType, statData);
-        const x = newtonSolveX(currentInput.replace(/[‸⬚]/g, ''), vars, ans, angleMode, sVars);
-        setVars(prev => ({ ...prev, X: x }));
-        setAns(x);
-        setShowingResult(true);
-        setLastValue(x);
-      } catch (e) {
-        setSyntaxError(true);
+      solveAfterPromptsRef.current = true;
+      const others = collectSolvePromptVars(expr);
+      if (others.length > 0) {
+        setPromptVarsQueue(others);
+        const first = others[0];
+        setPromptVar(first);
+        setPromptValue('0');
+        setPrevPromptValue(String(vars[first] ?? 0));
+      } else {
+        setPromptVar(null);
+        setPromptVarsQueue([]);
+        setSolveScreen('confirm');
       }
       return;
     }
@@ -514,30 +625,48 @@ const Calculator: React.FC = () => {
     } else {
       solveRef.current();
     }
-  }, [isShift, isAlpha, currentInput, vars, handleInput, ans, angleMode]);
+  }, [isShift, isAlpha, currentInput, vars, handleInput]);
 
   const tackleNextPrompt = useCallback(() => {
     if (!promptVar) return;
-    
-    // Save current prompt value to variable
+
     const val = parseFloat(promptValue) || parseFloat(prevPromptValue) || 0;
-    setVars(prev => ({ ...prev, [promptVar]: val }));
+    const merged = { ...vars, [promptVar]: val };
+    setVars(merged);
 
     const nextQueue = promptVarsQueue.slice(1);
     setPromptVarsQueue(nextQueue);
-    
+
     if (nextQueue.length > 0) {
       const nextVar = nextQueue[0];
       setPromptVar(nextVar);
       setPromptValue("0");
-      setPrevPromptValue(vars[nextVar]?.toString() || "0");
+      setPrevPromptValue(String(merged[nextVar] ?? 0));
     } else {
       setPromptVar(null);
-      solveRef.current();
+      if (solveAfterPromptsRef.current) {
+        setSolveScreen('confirm');
+      } else {
+        const evalRes = performEvaluation(merged);
+        if (evalRes) applyEvalSuccess(evalRes);
+      }
     }
-  }, [promptVar, promptValue, prevPromptValue, promptVarsQueue, vars]);
+  }, [promptVar, promptValue, prevPromptValue, promptVarsQueue, vars, runSolveNewton, performEvaluation, applyEvalSuccess]);
 
   const solve = useCallback(() => {
+    if (solveScreen === 'confirm') {
+      runSolveNewton(vars);
+      return;
+    }
+    if (solveScreen === 'result') {
+      setSolveScreen('continue');
+      setShowingResult(false);
+      return;
+    }
+    if (solveScreen === 'continue') {
+      setSolveScreen('confirm');
+      return;
+    }
     if (promptVar) {
       tackleNextPrompt();
       return;
@@ -589,28 +718,8 @@ const Calculator: React.FC = () => {
     }
 
     const evalRes = performEvaluation();
-    if (evalRes) {
-      const { val, raw, finalSequence } = evalRes;
-      const latex = toLaTeX(raw);
-      setHistory(prev => [{
-        id: Math.random().toString(36).substr(2, 9),
-        rawInput: raw,
-        displayInput: formatMath(raw),
-        result: val,
-        latex: latex,
-        sequence: finalSequence
-      }, ...prev].slice(0, 50));
-
-      setAns(val);
-      setCurrentSequence([]);
-      setLastValue(val);
-      setShowingResult(true);
-      setEngMode(null);
-      setDmsResult(false);
-      setReplayIndex(-1);
-      setDisplayMode(resultDisplayMode(val));
-    }
-  }, [calcMode, eqnIndex, eqnCoeffs, eqnResultIdx, eqnResults, performEvaluation, toLaTeX, formatMath, promptVar, tackleNextPrompt, statType, statData, statCursor, statFrequencyEnabled]);
+    if (evalRes) applyEvalSuccess(evalRes);
+  }, [calcMode, eqnIndex, eqnCoeffs, eqnResultIdx, eqnResults, performEvaluation, applyEvalSuccess, promptVar, tackleNextPrompt, statType, statData, statCursor, statFrequencyEnabled, solveScreen, vars, runSolveNewton]);
 
   useEffect(() => {
     solveRef.current = solve;
@@ -658,6 +767,16 @@ const Calculator: React.FC = () => {
       setCurrentSequence([]);
       return;
     }
+    // E-20: AC from a SOLVE screen returns to the equation, not a blank line.
+    if (solveScreen || (promptVar && solveAfterPromptsRef.current)) {
+      setSolveScreen(null);
+      setPromptVar(null);
+      setPromptVarsQueue([]);
+      setShowingResult(false);
+      setLcdError(null);
+      solveAfterPromptsRef.current = false;
+      return;
+    }
     setCurrentInput("‸");
     setCurrentSequence([]);
     setShowingResult(false);
@@ -666,19 +785,23 @@ const Calculator: React.FC = () => {
     setIsSto(false);
     setIsRcl(false);
     setCalcMode('COMP');
-    setSyntaxError(false);
-    setMathError(false);
+    setLcdError(null);
+    setSolveScreen(null);
+    setPromptVar(null);
+    setPromptVarsQueue([]);
+    solveAfterPromptsRef.current = false;
     setShowHypMenu(false);
     setSetupPrompt(null);
     setSetupPage(0);
     setEngMode(null);
     setDmsResult(false);
     setReplayIndex(-1);
-  }, [calcMode]);
+  }, [calcMode, solveScreen, promptVar]);
 
   const handleRight = useCallback(() => {
     // After an error, ◄/► dismiss it and return to the expression for editing.
-    if (syntaxError || mathError) { setSyntaxError(false); setMathError(false); return; }
+    if (lcdError) { setLcdError(null); return; }
+    if (solveScreen) return;
     if (calcMode === 'STAT_DATA') {
       const isTwoVar = statType !== '1-VAR';
       const maxCol = (isTwoVar ? 1 : 0) + (statFrequencyEnabled ? 1 : 0);
@@ -691,11 +814,12 @@ const Calculator: React.FC = () => {
     }
     if (showingResult) { setShowingResult(false); return; }
     setCurrentInput(moveCompCursorRight(currentInput));
-  }, [calcMode, showingResult, currentInput, statType, statFrequencyEnabled, syntaxError, mathError]);
+  }, [calcMode, showingResult, currentInput, statType, statFrequencyEnabled, lcdError, solveScreen]);
 
   const handleLeft = useCallback(() => {
     // After an error, ◄/► dismiss it and return to the expression for editing.
-    if (syntaxError || mathError) { setSyntaxError(false); setMathError(false); return; }
+    if (lcdError) { setLcdError(null); return; }
+    if (solveScreen) return;
     if (calcMode === 'STAT_DATA') {
       setStatCursor(prev => ({ ...prev, col: Math.max(0, prev.col - 1) }));
       return;
@@ -706,13 +830,15 @@ const Calculator: React.FC = () => {
     }
     if (showingResult) { setShowingResult(false); return; }
     setCurrentInput(moveCompCursorLeft(currentInput));
-  }, [calcMode, showingResult, currentInput, syntaxError, mathError]);
+  }, [calcMode, showingResult, currentInput, lcdError, solveScreen]);
 
   const handleDown = useCallback(() => {
     if (calcMode === 'SETUP') { setSetupPage(p => (p === 0 ? 1 : 0)); return; }
+    if (solveScreen || promptVar) return;
     // LCD history replay: ▼ walks back toward the newest entry / live line.
     if (calcMode === 'COMP' && replayIndex >= 0) {
-      const idx = replayIndex - 1;
+      let idx = replayIndex - 1;
+      while (idx >= 0 && !isReplayableHistory(history[idx])) idx--;
       if (idx < 0) {
         setReplayIndex(-1);
         setCurrentInput('‸');
@@ -743,25 +869,26 @@ const Calculator: React.FC = () => {
       return;
     }
     setCurrentInput(moveCompCursorDown(currentInput));
-  }, [calcMode, eqnResultIdx, eqnResults, currentInput, statCursor, statData, replayIndex, history, statType, statFrequencyEnabled]);
+  }, [calcMode, eqnResultIdx, eqnResults, currentInput, statCursor, statData, replayIndex, history, statType, statFrequencyEnabled, solveScreen, promptVar]);
 
   const handleUp = useCallback(() => {
     if (calcMode === 'SETUP') { setSetupPage(p => (p === 0 ? 1 : 0)); return; }
+    if (solveScreen || promptVar) return;
     // LCD history replay: ▲ recalls a past calculation onto the line.
     // From a result, mid-replay, or a blank live line (after AC). While editing
     // a non-empty expression, ▲ still prefers template-slot navigation below.
     const blankLive = currentInput === '‸';
     if (calcMode === 'COMP' && history.length > 0 && (showingResult || replayIndex >= 0 || blankLive)) {
-      const idx = replayIndex < 0 ? 0 : Math.min(history.length - 1, replayIndex + 1);
+      let idx = replayIndex < 0 ? 0 : replayIndex + 1;
+      while (idx < history.length && !isReplayableHistory(history[idx])) idx++;
       const item = history[idx];
-      if (item) {
+      if (item && item.result !== null) {
         setReplayIndex(idx);
         setShowingResult(true);
         setAns(item.result);
         setLastValue(item.result);
         setDisplayMode(resultDisplayMode(item.result));
-        setSyntaxError(false);
-        setMathError(false);
+        setLcdError(null);
         setEngMode(null);
         setDmsResult(false);
         setCurrentInput(item.rawInput + '‸');
@@ -780,7 +907,7 @@ const Calculator: React.FC = () => {
       return;
     }
     setCurrentInput(moveCompCursorUp(currentInput));
-  }, [calcMode, eqnResultIdx, currentInput, showingResult, replayIndex, history]);
+  }, [calcMode, eqnResultIdx, currentInput, showingResult, replayIndex, history, solveScreen, promptVar]);
 
   const toggleSD = useCallback(() => {
     if (!showingResult) return;
@@ -809,14 +936,14 @@ const Calculator: React.FC = () => {
         if (evalRes) {
           valToUse = evalRes.val;
           setAns(evalRes.val);
-          setHistory(prev => [{
-            id: Math.random().toString(36).substr(2, 9),
+          prependHistory({
             rawInput: evalRes.raw,
             displayInput: formatMath(evalRes.raw),
             result: evalRes.val,
             latex: toLaTeX(evalRes.raw),
-            sequence: evalRes.finalSequence
-          }, ...prev].slice(0, 50));
+            sequence: [...evalRes.finalSequence, isShift ? 'SHIFT' : '', 'M+'].filter(Boolean),
+            kind: 'calc',
+          });
           setLastValue(evalRes.val);
           setShowingResult(true);
           setDisplayMode(resultDisplayMode(evalRes.val));
@@ -825,37 +952,60 @@ const Calculator: React.FC = () => {
         }
       }
       setVars(prev => ({ ...prev, M: isShift ? prev.M - valToUse : prev.M + valToUse }));
+      if (showingResult) {
+        prependHistory({
+          rawInput: isShift ? 'M−' : 'M+',
+          displayInput: isShift ? 'M−' : 'M+',
+          result: valToUse,
+          latex: '',
+          sequence: isShift ? ['SHIFT', 'M+'] : ['M+'],
+          kind: 'action',
+        });
+      }
     } else if (action === 'rcl_sto') {
       if (isShift) { setIsSto(true); setIsRcl(false); }
       else { setIsRcl(true); setIsSto(false); }
     }
     setIsShift(false);
     setIsAlpha(false);
-  }, [isAlpha, isShift, showingResult, ans, performEvaluation, formatMath, toLaTeX, vars]);
+  }, [isAlpha, isShift, showingResult, ans, performEvaluation, formatMath, toLaTeX, vars, prependHistory]);
 
   const handleAlphaVar = useCallback((v: string) => {
     if (isSto) {
       let beforeText = currentInput.replace('‸', '');
       let operand = findPrecedingOperand(beforeText);
-      
+      let storedRaw = '';
+      let storedVal = ans;
+
       if (showingResult || !operand || beforeText === '') {
         setVars(prev => ({ ...prev, [v]: ans }));
-        setCurrentInput(`Ans→${v}‸`);
+        storedRaw = `Ans→${v}`;
+        setCurrentInput(`${storedRaw}‸`);
       } else {
         try {
           // Keep user memory as the eval scope; STAT overlay must not wipe A–C.
           const sVars = calculateStatVars(statType, statData, statFrequencyEnabled);
-          let valToSave = evaluateExpression(operand.replace(/Ans/g, String(ans)), { ...vars }, ans, angleMode, sVars);
-          setVars(prev => ({ ...prev, [v]: valToSave }));
-          setAns(valToSave);
-          setLastValue(valToSave);
-          setDisplayMode(resultDisplayMode(valToSave));
-          setCurrentInput(beforeText + `→${v}‸`);
+          storedVal = evaluateExpression(operand.replace(/Ans/g, String(ans)), { ...vars }, ans, angleMode, sVars);
+          setVars(prev => ({ ...prev, [v]: storedVal }));
+          setAns(storedVal);
+          setLastValue(storedVal);
+          setDisplayMode(resultDisplayMode(storedVal));
+          storedRaw = beforeText + `→${v}`;
+          setCurrentInput(storedRaw + '‸');
         } catch(e) {
           setVars(prev => ({ ...prev, [v]: ans }));
-          setCurrentInput(beforeText + `→${v}‸`);
+          storedRaw = beforeText + `→${v}`;
+          setCurrentInput(storedRaw + '‸');
         }
       }
+      prependHistory({
+        rawInput: storedRaw,
+        displayInput: formatMath(storedRaw),
+        result: storedVal,
+        latex: toLaTeX(storedRaw),
+        sequence: reconstructSequence(storedRaw),
+        kind: 'action',
+      });
       setShowingResult(true); 
       setIsSto(false);
       setIsShift(false);
@@ -888,7 +1038,7 @@ const Calculator: React.FC = () => {
       if (v === 'Y') toggleSD(); 
       if (v === 'M') handleMemory('plus_minus', 'M'); 
     }
-  }, [isSto, isRcl, isAlpha, isShift, currentInput, showingResult, ans, vars, angleMode, handleInput, toggleSD, handleMemory, statType, statData, statFrequencyEnabled]);
+  }, [isSto, isRcl, isAlpha, isShift, currentInput, showingResult, ans, vars, angleMode, handleInput, toggleSD, handleMemory, statType, statData, statFrequencyEnabled, prependHistory, formatMath, toLaTeX]);
 
   handleAlphaVarRef.current = handleAlphaVar;
 
@@ -1067,7 +1217,7 @@ const Calculator: React.FC = () => {
     };
     const pressVar = (v: 'X' | 'Y', flashId: string) => {
       flashKey(flashId);
-      recordShortcut(['ALPHA', v]);
+      recordShortcut(['ALPHA', v === 'X' ? ')' : 'S⇔D']);
       if (isSto || isRcl || isAlpha) handleAlphaVar(v);
       else handleInput(v);
     };
@@ -1119,10 +1269,10 @@ const Calculator: React.FC = () => {
       // Special shortcuts (don't trigger if modifiers are active unless expected)
       else if (e.key.toLowerCase() === 'x') { e.preventDefault(); pressVar('X', 'paren-close'); }
       else if (e.key.toLowerCase() === 'y') { e.preventDefault(); pressVar('Y', 'sd'); }
-      else if (e.key.toLowerCase() === 's') { e.preventDefault(); press('sd', () => handleAlphaVar('Y'), overlayHistoryLabel('S⇔D', 'Y')); }
-      else if (e.key.toLowerCase() === 'c') { e.preventDefault(); press('cos', () => handleTrig('cos', 'E'), 'COS'); }
-      else if (e.key.toLowerCase() === 't') { e.preventDefault(); press('tan', () => handleTrig('tan', 'F'), 'TAN'); }
-      else if (e.key.toLowerCase() === 'l') { e.preventDefault(); press('log', handleLogKey, 'LOG'); }
+      else if (e.key.toLowerCase() === 's') { e.preventDefault(); press('sd', () => handleAlphaVar('Y'), 'S⇔D'); }
+      else if (e.key.toLowerCase() === 'c') { e.preventDefault(); press('cos', () => handleTrig('cos', 'E'), 'cos'); }
+      else if (e.key.toLowerCase() === 't') { e.preventDefault(); press('tan', () => handleTrig('tan', 'F'), 'tan'); }
+      else if (e.key.toLowerCase() === 'l') { e.preventDefault(); press('log', handleLogKey, 'log_box'); }
       else if (e.key.toLowerCase() === 'r') { e.preventDefault(); press('sqrt', handleSquareRootKey, '√'); }
       else if (e.key.toLowerCase() === 'q') { e.preventDefault(); press('sqr', handleSquareKey, 'x²'); }
       else if (e.key.toLowerCase() === 'a') { e.preventDefault(); press('ans', () => handleInput('Ans'), 'Ans'); }
@@ -1151,6 +1301,7 @@ const Calculator: React.FC = () => {
   // --- Rendering Helpers ---
   const isLcdMenu =
     showHypMenu ||
+    solveScreen === 'confirm' || solveScreen === 'continue' ||
     calcMode === 'MENU' || calcMode === 'SETUP' || calcMode === 'CLR_MENU' ||
     calcMode === 'EQN_MENU' || calcMode === 'STAT_MENU' || calcMode === 'STAT_RESULT' ||
     calcMode === 'STAT_RESULT_SUB' || calcMode === 'STAT_DATA';
@@ -1160,7 +1311,7 @@ const Calculator: React.FC = () => {
   // `ind-arrows`). CMPLX/MAT/VCT/Disp stay dim — no backing state until Phase 3
   // (CMPLX/MAT/VCT) or multi-statement `:` (Disp) lands (issue `ind-hardcoded`).
   const compEditing =
-    calcMode === 'COMP' && !showingResult && !syntaxError && !mathError && !isLcdMenu;
+    calcMode === 'COMP' && !showingResult && !lcdError && !solveScreen && !promptVar && !isLcdMenu;
   const caretIdx = currentInput.indexOf('‸');
   // ◀ / ▶ light when the caret can still travel left / right through the entry.
   const canCaretLeft = compEditing && caretIdx > 0;
@@ -1176,6 +1327,12 @@ const Calculator: React.FC = () => {
     (calcMode === 'EQN_RESULT' && eqnResultIdx < eqnResults.length - 1) || canReplayDown;
 
   const renderInput = () => {
+    if (solveScreen === 'confirm') {
+      return <div className="mode-menu"><div className="mode-item">solve for x</div></div>;
+    }
+    if (solveScreen === 'continue') {
+      return <div className="mode-menu"><div className="mode-item">Continue?</div></div>;
+    }
     if (showHypMenu) {
       return (
         <div className="mode-menu grid grid-cols-3 gap-x-4 gap-y-2 text-[0.95rem]">
@@ -1288,6 +1445,10 @@ const Calculator: React.FC = () => {
       return <EqnResultLabel results={eqnResults} resultIdx={eqnResultIdx} />;
     }
 
+    if (solveScreen === 'result') {
+      return <div dangerouslySetInnerHTML={{ __html: formatMath(currentInput.replace('‸', '')) }} />;
+    }
+
     return <div dangerouslySetInnerHTML={{ __html: formatMath(currentInput) }} />;
   };
 
@@ -1302,12 +1463,23 @@ const Calculator: React.FC = () => {
     }
     if (isLcdMenu) return null;
     
-    if (syntaxError) {
-      return <div className="decimal-result error">Syntax ERROR</div>;
+    if (lcdError) {
+      return <div className="decimal-result error">{calcErrorLabel(lcdError)}</div>;
     }
 
-    if (mathError) {
-      return <div className="decimal-result error">Math ERROR</div>;
+    if (solveScreen === 'result') {
+      return (
+        <div className="solve-result">
+          <div className="solve-result-row">
+            <span>x=</span>
+            <span className="solve-val">{formatResultNumber(ans, displayFormat)}</span>
+          </div>
+          <div className="solve-result-row">
+            <span>L-R=</span>
+            <span className="solve-val">{formatResultNumber(solveResidual, displayFormat)}</span>
+          </div>
+        </div>
+      );
     }
 
     if (calcMode === 'EQN_QUAD') {
@@ -1412,125 +1584,46 @@ const Calculator: React.FC = () => {
       );
     };
 
-    const renderMiniButton = (label: string, id: string | number) => {
-      let typeClass = '';
-      if (label.match(/^[0-9.]+$/) || label === 'Ans' || label === 'π' || label === 'e' || label === '×10ˣ') {
-        typeClass = 'num';
-      } else if (['+', '-', '×', '÷', '=', 'DEL', 'AC', '(', ')'].includes(label)) {
-        typeClass = 'op';
-      } else if (label === 'SHIFT') {
-        typeClass = 'shift';
-      } else if (label === 'ALPHA') {
-        typeClass = 'alpha';
-      }
-      
-      const cls = `mini-btn ${typeClass}`;
-      
-      if (label === 'log_box') {
-        return (
-          <span className={cls} key={id}>
-            log<span className="mini-box ml-1"></span>
-          </span>
-        );
-      }
-      if (label.toUpperCase() === 'LOG') {
-        return <span className={cls} key={id}>log</span>;
-      }
-      if (label.toLowerCase() === 'ln') {
-        return <span className={cls} key={id}>ln</span>;
-      }
-      if (label === '√') {
-        return (
-          <span className={cls} key={id}>
-            <div className="flex items-center">
-              <span className="text-[12px] -mr-1">√</span><span className="mini-box scale-75"></span>
-            </div>
-          </span>
-        );
-      }
-      if (label === '∫') {
-        return (
-          <span className={cls} key={id}>
-            <span className="text-[14px] font-serif -mr-1">∫</span>
-            <div className="flex flex-col gap-0.5 ml-1">
-               <div className="mini-box scale-50"></div>
-               <div className="mini-box scale-50"></div>
-            </div>
-          </span>
-        );
-      }
-      if (label === 'Σ') {
-        return (
-          <span className={cls} key={id}>
-            <span className="text-xs mr-0.5">Σ</span>
-            <div className="flex flex-col items-center">
-              <span className="mini-box scale-50"></span>
-              <span className="mini-box scale-50 mt-1"></span>
-            </div>
-          </span>
-        );
-      }
-      if (label === 'frac') {
-        return (
-          <span className={cls} key={id}>
-            <div className="frac-graphic">
-              <div className="mini-box"></div>
-              <div className="frac-line"></div>
-              <div className="mini-box"></div>
-            </div>
-          </span>
-        );
-      }
-      if (label === 'x²' || label === 'x³' || label === 'xⁿ' || label === 'x-1') {
-        let sup = '▭';
-        if (label.includes('²')) sup = '2';
-        else if (label.includes('³')) sup = '3';
-        else if (label.includes('-1')) sup = '-1';
-        
-        return (
-          <span className={cls} key={id}>
-            x<span className="text-[7px] -mt-2.5 ml-0.5 font-bold">{sup}</span>
-          </span>
-        );
-      }
-      if (label === '×10ˣ') {
-        return <span className={cls} key={id}>×10ˣ</span>;
-      }
-      if (label === 'd/dx') {
-        return (
-          <span className={cls} key={id}>
-             <div className="flex flex-col items-center leading-none text-[8px] font-bold">
-               <span>d</span>
-               <div className="w-3 h-[1px] bg-white/40 my-0.5"></div>
-               <span>dx</span>
-             </div>
-          </span>
-        );
-      }
-      if (label === '°\'"') {
-        return <span className={cls} key={id}>°′″</span>;
-      }
-      if (label === '(-)') {
-        return <span className={cls} key={id}>(-)</span>;
-      }
+  const liveKeys = liveOperationSequence({
+    calcMode,
+    setupPage,
+    setupPrompt,
+    isSto,
+    isRcl,
+    currentInput,
+  });
 
-      const navigationIcons: Record<string, any> = {
-        'UP': <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>,
-        'DOWN': <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>,
-        'LEFT': <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>,
-        'RIGHT': <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>,
-      };
-
-      return (
-        <span className={cls} key={id}>
-          {navigationIcons[label] || label}
-        </span>
-      );
-    };
-
+  const renderKeyRow = (seq: string[], keyPrefix: string) => (
+    <div className="flex flex-wrap gap-1.5 items-center">
+      {seq.map((label, i) => (
+        <React.Fragment key={`${keyPrefix}-${i}`}>
+          {renderMiniButton(label, `${keyPrefix}-${i}`)}
+          {i < seq.length - 1 && <span className="text-[10px] text-white/15 mx-1 font-black">›</span>}
+        </React.Fragment>
+      ))}
+    </div>
+  );
 
   return (
-    <div className="flex flex-col md:flex-row justify-center items-start p-5 bg-[#121212] min-h-screen m-0 overflow-x-hidden font-sans gap-8">
+    <div className="flex flex-col bg-[#121212] min-h-screen m-0 overflow-x-hidden font-sans">
+      <button
+        type="button"
+        onClick={() => setShowCurrentKeys(v => !v)}
+        className="fixed top-4 left-4 z-50 px-3 py-2 bg-[#1c1c1c] text-[10px] font-black tracking-widest uppercase text-blue-400/80 rounded-full shadow-lg border border-white/10 hover:bg-[#2a2a2a]"
+      >
+        {showCurrentKeys ? 'Hide keys' : 'Show keys'}
+      </button>
+      {showCurrentKeys && (
+        <div className="current-keys-strip w-full border-b border-white/10 pl-32 pr-16 py-3">
+          <span className="block text-[10px] font-black tracking-widest uppercase text-white/25 mb-1.5">Current keys</span>
+          {liveKeys.length === 0 ? (
+            <div className="text-[11px] text-white/20 italic">No current operation</div>
+          ) : (
+            renderKeyRow(liveKeys, 'live')
+          )}
+        </div>
+      )}
+    <div className="flex flex-col md:flex-row justify-center items-start p-5 gap-8 flex-1">
       {/* Sidebar Toggle */}
       <button 
         onClick={() => setShowPane(!showPane)}
@@ -1599,7 +1692,7 @@ const Calculator: React.FC = () => {
             {renderInput()}
           </div>
 
-          <div id="result-text" className={`flex items-end grow text-[#1a1a1a] pb-1 pointer-events-none ${calcMode === 'EQN_QUAD' ? 'justify-start' : 'justify-end'} ${isLcdMenu ? 'hidden' : ''}`}>
+          <div id="result-text" className={`flex items-end grow text-[#1a1a1a] pb-1 pointer-events-none ${calcMode === 'EQN_QUAD' || solveScreen === 'result' ? 'justify-start' : 'justify-end'} ${isLcdMenu ? 'hidden' : ''}`}>
             {renderResult()}
           </div>
         </div>
@@ -1608,9 +1701,9 @@ const Calculator: React.FC = () => {
         {renderMappingKey('calc', withFlash(handleCalc, 'CALC'), 'sci sr1 sc1')}
         {renderMappingKey('integral', withFlash(handleIntegralKey, '∫'), 'sci sr1 sc2')}
         {renderMappingKey('inv', withFlash(handleFactorialKey, 'x-1'), 'sci sr1 sc5')}
-        {renderMappingKey('log', withFlash(handleLogKey, 'LOG'), 'sci sr1 sc6')}
+        {renderMappingKey('log', withFlash(handleLogKey, 'log_box'), 'sci sr1 sc6')}
 
-        {renderMappingKey('frac', withFlash(handleFracKey, 'ab/c'), 'key-frac')}
+        {renderMappingKey('frac', withFlash(handleFracKey, 'frac'), 'key-frac')}
         {renderMappingKey('sqrt', withFlash(handleSquareRootKey, '√'), 'sci sr2 sc2')}
         {renderMappingKey('sqr', withFlash(handleSquareKey, 'x²'), 'sci sr2 sc3')}
         {renderMappingKey('pwr', withFlash(handlePowerKey, 'xⁿ'), 'sci sr2 sc4')}
@@ -1620,15 +1713,15 @@ const Calculator: React.FC = () => {
         {renderMappingKey('A', withFlash(() => handleAlphaVar('A'), '(-)'), 'sci sr3 sc1')}
         {renderMappingKey('B', withFlash(() => handleAlphaVar('B'), '°\'"'), 'sci sr3 sc2')}
         {renderMappingKey('C', withFlash(() => handleAlphaVar('C'), 'hyp'), 'sci sr3 sc3')}
-        {renderMappingKey('sin', withFlash(() => handleTrig('sin', 'D'), 'SIN'), 'sci sr3 sc4')}
-        {renderMappingKey('cos', withFlash(() => handleTrig('cos', 'E'), 'COS'), 'sci sr3 sc5')}
-        {renderMappingKey('tan', withFlash(() => handleTrig('tan', 'F'), 'TAN'), 'sci sr3 sc6')}
+        {renderMappingKey('sin', withFlash(() => handleTrig('sin', 'D'), 'sin'), 'sci sr3 sc4')}
+        {renderMappingKey('cos', withFlash(() => handleTrig('cos', 'E'), 'cos'), 'sci sr3 sc5')}
+        {renderMappingKey('tan', withFlash(() => handleTrig('tan', 'F'), 'tan'), 'sci sr3 sc6')}
 
         {renderMappingKey('rcl', withFlash(() => handleMemory('rcl_sto'), 'RCL'), 'sci sr4 sc1')}
         {renderMappingKey('eng', withFlash(handleEng, 'ENG'), 'sci sr4 sc2')}
         {renderMappingKey('paren-open', withFlash(() => handleParentheses('(', ''), '('), 'sci sr4 sc3')}
-        {renderMappingKey('paren-close', withFlash(() => handleAlphaVar('X'), overlayHistoryLabel(')', 'X')), 'sci sr4 sc4')}
-        {renderMappingKey('sd', withFlash(() => handleAlphaVar('Y'), overlayHistoryLabel('S⇔D', 'Y')), 'key-sd')}
+        {renderMappingKey('paren-close', withFlash(() => handleAlphaVar('X'), ')'), 'sci sr4 sc4')}
+        {renderMappingKey('sd', withFlash(() => handleAlphaVar('Y'), 'S⇔D'), 'key-sd')}
         {renderMappingKey('mplus', withFlash(() => handleAlphaVar('M'), 'M+'), 'key-mplus')}
 
         {/* Navigation - Higher priority/Z-index */}
@@ -1689,8 +1782,8 @@ const Calculator: React.FC = () => {
 
       {/* Side Pane */}
       {showPane && (
-        <div className="fixed inset-0 z-[100] md:relative md:inset-auto md:w-[350px] md:mt-0 bg-[#1a1a1a] md:rounded-3xl border-l md:border border-white/5 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-right duration-300 h-full md:h-fit md:max-h-[900px]">
-          <div className="flex border-b border-white/5 relative">
+        <div className="relative z-[40] w-full md:w-[350px] flex-shrink-0 bg-[#1a1a1a] rounded-3xl border border-white/5 shadow-2xl flex flex-col overflow-hidden h-fit max-h-[min(900px,calc(100vh-6rem))]">
+          <div className="flex border-b border-white/5 relative pr-10">
             <button 
               onClick={() => setPaneView('history')}
               className={`flex-1 py-4 text-sm font-bold tracking-wider uppercase transition-colors ${paneView === 'history' ? 'bg-white/5 text-blue-400' : 'text-white/40 hover:text-white/60'}`}
@@ -1706,7 +1799,7 @@ const Calculator: React.FC = () => {
             {/* Close button for mobile split view */}
             <button 
               onClick={() => setShowPane(false)}
-              className="md:hidden absolute right-4 top-1/2 -translate-y-1/2 p-2 text-white/40 hover:text-white"
+              className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-white/40 hover:text-white"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
@@ -1734,6 +1827,7 @@ const Calculator: React.FC = () => {
                           <div className="flex justify-between items-center mb-1">
                              <div className="text-[9px] text-white/10 font-black tracking-widest uppercase">#{history.length - idx}</div>
                              <div className="flex gap-3">
+                               {isReplayableHistory(item) && (
                                <button 
                                  onClick={() => {
                                    setCurrentInput(item.rawInput + "‸");
@@ -1745,22 +1839,31 @@ const Calculator: React.FC = () => {
                                >
                                  Load
                                </button>
+                               )}
+                           {item.latex ? (
                            <button 
                              onClick={() => copyToClipboard(item.latex)}
                              className="text-[9px] text-white/5 hover:text-white/30 transition-colors uppercase font-bold tracking-widest cursor-pointer"
                            >
                              LaTeX
                            </button>
+                           ) : null}
                          </div>
                       </div>
                       <div className="flex items-center justify-between overflow-hidden gap-3">
+                        {item.kind === 'action' && !item.rawInput.includes('→') ? (
+                          <div className="flex-shrink min-w-0 text-white/90 text-sm">{item.rawInput}</div>
+                        ) : (
                         <div 
                           className="flex-shrink min-w-0 text-white/90 text-sm overflow-x-auto overflow-y-hidden whitespace-nowrap custom-scrollbar pb-1 lcd-screen-mini"
                           dangerouslySetInnerHTML={{ __html: formatMath(item.rawInput) }}
                         />
+                        )}
+                        {item.result !== null && (
                         <div className="flex-shrink-0 text-white text-xl font-black tracking-tighter tabular-nums opacity-90 border-l border-white/10 pl-3">
                           {item.result.toLocaleString(undefined, { maximumFractionDigits: 10 })}
                         </div>
+                        )}
                       </div>
                       <div className="mt-2 flex justify-end">
                         <button 
@@ -1771,13 +1874,8 @@ const Calculator: React.FC = () => {
                         </button>
                       </div>
                       {expandedItem === item.id && (
-                        <div className="mt-3 pt-3 border-t border-white/5 flex flex-wrap gap-1.5 items-center animate-in fade-in slide-in-from-top-1 duration-200">
-                          {item.sequence.map((label, i) => (
-                            <React.Fragment key={i}>
-                              {renderMiniButton(label, `${idx}-${i}`)}
-                              {i < item.sequence.length - 1 && <span className="text-[10px] text-white/5 mx-1 font-black">›</span>}
-                            </React.Fragment>
-                          ))}
+                        <div className="mt-3 pt-3 border-t border-white/5 animate-in fade-in slide-in-from-top-1 duration-200">
+                          {renderKeyRow(item.sequence, `${idx}`)}
                         </div>
                       )}
                     </div>
@@ -1832,8 +1930,8 @@ const Calculator: React.FC = () => {
                     <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">Q</kbd> <span>Square (x²)</span></div>
                     <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">^</kbd> <span>Power (xⁿ)</span></div>
                     <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">A</kbd> <span>Answer (Ans)</span></div>
-                    <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">X</kbd> <span>Variable X (ALPHA X)</span></div>
-                    <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">Y</kbd> <span>Variable Y (ALPHA Y)</span></div>
+                    <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">X</kbd> <span>Variable X (ALPHA ))</span></div>
+                    <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">Y</kbd> <span>Variable Y (ALPHA S⇔D)</span></div>
                   </div>
                 </section>
               </div>
@@ -1841,6 +1939,7 @@ const Calculator: React.FC = () => {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 };

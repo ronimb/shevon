@@ -23,7 +23,7 @@ wrap-up, then move them to **Landed**).
 ## Now
 
 Priority (12 Sep 2026): COMP visual leftovers first, then close Phase 2
-(SOLVE first). Daily-driver bar is COMP + STAT + EQN. Do not open Phase 3
+(`p2-solve` landed). Daily-driver bar is COMP + STAT + EQN. Do not open Phase 3
 until Phase 2 closes. Packaging stays in Phase 4. Lying menus wait for the
 matching feature — no separate “disable the row” pass.
 
@@ -58,13 +58,14 @@ pull in only if it blocks the COMP visual pass.
 Needed for the daily-driver bar and the Phase 3 gate, even though STAT editor
 / Dist / linear EQN are not daily pain. **Do `p2-solve` first.**
 
-See **Phase 2** for the full list.
+See **Phase 2** for the full list. `p2-solve` (typed `CalcError` + E-20
+SOLVE procedure) has landed. Next Phase 2 item is `p2-edit`.
 
 ### Parked extra — Current history
 
 Still scheduled, not this slice. UI + remaining letter-shortcut audit live
-under **Emulator extras** below. Keyboard `x`/`y` + `ALPHA`,`X`/`Y` logging
-already landed.
+under **Emulator extras** below. Keyboard `x`/`y` insert X/Y; sequences log
+the physical keys `ALPHA`, `)` / `ALPHA`, `S⇔D`.
 
 ---
 
@@ -124,9 +125,11 @@ See **Landed**. Remaining COMP gaps that did not block Phase 1 are listed under
 **Status: in progress.** Close these before opening new modes.
 
 - [x] `p2-freq` — SETUP STAT FREQ ON/OFF; editor row limits 80 / 40 / 26.
-- [ ] `p2-solve` — SOLVE: prompt remaining variables, initial X, L−R residual,
-      Continue screen. Issue: `solve-errors`. **First Phase 2 item after the
-      visual slice.**
+- [x] `p2-solve` — SOLVE: prompt remaining variables, “solve for x”, then
+      equation + `x=` + `L-R=` on one screen; Continue to retry. Typed
+      `CalcError` so Variable ERROR / Can’t Solve are real kinds.
+      Issue: `solve-errors`.
+      Kickoff prompt: [`docs/prompts/p2-solve-errors.md`](docs/prompts/p2-solve-errors.md).
 - [ ] `p2-edit` — STAT Edit Ins and Del-A; DEL deletes a line in the editor
       (today DEL edits the cell). Issue: `stat-del`.
 - [ ] `p2-dist` — 1-VAR Dist: P( Q( R( and normalized variate `'t`.
@@ -173,27 +176,27 @@ policy). Do not add a separate not-implemented pass.
 ## Emulator extras (scheduled, not Now)
 
 **History sequence contract** (live Current history *and* saved History pane):
-sequences log the Casio key presses that match the PC keyboard shortcut,
-including modifiers. Overlay clicks and `reconstructSequence` (used on `=`)
-must emit the same vocabulary for the same token.
+sequences log the **physical faceplate keys** that produce the expression,
+including SHIFT/ALPHA. Overlay clicks and `reconstructSequence` (used on `=`)
+must emit the same vocabulary for the same token. Chips use the same glyphs
+as the keycaps (`sin`, `x^□`, `)`, `S⇔D`), not logical letters.
 
-- Example: typing `x` inserts variable X and logs `ALPHA`, `X` — not a bare
-  `x`, and not the physical `)` key that wears the ALPHA-X legend. Same for
-  `y` → `ALPHA`, `Y`.
+- Example: typing `x` inserts variable X and logs `ALPHA`, `)` — the key that
+  wears the red X. Same for `y` → `ALPHA`, `S⇔D`. Digits are one chip each
+  (`6`, `0`, not `60`).
 - If ALPHA/SHIFT is already latched (Alt/Shift held, or overlay toggle), do
   not duplicate the modifier in the log.
+- Corrections (DEL, overwrite) do not appear; Show Keys is the **final**
+  recipe, same as `reconstructSequence`.
 
 - [x] Keyboard `x` / `y` insert X / Y; live sequence and `reconstructSequence`
-      both log `ALPHA`, `X` / `ALPHA`, `Y`.
-- [ ] **Current history** — a prominent live record of the key order and
-      presses for the *current* computation (same key-glyph treatment as the
-      side-pane History “Show Keys” row, but for one in-progress calculation).
-      - Visible by default (not buried behind History expand / pane closed).
-      - Simple hide/show toggle.
-      - Resets when AC is pressed.
-      - `currentSequence` is already accumulated in `Calculator.tsx`; it is
-        not shown live today. Past calculations keep using the History pane.
-      - Must follow the History sequence contract above.
+      both log `ALPHA`, `)` / `ALPHA`, `S⇔D`. Show Keys chips match keycaps.
+- [x] **Current history** — live key strip **across the top** of the page
+      (not in the History pane). Same chips as Show Keys; SHIFT/ALPHA are
+      circular like the faceplate. Hidden by default; Show keys toggle.
+      Opening the strip or History pane rescales the unit so it stays fully
+      visible. AC clears the LCD and the strip. Records calculations **and**
+      non-calc operations (STO letter, MODE, SETUP, CLR, M+/M−).
 - [ ] Remaining letter shortcuts (and SHIFT/ALPHA overlays for A–F / M)
       audited against this contract.
 
@@ -251,8 +254,12 @@ longer dump raw ASCII. `vis-no-literal`: shared LCD/History template table so
 trig/hyp/`ln` paint styled names and unclosed templates never leak IR stems
 (`ir-leak`, `ascii-tokens`). `vis-indicators`: ◀▶ + COMP-history ▲▼ light.
 
-**Tests** — 47 golden (manual samples + Phase 1/2 + vis-no-literal) + 16
-parser = 63.
+**SOLVE** — E-20/E-21/E-41: Variable ERROR, Can’t Solve, initial-X prompt,
+X= result, L−R residual, Continue (`p2-solve`). LCD errors are one
+`lcdError` (`CalcError`), not Syntax/Math booleans.
+
+**Tests** — 70 golden (manual samples + Phase 1/2 + vis-no-literal +
+history/keys + SOLVE) + 16 parser = 86.
 
 ---
 

@@ -36,7 +36,8 @@ and delete it from here. Do not leave the same item in two files.
 
 - Multi-line **history stack on the LCD** itself (today ▲/▼ replays one past
   COMP line; the side pane is a separate emulator extra). Distinct from the
-  scheduled **Current history** overlay in [`roadmap.md`](roadmap.md) Now.
+  landed **Current history** top strip in [`roadmap.md`](roadmap.md)
+  Emulator extras (remaining work is the A–F / M letter-shortcut audit).
 
 ## Architecture
 

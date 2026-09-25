@@ -50,7 +50,7 @@ const FEATURES: Feature[] = [
   { area: "Modes", name: "CMPLX", manual: "E-5 N2", status: "missing", inCode: "Menu row only; CMPLX indicator always dim", gap: "No i, ∠, arg, Conjg, or polar/rect format" },
   { area: "Modes", name: "STAT", manual: "E-5 N3, E-22", status: "partial", inCode: "Type menu, editor, Sum/Var/MinMax/Reg, FREQ", gap: "Dist, Ins/Del-A, STAT stays active on recall" },
   { area: "Modes", name: "BASE-N", manual: "E-5 N4, E-26", status: "missing", inCode: "Menu row; selecting 4 returns to COMP", gap: "DEC/HEX/BIN/OCT, and/or/xor/xnor, Not, Neg" },
-  { area: "Modes", name: "EQN", manual: "E-5 N5, E-28", status: "partial", inCode: "Menu shown; quadratic editor + real roots", gap: "2-unk, 3-unk, cubic; complex quadratic roots" },
+  { area: "Modes", name: "EQN", manual: "E-5 N5, E-28", status: "partial", inCode: "Menu shown; quadratic editor + real and complex roots", gap: "2-unk, 3-unk, cubic" },
   { area: "Modes", name: "MATRIX", manual: "E-5 N6, E-29", status: "missing", inCode: "Menu row only", gap: "MatA/B/C, Dim, det, Trn, inverse, MatAns" },
   { area: "Modes", name: "TABLE", manual: "E-5 N7, E-32", status: "missing", inCode: "Menu row only", gap: "f(x), Start/End/Step, 30-row cap, Insufficient MEM" },
   { area: "Modes", name: "VECTOR", manual: "E-5 N8, E-33", status: "missing", inCode: "Menu row only", gap: "VctA/B/C, dot, cross, Abs, VctAns" },
@@ -73,7 +73,7 @@ const FEATURES: Feature[] = [
   { area: "Input", name: "Sexagesimal ° ′ ″", manual: "E-11", status: "done", inCode: "Input and result use ° ′ ″; °′″ key toggle", gap: "" },
   { area: "Input", name: "Multi-statements :", manual: "E-11 ALPHA 7", status: "missing", inCode: "ALPHA CALC inserts =", gap: "Colon chain + Disp indicator" },
   { area: "Input", name: "Engineering notation", manual: "E-11 ENG", status: "done", inCode: "ENG / SHIFT ENG shift the displayed result", gap: "" },
-  { area: "Input", name: "Calculation history replay", manual: "E-12", status: "done", inCode: "LCD ▲/▼ replay; side pane kept as extra", gap: "Live Current history overlay still open (roadmap Now)" },
+  { area: "Input", name: "Calculation history replay", manual: "E-12", status: "done", inCode: "LCD ▲/▼ replay; live Current keys strip; side pane extra", gap: "Remaining A–F / M keyboard-shortcut audit (hist-letters)" },
 
   { area: "Memory", name: "Ans", manual: "E-12", status: "done", inCode: "ans state; persisted localStorage", gap: "" },
   { area: "Memory", name: "Variables A–F, X, Y", manual: "E-13", status: "done", inCode: "ALPHA + keys; STO/RCL; persisted", gap: "" },
@@ -98,7 +98,7 @@ const FEATURES: Feature[] = [
   { area: "Functions", name: "Rnd", manual: "E-15", status: "done", inCode: "Respects current Fix/Sci/Norm", gap: "" },
 
   { area: "CALC / SOLVE", name: "CALC", manual: "E-19", status: "partial", inCode: "Prompts every A–F/M/X/Y in the expression", gap: "Casio CALC UX, equalities, Linear input during prompt" },
-  { area: "CALC / SOLVE", name: "SOLVE", manual: "E-20 SHIFT CALC", status: "partial", inCode: "Newton–Raphson 40 steps on X", gap: "Initial-guess prompt, L−R residual, Continue, Variable ERROR, Can’t Solve" },
+  { area: "CALC / SOLVE", name: "SOLVE", manual: "E-20 SHIFT CALC", status: "done", inCode: "Prompts other letters; solve for x; Newton; equation + x= + L-R=; Continue; Variable ERROR / Can’t Solve", gap: "Unshifted CALC UX is comp-calc" },
 
   { area: "STAT", name: "Eight calculation types", manual: "E-22", status: "done", inCode: "1-VAR through 1/X; linear transforms + quadratic Cramer's", gap: "Quadratic r vs Casio A B C m1 m2 n (backlog)" },
   { area: "STAT", name: "Stat Editor", manual: "E-23", status: "partial", inCode: "Grid, caret, FREQ, = advances cell, row caps", gap: "Ins; Del-A; DEL should delete the line" },
@@ -109,7 +109,7 @@ const FEATURES: Feature[] = [
 
   { area: "EQN", name: "2-unknown linear", manual: "E-28 1", status: "missing", inCode: "Menu text only", gap: "Coefficient editor + X,Y solutions" },
   { area: "EQN", name: "3-unknown linear", manual: "E-28 2", status: "missing", inCode: "Menu text only", gap: "X,Y,Z" },
-  { area: "EQN", name: "Quadratic", manual: "E-28 3", status: "partial", inCode: "a,b,c labels; caret; bottom-left entry; real roots; ▲▼", gap: "Complex roots with √ form" },
+  { area: "EQN", name: "Quadratic", manual: "E-28 3", status: "done", inCode: "a,b,c labels; caret; bottom-left entry; real and a+bi roots; ▲▼", gap: "Exact √ form of complex roots is p4-exact" },
   { area: "EQN", name: "Cubic", manual: "E-28 4", status: "missing", inCode: "Menu text only", gap: "Up to three real/complex roots" },
 
   { area: "CMPLX", name: "a+bi and r∠θ I/O", manual: "E-18", status: "missing", inCode: "i / ∠ unused", gap: "Full CMPLX mode" },
@@ -127,14 +127,14 @@ const FEATURES: Feature[] = [
 
   { area: "Errors", name: "Math ERROR / Syntax ERROR", manual: "E-40", status: "partial", inCode: "LCD strings; NaN/Infinity → Math ERROR", gap: "◀▶ jump to error token; AC clears expression on Casio" },
   { area: "Errors", name: "Stack / Argument / Dimension", manual: "E-40", status: "missing", inCode: "None", gap: "Needed once MATRIX/VECTOR/deep nests exist" },
-  { area: "Errors", name: "Variable / Can’t Solve / Time Out", manual: "E-41", status: "missing", inCode: "SOLVE fails as Syntax ERROR", gap: "Proper SOLVE and ∫/d/dx diagnostics" },
+  { area: "Errors", name: "Variable / Can’t Solve / Time Out", manual: "E-41", status: "partial", inCode: "Variable ERROR and Can’t Solve via CalcError", gap: "Time Out for slow ∫ / d/dx (backlog)" },
   { area: "Errors", name: "Calculation range ±1×10^99", manual: "E-38", status: "partial", inCode: "Overflow beyond ±10¹⁰⁰ raises Math ERROR", gap: "Per-function ranges from E-38–39; factorial 69" },
 
   { area: "Platform", name: "Photo overlay + hitboxes", manual: "—", status: "done", inCode: "Absolute keys; triple-click calibration; calculator_new.png", gap: "" },
   { area: "Platform", name: "PC keyboard", manual: "—", status: "partial", inCode: "Enter, arrows, Shift/Alt, S/C/T/L/R/Q/A, X/Y vars", gap: "Letter keys steal typing; Shift hold vs overlay toggle" },
-  { area: "Platform", name: "History / LaTeX pane", manual: "—", status: "done", inCode: "50 items, Load, key-sequence reconstruction", gap: "Not Casio behavior; keep as extra. Live Current history still open" },
+  { area: "Platform", name: "History / LaTeX pane", manual: "—", status: "done", inCode: "50 items, Load, physical-key Show Keys; STO/MODE/SETUP actions", gap: "Not Casio behavior; keep as extra. Live Current keys strip is on top" },
   { area: "Platform", name: "Electron + Pages + PWA", manual: "—", status: "partial", inCode: "Scripts and workflow present", gap: "Verify portable exe, Pages deploy, and PWA install end-to-end" },
-  { area: "Platform", name: "Tests", manual: "E-16 examples", status: "partial", inCode: "40 golden + 16 parser = 56", gap: "Remaining numbered sample operations in the PDF" },
+  { area: "Platform", name: "Tests", manual: "E-16 examples", status: "partial", inCode: "70 golden + 16 parser = 86", gap: "Remaining numbered sample operations in the PDF" },
 ];
 
 const AREAS: Array<Area | "All"> = [
@@ -200,7 +200,7 @@ export default function CasioCoverage() {
       <Stack gap={8}>
         <H1>Casio fx-991ES PLUS coverage</H1>
         <Text tone="secondary">
-          View of `docs/coverage.md` (refreshed 12 Sep 2026). Status is
+          View of `docs/coverage.md` (refreshed 24 Sep 2026). Status is
           behavior, not whether a menu label exists. Scheduled work is in
           `roadmap.md`; bugs are in `issues.md`.
         </Text>
@@ -376,8 +376,8 @@ export default function CasioCoverage() {
           </Text>
           <Text tone="secondary">
             MODE 5 → only 3 is handled. Coefficients are decimal strings.
-            Negative discriminant shows "No real solutions" instead of
-            complex X1/X2 as on E-29.
+            Negative discriminant paints Casio-style a+bi / a−bi. Linear
+            and cubic types are still menu text only.
           </Text>
         </Stack>
       </CollapsibleSection>
@@ -385,9 +385,9 @@ export default function CasioCoverage() {
         <Stack gap={8}>
           <Text>
             Input uses HTML (stacked fractions, ∫ bounds, Σ bounds). Results
-            use a 10-digit budget or scientific mantissa×10^n. S⇔D uses a
-            continued-search `toFraction` (d ≤ 1000), not Casio's √/π exact
-            forms. π÷6 will not show as (1/6)π until `p4-exact`.
+            use a 10-digit budget or scientific mantissa×10^n. S⇔D shows a
+            fraction only when the value is an exact p/q. Surd/π forms wait
+            on `p4-exact`. π÷6 will not show as (1/6)π until then.
           </Text>
         </Stack>
       </CollapsibleSection>

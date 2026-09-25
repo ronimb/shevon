@@ -36,15 +36,45 @@ export interface KeyStyle {
   height: number;
 }
 
+export type HistoryKind = 'calc' | 'action';
+
 export interface HistoryItem {
   id: string;
   rawInput: string;
   displayInput: string;
-  result: number;
+  /** Null for mode / setup / CLR actions that have no numeric result. */
+  result: number | null;
   latex: string;
   sequence: string[];
+  kind: HistoryKind;
 }
 
 export interface Vars {
   [key: string]: any;
+}
+
+/** Two-bucket (and SOLVE) LCD errors. offset is reserved for vis-errors. */
+export type CalcErrorKind = 'syntax' | 'math' | 'variable' | 'cantSolve';
+
+export const CALC_ERROR_LABEL: Record<CalcErrorKind, string> = {
+  syntax: 'Syntax ERROR',
+  math: 'Math ERROR',
+  variable: 'Variable ERROR',
+  cantSolve: "Can't Solve",
+};
+
+export function calcErrorLabel(kind: CalcErrorKind): string {
+  return CALC_ERROR_LABEL[kind];
+}
+
+export class CalcError extends Error {
+  readonly kind: CalcErrorKind;
+  readonly offset?: number;
+
+  constructor(kind: CalcErrorKind, offset?: number) {
+    super(CALC_ERROR_LABEL[kind]);
+    this.name = 'CalcError';
+    this.kind = kind;
+    this.offset = offset;
+  }
 }
