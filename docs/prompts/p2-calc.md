@@ -1,10 +1,8 @@
 # Kickoff — `p2-calc` (unshifted CALC, E-19)
 
-Copy everything below the line into a **new agent chat**. Only after
-`roadmap.md` **Now** rows 1–3 (`R17` `R28` `R29`) or Ron pulls CALC
-forward. Do not start Dist,
-stay-in-STAT, EQN 1/2/4, LineIO, packaging, or a `ti-*` slice in that
-chat. Do not change SOLVE except to share prompt helpers.
+Copy everything below the line into a **new agent chat**. One slice.
+`R29` is in. Do not start Dist, stay-in-STAT, EQN 1/2/4, LineIO, or
+packaging. Do not change SOLVE except to share prompt helpers.
 
 ---
 

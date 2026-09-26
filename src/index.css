@@ -61,6 +61,15 @@ body {
     margin-left: 0.08em;
     line-height: 1;
 }
+/* Faceplate ×10ˣ entry — one ×10 unit, input-line size (not result 0.6em). */
+.sci-times10 {
+    font-size: 0.95em;
+    font-family: inherit;
+    margin: 0 0.04em;
+    vertical-align: 0.02em;
+    font-weight: 700;
+    letter-spacing: -0.06em;
+}
 .math-sym { font-family: "Times New Roman", serif; font-style: italic; font-weight: bold; }
 .root {
     display: inline-flex;
@@ -113,10 +122,52 @@ body {
 .mix-container { display: inline-flex; align-items: center; margin: 0 2px; }
 .mix-whole { margin-right: 2px; }
 
-.int-container { display: inline-flex; align-items: center; font-size: 0.9em; margin: 0 4px; position: relative; }
-.int-symbol { font-size: 2.2em; line-height: 1; position: relative; top: -2px; }
-.int-bounds { display: flex; flex-direction: column; justify-content: space-between; height: 3.5em; font-size: 0.6em; margin-left: -0.5em; margin-right: 0.2em; }
-.int-body { display: flex; align-items: center; gap: 2px; }
+.int-container {
+    display: inline-flex;
+    align-items: center;
+    font-size: 1em;
+    margin: 0 2px;
+    position: relative;
+    vertical-align: -0.28em;
+}
+.int-symbol {
+    position: relative;
+    display: inline-block;
+    font-size: 1.85em;
+    line-height: 0.92;
+    font-family: "Times New Roman", "Cambria Math", serif;
+    padding: 0.48em 0.95em 0.42em 0.04em;
+}
+/* Position in the symbol's em so limits sit on the hooks, not in a left stack. */
+.int-bounds {
+    position: absolute;
+    inset: 0;
+    font-size: 1em;
+    line-height: 1;
+    pointer-events: none;
+}
+.int-upper {
+    position: absolute;
+    top: 0;
+    left: 0.72em;
+    font-size: 0.36em;
+    line-height: 1;
+    min-width: 0.85em;
+    min-height: 1em;
+    text-align: center;
+}
+.int-lower {
+    position: absolute;
+    bottom: 0;
+    left: 0.42em;
+    font-size: 0.36em;
+    line-height: 1;
+    min-width: 0.85em;
+    min-height: 1em;
+    text-align: center;
+}
+.int-body { display: inline-flex; align-items: center; gap: 1px; }
+.int-dx { margin-left: 0.12em; }
 
 .diff-container { display: inline-flex; align-items: center; font-size: 0.9em; }
 .diff-frac { display: flex; flex-direction: column; align-items: center; font-size: 0.7em; margin-right: 2px; }
@@ -372,6 +423,12 @@ body {
     margin-left: 0.05em;
     margin-right: 0.02em;
     font-weight: 700;
+}
+
+.lcd-screen-mini .sci-times10 {
+    font-size: 0.9em;
+    vertical-align: 0.02em;
+    margin: 0 0.04em;
 }
 
 .lcd-screen-mini .sub {

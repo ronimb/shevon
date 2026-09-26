@@ -996,7 +996,7 @@ export function useModeRouter(s: CalculatorStore) {
   const handleExpKey = useCallback(() => {
     if (s.isShift) handleInput('π');
     else if (s.isAlpha) handleInput('e');
-    else handleInput('×10^');
+    else handleInput('×10^(‸)');
     s.setIsShift(false); s.setIsAlpha(false);
   }, [s, handleInput]);
 

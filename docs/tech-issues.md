@@ -16,15 +16,7 @@ Status: `[ ]` open · `[x]` done.
 
 ## Open
 
-- [ ] `R28` — **×10ˣ paints `10^`, caret leaks, exponent digits escape.**
-      Hardware: condensed `×10`, digits stay in the exponent. Same class
-      as R11. Distinct from R21 (tiny Norm *result*).
-      **Kickoff:** write when opening (**Now** row 1).
-
-- [ ] `R29` — **∫ limits and caret path ≠ the unit.** Limits sit beside
-      ∫ like a fraction. Hardware ▶: integrand → lower → upper → after
-      dx → before ∫. ▲/▼ only swap upper/lower from the integrand.
-      **Kickoff:** write when opening (**Now** row 2).
+None. Next scheduled work is `p2-calc`.
 
 ---
 
@@ -44,6 +36,8 @@ closed as ÷100 (`r17-percent`). Kickoffs stay under
 | `ti-escape` | R12, R13, R26 |
 | `ti-edges` | R15, R16, R19, R21–R24 |
 | `r17-percent` | R17 |
+| `r28-exp` | R28 |
+| `r29-int` | R29 |
 
 ### High (closed)
 
@@ -71,12 +65,19 @@ closed as ÷100 (`r17-percent`). Kickoffs stay under
 - [x] `R19` — quadratic `a=0` is Math ERROR.
 - [x] `R20` — `0^0` and lone `!` are Math ERROR.
 - [x] `R21` — `|x| < 1e-15` uses Norm sci; exact 0 stays `0`.
-- [x] `R22` — singular ∫ is Time Out (entry path is `R29`).
+- [x] `R22` — singular ∫ is Time Out (entry path landed as `R29`).
 - [x] `R23` — persisted Ans / vars / angle are validated.
 - [x] `R24` — result line blank while typing; idle/AC still `0`.
 - [x] `R25` — frac / nPr / nCr COMP-only.
 - [x] `R26` — History Load enters COMP and clears overlays.
 - [x] `R27` — EQN PC `3` reported dead, then worked. Closed as not reproduced.
+- [x] `R28` — ×10ˣ paints condensed `×10`; caret jumps `×10^(`; `2×10^(3)` = 2000.
+- [x] `R29` — ∫ limits sit on the symbol. Caret starts in the
+      integrand. ▶: integrand → lower → upper → after dx → before ∫
+      (then wraps). ◀ reverses: integrand → before ∫ → after dx →
+      upper → lower → integrand. ▲ from integrand (or lower) is
+      upper and stops; ▼ from integrand (or upper) is lower and
+      stops. Logged from the unit walk in [shevon overseer](f793dcae-c828-449a-a68d-fe9ad83dfbd2).
 
 ---
 

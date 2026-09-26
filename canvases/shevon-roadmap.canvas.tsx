@@ -14,7 +14,7 @@ import {
 
 const TRIAGE = `Follow docs/prompts/triage.md exactly. You are triage and oversight only. Do not implement leftovers. Start with one briefing from the files as they are now.`;
 
-const R28 = `R28 is next (roadmap.md Now row 1). Write the kickoff under docs/prompts/ when opening. ×10ˣ paints condensed ×10; caret keeps the exponent. Afterward run docs/prompts/sanity-landed.md. Do not start R29 or p2-calc.`;
+const P2_CALC = `Follow docs/prompts/p2-calc.md exactly. One slice. Afterward run docs/prompts/sanity-landed.md. Do not start Dist, stay-in-STAT, EQN 1/2/4, LineIO, or packaging.`;
 
 export default function ShevonRoadmap() {
   const dispatch = useCanvasAction();
@@ -59,14 +59,14 @@ export default function ShevonRoadmap() {
       </Row>
 
       <Row gap={24} align="end">
-        <Stat value="R28" label="Next slice" tone="warning" />
+        <Stat value="p2-calc" label="Next slice" />
         <Stat value="Phase 2" label="Current phase" />
         <Stat value="38/76" label="Coverage done" />
       </Row>
 
-      <Callout tone="warning" title="COMP entry before CALC UX">
-        ×10ˣ and ∫ entry are wrong (`R28` `R29`). Do not start
-        `p2-calc` until those two are in.
+      <Callout tone="info" title="R29 landed">
+        ∫ limits sit on the symbol; caret path matches the unit.
+        Next is unshifted CALC E-19 (`p2-calc`).
       </Callout>
 
       <H2>Now</H2>
@@ -74,17 +74,15 @@ export default function ShevonRoadmap() {
         striped
         headers={["#", "Id", "What", "Kickoff"]}
         rows={[
-          ["1", "R28", "×10ˣ condensed; caret keeps exponent", "write when opening"],
-          ["2", "R29", "∫ limits + caret path", "write when opening"],
-          ["3", "p2-calc", "Unshifted CALC E-19", "p2-calc.md"],
-          ["4–7", "Phase 2", "Dist, stay-in-STAT, EQN 1/2/4", "roadmap Phase 2"],
-          ["8", "p4-packaging", "Pages / PWA / exe / icon", "after Phase 2"],
+          ["1", "p2-calc", "Unshifted CALC E-19", "p2-calc.md"],
+          ["2–5", "Phase 2", "Dist, stay-in-STAT, EQN 1/2/4", "roadmap Phase 2"],
+          ["6", "p4-packaging", "Pages / PWA / exe / icon", "after Phase 2"],
         ]}
       />
 
       <Row gap={8} wrap>
-        <Button variant="primary" onClick={() => start(R28)}>
-          Start R28
+        <Button variant="primary" onClick={() => start(P2_CALC)}>
+          Start p2-calc
         </Button>
         <Button
           variant="secondary"
@@ -96,7 +94,7 @@ export default function ShevonRoadmap() {
           variant="ghost"
           onClick={() =>
             start(
-              "Follow docs/prompts/sanity-stat.md exactly. Pairing / verification only. Do not implement leftovers or R28.",
+              "Follow docs/prompts/sanity-stat.md exactly. Pairing / verification only. Do not implement leftovers or p2-calc.",
             )
           }
         >

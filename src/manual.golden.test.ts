@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { allowsCalcSolveHyp, allowsCompLineEdit, applyAllClear, applyHistoryLoad, applyPowerKey, applySquareKey, attemptStoreOperand, collectSolvePromptVars, commitPromptValue, expressionHasSolveUnknown, moveCompCursorLeft, moveCompCursorRight, newtonSolveX, placeCaretAtOffset, reconstructSequence, wrapPrecedingBinary } from './modes/comp.ts';
+import { allowsCalcSolveHyp, allowsCompLineEdit, applyAllClear, applyHistoryLoad, applyPowerKey, applySquareKey, attemptStoreOperand, collectSolvePromptVars, commitPromptValue, expressionHasSolveUnknown, moveCompCursorDown, moveCompCursorLeft, moveCompCursorRight, moveCompCursorUp, newtonSolveX, placeCaretAtOffset, reconstructSequence, wrapPrecedingBinary } from './modes/comp.ts';
 import { CURSOR_PATS } from './keys.ts';
 import { chipFamily, renderMiniButton } from './historyKeys.tsx';
 import { liveOperationSequence, setupCommitSequence } from './historyOps.ts';
@@ -309,6 +309,132 @@ describe('vis-no-literal / ir-leak — IR stems never reach the LCD', () => {
     expect(fromKey).toContain('>2</span>');
     expect(fromPwr).toContain('class="sup"');
     expect(fromKey).not.toContain('²');
+  });
+
+  it('×10ˣ paints condensed ×10, not the letters 10^ (R28)', () => {
+    const html = formatMath('2×10^(3)');
+    expect(html).toContain('sci-times10');
+    expect(html).toContain('>×10<');
+    expect(html).toContain('class="sup"');
+    expect(html).toContain('>3</span>');
+    expect(html).not.toContain('10^');
+    expect(html.replace(/<[^>]+>/g, '')).toBe('2×103');
+    expect(toLaTeX('2×10^(3)')).toBe('2\\times 10^{3}');
+    const logTen = formatMath('10^(2)');
+    expect(logTen).not.toContain('sci-times10');
+    expect(logTen).toContain('class="sup"');
+    expect(logTen.replace(/<[^>]+>/g, '')).toBe('102');
+  });
+});
+
+describe('r29-int — ∫ limits on the symbol, caret path', () => {
+  const fresh = 'int(‸,,,x)';
+
+  it('limits sit on the ∫ symbol; integrand and dx stay to the right', () => {
+    const html = formatMath(fresh);
+    expect(html).toContain('int-container');
+    expect(html).toContain('int-symbol');
+    expect(html).toContain('int-bounds');
+    expect(html).toContain('int-upper');
+    expect(html).toContain('int-lower');
+    expect(html).toContain('int-body');
+    expect(html.indexOf('int-bounds')).toBeGreaterThan(html.indexOf('int-symbol'));
+    expect(html.indexOf('int-body')).toBeGreaterThan(html.indexOf('int-symbol'));
+    expect(html.slice(0, html.indexOf('int-symbol'))).not.toContain('int-bounds');
+    expect(html).toMatch(/int-body[\s\S]*d/);
+    expect(html).toContain('cursor');
+    expect(html).not.toContain('int(');
+    const filled = formatMath('int(X²,0,1,x)');
+    expect(filled).toMatch(/int-upper[\s\S]*1/);
+    expect(filled).toMatch(/int-lower[\s\S]*0/);
+    expect(filled).toContain('int-dx');
+    expect(filled.replace(/<[^>]+>/g, '')).toMatch(/∫.*X.*d/);
+  });
+
+  it('▶ integrand → lower → upper → after dx → before ∫ (wraps)', () => {
+    const lower = moveCompCursorRight(fresh);
+    expect(lower).toBe('int(,‸,,x)');
+    const upper = moveCompCursorRight(lower);
+    expect(upper).toBe('int(,,‸,x)');
+    const after = moveCompCursorRight(upper);
+    expect(after).toBe('int(,,,x)‸');
+    expect(after).not.toMatch(/int\(,,,‸x|int\(,,,x‸\)/);
+    const before = moveCompCursorRight(after);
+    expect(before).toBe('‸int(,,,x)');
+    expect(moveCompCursorRight(before)).toBe(fresh);
+  });
+
+  it('◀ integrand → before ∫ → after dx → upper → lower → integrand', () => {
+    const before = moveCompCursorLeft(fresh);
+    expect(before).toBe('‸int(,,,x)');
+    const after = moveCompCursorLeft(before);
+    expect(after).toBe('int(,,,x)‸');
+    const upper = moveCompCursorLeft(after);
+    expect(upper).toBe('int(,,‸,x)');
+    const lower = moveCompCursorLeft(upper);
+    expect(lower).toBe('int(,‸,,x)');
+    expect(moveCompCursorLeft(lower)).toBe(fresh);
+  });
+
+  it('▲/▼ swap upper/lower from the integrand or a bound', () => {
+    expect(moveCompCursorDown(fresh)).toBe('int(,‸,,x)');
+    expect(moveCompCursorUp(fresh)).toBe('int(,,‸,x)');
+    expect(moveCompCursorDown('int(X²‸,,,x)')).toBe('int(X²,‸,,x)');
+    expect(moveCompCursorUp('int(X²‸,,,x)')).toBe('int(X²,,‸,x)');
+    expect(moveCompCursorUp('int(X²,0‸,,x)')).toBe('int(X²,0,‸,x)');
+    expect(moveCompCursorUp('int(X²,0,‸,x)')).toBe('int(X²,0,‸,x)');
+    expect(moveCompCursorDown('int(,‸,,x)')).toBe('int(,‸,,x)');
+    expect(moveCompCursorUp('int(,,‸,x)')).toBe('int(,,‸,x)');
+    expect(moveCompCursorDown('int(X²,,1‸,x)')).toBe('int(X²,‸,1,x)');
+    expect(moveCompCursorDown('frac(1‸,2)')).toBe('frac(1‸,2)');
+    expect(moveCompCursorUp('frac(1,‸2)')).toBe('frac(1,‸2)');
+    expect(moveCompCursorDown('pol(3,‸4)')).toBe('pol(3,‸4)');
+    expect(moveCompCursorDown('diff(‸,x,)')).toBe('diff(‸,x,)');
+    expect(moveCompCursorUp('diff(‸,x,)')).toBe('diff(‸,x,)');
+    expect(moveCompCursorRight('diff(‸,x,)')).toBe('diff(,x,‸)');
+    expect(moveCompCursorLeft('diff(,x,‸)')).toBe('diff(‸,x,)');
+  });
+
+  it('int(sqr(x),0,1) is still 1/3; ∫ x² ▶ 0 ▶ 1 evals', () => {
+    expect(evalComp('int(sqr(x),0,1)')).toBeCloseTo(1 / 3, 9);
+    let s = fresh;
+    s = s.replace('‸', 'X²‸');
+    s = moveCompCursorRight(s);
+    expect(s).toBe('int(X²,‸,,x)');
+    s = s.replace('‸', '0‸');
+    s = moveCompCursorRight(s);
+    expect(s).toBe('int(X²,0,‸,x)');
+    s = s.replace('‸', '1‸');
+    expect(evalComp(s.replace(/‸/g, ''))).toBeCloseTo(1 / 3, 9);
+  });
+});
+
+describe('r28-exp — ×10ˣ condensed paint, caret, eval', () => {
+  it('digits after ×10ˣ stay in the exponent superscript', () => {
+    const typed = formatMath('2×10^(3‸)');
+    expect(typed).toContain('sci-times10');
+    expect(typed).toContain('class="sup"');
+    expect(typed).toContain('cursor');
+    expect(typed).not.toContain('10^');
+    const sup = typed.match(/<span class="sup">([\s\S]*?)<\/span>/);
+    expect(sup?.[1]).toContain('3');
+    expect(sup?.[1]).toContain('cursor');
+  });
+
+  it('caret jumps the whole ×10^( stem (R11 class)', () => {
+    expect(CURSOR_PATS).toEqual(expect.arrayContaining(['×10^(']));
+    expect(CURSOR_PATS.indexOf('×10^(')).toBeLessThan(CURSOR_PATS.indexOf('10^('));
+    expect(CURSOR_PATS.indexOf('×10^(')).toBeLessThan(CURSOR_PATS.indexOf('^('));
+    expect(moveCompCursorRight('2‸×10^(3)')).toBe('2×10^(‸3)');
+    expect(moveCompCursorLeft('2×10^(‸3)')).toBe('2‸×10^(3)');
+    expect(moveCompCursorRight('‸×10^(3)')).toBe('×10^(‸3)');
+    expect(moveCompCursorLeft('×10^(3‸)')).toBe('×10^(‸3)');
+  });
+
+  it('2×10^(3) is 2000; unboxed ×10^ still evals', () => {
+    expect(evalComp('2×10^(3)')).toBe(2000);
+    expect(evalComp('2×10^3')).toBe(2000);
+    expect(reconstructSequence('2×10^(3)')).toEqual(['2', '×10ˣ', '3']);
   });
 });
 

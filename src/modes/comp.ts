@@ -315,110 +315,253 @@ function unclosedAbsAtEnd(before: string): boolean {
   return false;
 }
 
-export function moveCompCursorRight(currentInput: string): string {
-  let i = currentInput.indexOf('‸');
-  if (i === -1) return currentInput;
-  if (i >= currentInput.length - 1) {
-    const before = currentInput.substring(0, i);
-    return unclosedAbsAtEnd(before) ? `${before})‸` : currentInput;
+type IntSlot = 'before' | 'stem' | 'integrand' | 'lower' | 'upper' | 'dummy' | 'after';
+
+interface IntArg { start: number; end: number }
+
+interface IntTemplate {
+  stemStart: number;
+  open: number;
+  close: number;
+  end: number;
+  args: IntArg[];
+}
+
+function isIntStemAt(s: string, i: number): boolean {
+  return s.startsWith('int(', i) && (i < 3 || s.slice(i - 3, i) !== 'Ran');
+}
+
+function parseIntTemplates(raw: string): IntTemplate[] {
+  const out: IntTemplate[] = [];
+  for (let i = 0; i < raw.length; i++) {
+    if (!isIntStemAt(raw, i)) continue;
+    const open = i + 3;
+    let depth = 0;
+    let close = -1;
+    const commas: number[] = [];
+    for (let j = open; j < raw.length; j++) {
+      const ch = raw[j];
+      if (ch === '(') depth++;
+      else if (ch === ')') {
+        depth--;
+        if (depth === 0) {
+          close = j;
+          break;
+        }
+      } else if (ch === ',' && depth === 1) {
+        commas.push(j);
+      }
+    }
+    const bodyEnd = close === -1 ? raw.length : close;
+    const args: IntArg[] = [];
+    let cur = open + 1;
+    for (const comma of commas) {
+      args.push({ start: cur, end: comma });
+      cur = comma + 1;
+    }
+    args.push({ start: cur, end: bodyEnd });
+    out.push({
+      stemStart: i,
+      open,
+      close,
+      end: close === -1 ? bodyEnd : close + 1,
+      args,
+    });
   }
+  return out;
+}
 
-  let before = currentInput.substring(0, i);
-  let after = currentInput.substring(i + 1);
+function classifyInt(t: IntTemplate, caret: number): IntSlot {
+  if (caret <= t.stemStart) return 'before';
+  if (caret <= t.open) return 'stem';
+  const a = t.args;
+  if (a.length >= 1 && caret <= a[0].end) return 'integrand';
+  if (a.length >= 2 && caret <= a[1].end) return 'lower';
+  if (a.length >= 3 && caret <= a[2].end) return 'upper';
+  if (caret < t.end && a.length >= 4) return 'dummy';
+  return 'after';
+}
 
-  let found = CURSOR_PATS.find(p => after.startsWith(p));
+function placeCaret(raw: string, pos: number): string {
+  const p = Math.max(0, Math.min(pos, raw.length));
+  return `${raw.slice(0, p)}‸${raw.slice(p)}`;
+}
+
+function intHit(raw: string, caret: number): { t: IntTemplate; slot: IntSlot } | null {
+  const all = parseIntTemplates(raw);
+  const entering = all.find(t => caret === t.stemStart);
+  if (entering) return { t: entering, slot: 'before' };
+  let best: { t: IntTemplate; slot: IntSlot } | null = null;
+  for (const t of all) {
+    if (caret > t.stemStart && caret <= t.end) {
+      if (!best || t.end - t.stemStart < best.t.end - best.t.stemStart) {
+        best = { t, slot: classifyInt(t, caret) };
+      }
+    }
+  }
+  return best;
+}
+
+function jumpIntNext(t: IntTemplate, slot: IntSlot, raw: string): string {
+  if (slot === 'integrand' && t.args[1]) return placeCaret(raw, t.args[1].start);
+  if (slot === 'lower' && t.args[2]) return placeCaret(raw, t.args[2].start);
+  return placeCaret(raw, t.end);
+}
+
+function jumpIntPrev(t: IntTemplate, slot: IntSlot, raw: string): string {
+  if (slot === 'lower' && t.args[0]) return placeCaret(raw, t.args[0].end);
+  if (slot === 'upper' && t.args[1]) return placeCaret(raw, t.args[1].end);
+  return placeCaret(raw, t.stemStart);
+}
+
+/** Character / stem walk used by every template except the ∫ slot path. */
+function moveCompCursorRightBasic(currentInput: string): string {
+  const i = currentInput.indexOf('‸');
+  if (i === -1 || i >= currentInput.length - 1) return currentInput;
+
+  const before = currentInput.substring(0, i);
+  const after = currentInput.substring(i + 1);
+
+  const found = CURSOR_PATS.find(p => after.startsWith(p));
   if (found) {
     const nextBefore = before + found;
     const nextAfter = after.substring(found.length);
     if (found === 'diff(' && nextAfter.includes(',x,')) {
       return nextBefore + '‸' + nextAfter;
-    } else if (found === ',' && (nextAfter.startsWith('x,') || nextAfter.startsWith('X,'))) {
+    }
+    if (found === ',' && (nextAfter.startsWith('x,') || nextAfter.startsWith('X,'))) {
       const skippedVar = nextAfter.startsWith('x,') ? 'x,' : 'X,';
       return nextBefore + skippedVar + '‸' + nextAfter.substring(2);
-    } else {
-      return nextBefore + '‸' + nextAfter;
     }
-  } else {
-    let c = after[0];
-    const nextBefore = before + c;
-    const nextAfter = after.substring(1);
-    if (c === ',' && (nextAfter.startsWith('x,') || nextAfter.startsWith('X,'))) {
-      const skippedVar = nextAfter.startsWith('x,') ? 'x,' : 'X,';
-      return nextBefore + skippedVar + '‸' + nextAfter.substring(2);
-    } else {
-      return nextBefore + '‸' + nextAfter;
-    }
+    return nextBefore + '‸' + nextAfter;
   }
+
+  const c = after[0];
+  const nextBefore = before + c;
+  const nextAfter = after.substring(1);
+  if (c === ',' && (nextAfter.startsWith('x,') || nextAfter.startsWith('X,'))) {
+    const skippedVar = nextAfter.startsWith('x,') ? 'x,' : 'X,';
+    return nextBefore + skippedVar + '‸' + nextAfter.substring(2);
+  }
+  return nextBefore + '‸' + nextAfter;
 }
 
-export function moveCompCursorLeft(currentInput: string): string {
-  let i = currentInput.indexOf('‸');
+function moveCompCursorLeftBasic(currentInput: string): string {
+  const i = currentInput.indexOf('‸');
   if (i <= 0) return currentInput;
 
-  let before = currentInput.substring(0, i);
-  let after = currentInput.substring(i + 1);
+  const before = currentInput.substring(0, i);
+  const after = currentInput.substring(i + 1);
 
-  let found = CURSOR_PATS.find(p => before.endsWith(p));
+  const found = CURSOR_PATS.find(p => before.endsWith(p));
   if (found) {
     const nextBefore = before.substring(0, before.length - found.length);
     const targetStr = found + after;
-
     if (found === ',' && (nextBefore.endsWith(',x') || nextBefore.endsWith(',X'))) {
-      const preVal = nextBefore.slice(0, -2);
-      return preVal + '‸' + nextBefore.slice(-2) + targetStr;
+      return nextBefore.slice(0, -2) + '‸' + nextBefore.slice(-2) + targetStr;
     }
-
-    return nextBefore + '‸' + targetStr;
-  } else {
-    let c = before[before.length - 1];
-    const nextBefore = before.substring(0, before.length - 1);
-    const targetStr = c + after;
-
-    if (c === ',' && (nextBefore.endsWith('x') || nextBefore.endsWith('X'))) {
-      const preVar = nextBefore.slice(0, -1);
-      if (preVar.endsWith(',')) {
-        return preVar.slice(0, -1) + '‸' + ',' + nextBefore.slice(-1) + targetStr;
-      }
-    }
-
     return nextBefore + '‸' + targetStr;
   }
+
+  const c = before[before.length - 1];
+  const nextBefore = before.substring(0, before.length - 1);
+  const targetStr = c + after;
+  if (c === ',' && (nextBefore.endsWith('x') || nextBefore.endsWith('X'))) {
+    const preVar = nextBefore.slice(0, -1);
+    if (preVar.endsWith(',')) {
+      return preVar.slice(0, -1) + '‸' + ',' + nextBefore.slice(-1) + targetStr;
+    }
+  }
+  return nextBefore + '‸' + targetStr;
 }
 
-export function moveCompCursorDown(currentInput: string): string {
-  let i = currentInput.indexOf('‸');
+export function moveCompCursorRight(currentInput: string): string {
+  const i = currentInput.indexOf('‸');
   if (i === -1) return currentInput;
-  let before = currentInput.substring(0, i);
-  let after = currentInput.substring(i + 1);
+  const raw = currentInput.replace(/‸/g, '');
+  const caret = i;
+  const hit = intHit(raw, caret);
 
-  let c = after.indexOf(',');
-  let p = after.indexOf(')');
-  let target = -1;
+  if (hit?.slot === 'before' || hit?.slot === 'stem') {
+    return placeCaret(raw, hit.t.args[0]?.start ?? hit.t.open + 1);
+  }
+  if (hit?.slot === 'dummy') {
+    return placeCaret(raw, hit.t.end);
+  }
+  if (hit && (hit.slot === 'integrand' || hit.slot === 'lower' || hit.slot === 'upper')) {
+    const tentative = i >= currentInput.length - 1
+      ? currentInput
+      : moveCompCursorRightBasic(currentInput);
+    if (tentative === currentInput) return jumpIntNext(hit.t, hit.slot, raw);
+    const tRaw = tentative.replace(/‸/g, '');
+    const tCaret = tentative.indexOf('‸');
+    if (tRaw === raw && classifyInt(hit.t, tCaret) !== hit.slot) {
+      return jumpIntNext(hit.t, hit.slot, raw);
+    }
+    return tentative;
+  }
+  if (hit?.slot === 'after' && caret >= raw.length) {
+    return placeCaret(raw, hit.t.stemStart);
+  }
 
-  if (c !== -1 && (p === -1 || c < p)) target = c;
-  else if (p !== -1) target = p;
+  if (i >= currentInput.length - 1) {
+    const before = currentInput.substring(0, i);
+    return unclosedAbsAtEnd(before) ? `${before})‸` : currentInput;
+  }
+  return moveCompCursorRightBasic(currentInput);
+}
 
-  if (target !== -1) {
-    return before + after.substring(0, target + 1) + '‸' + after.substring(target + 1);
+export function moveCompCursorLeft(currentInput: string): string {
+  const i = currentInput.indexOf('‸');
+  if (i === -1) return currentInput;
+  const raw = currentInput.replace(/‸/g, '');
+  const caret = i;
+  const hit = intHit(raw, caret);
+
+  if (hit && (hit.slot === 'before' || hit.slot === 'stem') && caret === 0) {
+    return placeCaret(raw, hit.t.end);
+  }
+  if (hit?.slot === 'stem') {
+    return placeCaret(raw, hit.t.stemStart);
+  }
+  if (hit && (hit.slot === 'after' || hit.slot === 'dummy')) {
+    return placeCaret(raw, hit.t.args[2] ? hit.t.args[2].end : hit.t.end);
+  }
+  if (hit && (hit.slot === 'integrand' || hit.slot === 'lower' || hit.slot === 'upper')) {
+    const tentative = i <= 0 ? currentInput : moveCompCursorLeftBasic(currentInput);
+    if (tentative === currentInput) return jumpIntPrev(hit.t, hit.slot, raw);
+    const tRaw = tentative.replace(/‸/g, '');
+    const tCaret = tentative.indexOf('‸');
+    if (tRaw === raw && classifyInt(hit.t, tCaret) !== hit.slot) {
+      return jumpIntPrev(hit.t, hit.slot, raw);
+    }
+    return tentative;
+  }
+
+  if (i <= 0) return currentInput;
+  return moveCompCursorLeftBasic(currentInput);
+}
+
+/** ▲/▼ swap ∫ upper/lower. From the integrand they jump to those slots.
+ *  From a bound they swap to the other bound. No comma-walk in other templates. */
+export function moveCompCursorDown(currentInput: string): string {
+  const i = currentInput.indexOf('‸');
+  if (i === -1) return currentInput;
+  const raw = currentInput.replace(/‸/g, '');
+  const hit = intHit(raw, i);
+  if ((hit?.slot === 'integrand' || hit?.slot === 'upper') && hit.t.args[1]) {
+    return placeCaret(raw, hit.t.args[1].start);
   }
   return currentInput;
 }
 
 export function moveCompCursorUp(currentInput: string): string {
-  let i = currentInput.indexOf('‸');
-  if (i <= 0) return currentInput;
-  let before = currentInput.substring(0, i);
-  let after = currentInput.substring(i + 1);
-
-  let c = before.lastIndexOf(',', i - 1);
-  let p = before.lastIndexOf('(', i - 1);
-  let target = -1;
-
-  if (c !== -1 && (p === -1 || c > p)) target = c;
-  else if (p !== -1) target = p;
-
-  if (target !== -1) {
-    return before.substring(0, target) + '‸' + before.substring(target) + after;
+  const i = currentInput.indexOf('‸');
+  if (i === -1) return currentInput;
+  const raw = currentInput.replace(/‸/g, '');
+  const hit = intHit(raw, i);
+  if ((hit?.slot === 'integrand' || hit?.slot === 'lower') && hit.t.args[2]) {
+    return placeCaret(raw, hit.t.args[2].start);
   }
   return currentInput;
 }

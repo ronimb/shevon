@@ -12,8 +12,6 @@ import {
   useCanvasAction,
 } from "cursor/canvas";
 
-const R28 = `R28 is next (roadmap.md Now row 1). Write the kickoff under docs/prompts/ when opening. ×10ˣ paints condensed ×10; caret keeps the exponent. Afterward run docs/prompts/sanity-landed.md. Do not start R29 or p2-calc.`;
-
 export default function TechIssues() {
   const dispatch = useCanvasAction();
   const open = (path: string) => dispatch({ type: "openFile", path });
@@ -43,32 +41,18 @@ export default function TechIssues() {
       </Row>
 
       <Row gap={24} align="end">
-        <Stat value="2" label="Open (R28 R29)" tone="warning" />
-        <Stat value="R28" label="Next" tone="danger" />
+        <Stat value="0" label="Open R-ids" />
+        <Stat value="p2-calc" label="Next" />
       </Row>
 
       <Callout tone="info" title="Not this file">
         `lying-menus`, `calc-ux`, Dist, LineIO stay on `issues.md`.
-        Do not copy R-ids there.
+        Do not copy R-ids there. `R29` is landed.
       </Callout>
 
-      <H2>Open</H2>
-      <Table
-        striped
-        headers={["Id", "Finding", "Kickoff"]}
-        rowTone={["danger", "warning"]}
-        rows={[
-          ["R28", "×10ˣ paints 10^; caret drops exponent", "write when opening"],
-          ["R29", "∫ limits + caret path ≠ unit", "write when opening"],
-        ]}
-      />
-
       <Row gap={8} wrap>
-        <Button variant="primary" onClick={() => start(R28)}>
-          Start R28
-        </Button>
         <Button
-          variant="secondary"
+          variant="primary"
           onClick={() => open("roadmap.md")}
         >
           Open roadmap
@@ -86,7 +70,8 @@ export default function TechIssues() {
       </Row>
 
       <Text tone="secondary">
-        `ti-stat` … `ti-edges`, `R17`, and `R27` are closed in the catalog.
+        `ti-stat` … `ti-edges`, `R17`, `R27`, `R28`, and `R29` are
+        closed in the catalog.
       </Text>
 
       <Row gap={8} wrap>

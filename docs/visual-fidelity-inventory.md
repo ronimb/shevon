@@ -8,7 +8,7 @@ against the roadmap’s “fix existing vs. add missing” split.
 [`roadmap.md`](../roadmap.md). Honesty leftovers: [`issues.md`](../issues.md).
 Landed-correctness review: [`docs/tech-issues.md`](tech-issues.md).
 
-Refreshed 26 Sep 2026 after sanity on landed COMP/STAT/EQN. No inventory change.
+Refreshed 26 Sep 2026 after `R29` (∫ limits on the symbol + caret path).
 If this file disagrees with `roadmap.md` on what is scheduled, follow the
 roadmap.
 
@@ -64,6 +64,8 @@ rebuild.
 | Keypad overlay | `Calculator.tsx`, `keys.ts` | Transparent buttons over faceplate PNG |
 | ENG / hyp / Abs / Ran# / RanInt# | `modeRouter.ts`, `display.tsx` | No literal ENG/hyp dump; abs is `| |`; Ran# templates |
 | Trig / hyp / `ln` / unclosed templates | `display.tsx` | Shared `paintTemplates` table; IR stems never reach the LCD (`vis-no-literal`) |
+| ×10ˣ entry | `display.tsx`, `keys.ts` | Condensed `×10` + superscript; caret jumps `×10^(` (`R28`) |
+| ∫ template | `display.tsx`, `modes/comp.ts` | Limits on the ∫ glyph; ▶ integrand → lower → upper → after dx → before ∫; ◀ reverses that cycle; ▲/▼ only jump upper↔lower (`R29`) |
 | ◀▶ + COMP ▲▼ | `lcd.tsx` | Light from caret navigability and COMP history replay |
 | Pol/Rec pair result | `evaluator.ts`, `lcd.tsx`, `display.tsx` | Top-level `=` paints `r=…, θ=…` or bottom-right `x=…, y=…` (`debt-value`) |
 
@@ -85,8 +87,6 @@ Ids match [`issues.md`](../issues.md) and [`roadmap.md`](../roadmap.md).
 | `vis-errors` | Stack / Argument ERROR | Syntax / Math jump landed; these screens still missing | `lcd.tsx` |
 | `lineio-display` / `comp-lineio` | MthIO / LineIO | SETUP shows options; not functional | `lcd.tsx`, `modeRouter.ts` |
 | `setup-page2` / `vis-menus` | SETUP page 2 | Unit: 1 ab/c 2 d/c 3 CMPLX 4 STAT 5 Disp 6 CONT. Shevon: 1–2 plus STAT as 3 | `lcd.tsx` |
-| `R28` | ×10ˣ entry | Paints `10^`, caret splits the stem, exponent digits can escape | `display.tsx`, `keys.ts` |
-| `R29` | ∫ template | Limits sit left of ∫ like a fraction; caret path ≠ unit | `display.tsx`, `modes/comp.ts` |
 | `prompt-prev-size` / `vis-elements` | SOLVE/CALC previous value | Bottom-right number is 0.7rem / faded; unit uses result size | `lcd.tsx` |
 
 ---
@@ -171,7 +171,7 @@ Status bar CSS: `index.css`.
 | Mixed fractions (ab/c) | `mix()` template | Yes when SETUP ab/c |
 | Surds (n√m) | `root(n,)` / `sqrt()` | No surd result form |
 | π | SHIFT+×10ˣ inserts `π` | Decimal unless integer |
-| Scientific ×10ⁿ | Raw `×10^` text | Yes via `SciNotation` |
+| Scientific ×10ⁿ | Boxed `×10^(` paints condensed `×10` + superscript | Yes via `SciNotation` |
 | Complex a+bi | No (CMPLX unused) | EQN quadratic only (`formatComplexPair`) |
 | Pol/Rec r,θ | `pol(‸` / `rec(‸` (comma typed) | Single line `r=…, θ=…` / bottom-right `x=…, y=…` |
 | S⇔D | — | Yes in Norm mode when `showingResult` |
@@ -217,9 +217,9 @@ overlay size** as the faceplate keycap (`keys.ts`):
 
 ## Summary
 
-Open visual holes on shipped COMP: `R28` (×10ˣ), `R29` (∫),
-`prompt-prev-size`. STAT ▲▼ and dim CMPLX/MAT/VCT/Disp stay on
-`vis-indicators`. Menu lies wait on the matching feature (`vis-menus`).
+Open visual holes on shipped COMP: `prompt-prev-size`.
+STAT ▲▼ and dim CMPLX/MAT/VCT/Disp stay on `vis-indicators`. Menu
+lies wait on the matching feature (`vis-menus`).
 
 Natural result forms (`n√m`, p/q·π) are `p4-exact`. Pixel-perfect LCD
 font waits until Phase 3 is done.

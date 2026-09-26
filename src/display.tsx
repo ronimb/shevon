@@ -10,7 +10,8 @@ import { pairLabels, type CalcValue } from './types.ts';
  * THIS list so the two renderers cannot drift: every stem here has a `html` and a
  * `latex` painter. An IR stem must never survive onto the screen as literal
  * ASCII — closed OR open. See `docs/principles.md` **Match function
- * behavior** and `roadmap.md` `vis-no-literal`. ×10ˣ input is `R28`.
+ * behavior** and `roadmap.md` `vis-no-literal`. Faceplate ×10ˣ is
+ * condensed `×10` plus a boxed exponent (`×10^(`), same caret class as R11.
  */
 
 const CURSOR = '‸';
@@ -138,8 +139,11 @@ const TEMPLATE_SPECS: TemplateSpec[] = [
   },
   {
     stem: 'int',
-    html: a => `<div class="int-container"><div class="int-bounds"><span>${slot(a[2])}</span><span>${slot(a[1])}</span></div><span class="int-symbol">∫</span><div class="int-body">${slot(a[0])} d${slot(a[3] || 'x')}</div></div>`,
-    latex: a => `\\int_{${lx(a[1])}}^{${lx(a[2])}} ${lx(a[0])} \\, d${a[3] || 'x'}`,
+    html: a => {
+      const dummy = (a[3] || 'x').replace(/[‸⬚]/g, '') || 'x';
+      return `<div class="int-container"><span class="int-symbol">∫<span class="int-bounds"><span class="int-upper">${slot(a[2])}</span><span class="int-lower">${slot(a[1])}</span></span></span><span class="int-body">${slot(a[0])}<span class="int-dx">d${dummy}</span></span></div>`;
+    },
+    latex: a => `\\int_{${lx(a[1])}}^{${lx(a[2])}} ${lx(a[0])} \\, d${(a[3] || 'x').replace(/[‸⬚]/g, '') || 'x'}`,
   },
   {
     stem: 'diff',
@@ -169,6 +173,11 @@ const TEMPLATE_SPECS: TemplateSpec[] = [
   },
   { stem: 'log10', html: (a, closed) => `log${parenBody(slot(a[0]), closed)}`, latex: a => `\\log_{10}(${lx(a[0])})` },
   { stem: 'e^', html: a => `e<span class="sup">${slot(a[0])}</span>`, latex: a => `e^{${lx(a[0])}}` },
+  {
+    stem: '×10^',
+    html: a => `<span class="sci-times10">×10</span><span class="sup">${slot(a[0])}</span>`,
+    latex: a => `\\times 10^{${lx(a[0])}}`,
+  },
   { stem: '10^', html: a => `10<span class="sup">${slot(a[0])}</span>`, latex: a => `10^{${lx(a[0])}}` },
   { stem: 'pwr', html: a => `${slot(a[0])}<span class="sup">${slot(a[1] || '')}</span>`, latex: a => `{${lx(a[0])}}^{${lx(a[1])}}` },
   {

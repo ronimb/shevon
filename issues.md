@@ -51,8 +51,7 @@ Status: `[ ]` open · `[x]` fixed (move to **Closed** at the next wrap-up).
       the value, not SETUP LineIO.
       **Associated:** `p2-calc` (was `comp-calc`).
       Kickoff: [`docs/prompts/p2-calc.md`](docs/prompts/p2-calc.md).
-      Waits until `roadmap.md` **Now** reaches row 4 (`R17` / `R28` /
-      `R29` first). Shared prompt helper already landed (`ti-store` /
+      **Now** row 1. Shared prompt helper already landed (`ti-store` /
       `ti-parse`).
 
 ---
