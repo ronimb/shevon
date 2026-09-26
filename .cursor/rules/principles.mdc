@@ -1,12 +1,13 @@
 ---
-description: Design principles — visual fidelity and Casio behavior matching
+description: Design principles — visual fidelity and hardware behavior matching
 alwaysApply: true
 ---
 
 # Design principles
 
 Read `docs/principles.md` before implementing or reviewing calculator UI or
-behavior. The Casio manual `fx-570_991ES_PLUS_EN.pdf` is the behavior spec.
+behavior. The hardware manual `manual.pdf` is the behavior spec. Do not
+name the hardware vendor or the original calculator model.
 
 - Match **function behavior** to the hardware. Never fake a result. Never dump
   literal function text (`ENG`, `hyp`, `abs(`) where the unit shows a symbol,

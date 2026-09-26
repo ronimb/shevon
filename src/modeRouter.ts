@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { CalcError, calcPrimary, calcReal } from './types.ts';
 import type { CalcValue, Vars } from './types.ts';
-import { evaluateExpression, findPrecedingOperand, resultDisplayMode } from './evaluator.ts';
+import { evaluateExpression, findPrecedingOperand, mergePolRecVars, resultDisplayMode, type PolRecWrite } from './evaluator.ts';
 import { formatMath, toLaTeX } from './display.tsx';
 import { DEFAULT_FORMAT } from './format.ts';
 import {
@@ -12,12 +12,20 @@ import {
   moveCompCursorRight,
   moveCompCursorUp,
   placeCaretAtOffset,
+  attemptStoreOperand,
   collectSolvePromptVars,
+  commitPromptValue,
   expressionHasSolveUnknown,
   newtonSolveX,
   reconstructSequence,
   wrapFracTemplate,
   wrapPrecedingBinary,
+  allowsCompLineEdit,
+  allowsCalcSolveHyp,
+  applyAllClear,
+  applyHistoryLoad,
+  applyPowerKey,
+  applySquareKey,
 } from './modes/comp.ts';
 import {
   STAT_RESULT_TOP_OPTIONS,
@@ -44,20 +52,24 @@ import type { CalculatorStore } from './useCalculatorState.ts';
 export function useModeRouter(s: CalculatorStore) {
   const handleInput = useCallback((val: string) => {
     if (s.showHypMenu) {
-      const hypMap: Record<string, string> = {
-        '1': 'sinh(‸', '2': 'cosh(‸', '3': 'tanh(‸',
-        '4': 'sinh⁻¹(‸', '5': 'cosh⁻¹(‸', '6': 'tanh⁻¹(‸',
-      };
-      if (hypMap[val]) {
+      if (!allowsCalcSolveHyp(s.calcMode)) {
         s.setShowHypMenu(false);
-        s.setLcdError(null);
-        const next = insertCompValue(s.currentInput, s.showingResult, hypMap[val]);
-        s.setCurrentInput(next.input);
-        s.setShowingResult(next.showingResult);
+      } else {
+        const hypMap: Record<string, string> = {
+          '1': 'sinh(‸', '2': 'cosh(‸', '3': 'tanh(‸',
+          '4': 'sinh⁻¹(‸', '5': 'cosh⁻¹(‸', '6': 'tanh⁻¹(‸',
+        };
+        if (hypMap[val]) {
+          s.setShowHypMenu(false);
+          s.setLcdError(null);
+          const next = insertCompValue(s.currentInput, s.showingResult, hypMap[val]);
+          s.setCurrentInput(next.input);
+          s.setShowingResult(next.showingResult);
+        }
+        return;
       }
-      return;
     }
-    if (s.promptVar) {
+    if (s.promptVar && allowsCalcSolveHyp(s.calcMode)) {
       if (!isNaN(Number(val)) || val === '.' || val === '-') {
         s.setPromptValue(prev => {
           if (prev === "0" && val !== '.') return val === '-' ? '-' : val;
@@ -117,8 +129,19 @@ export function useModeRouter(s: CalculatorStore) {
       }
     }
     if (s.calcMode === 'STAT_DATA') {
+      if (isNaN(Number(val)) && val !== '.' && val !== '-') return;
+      const replace = s.statEntryFreshRef.current;
+      s.statEntryFreshRef.current = false;
       s.setStatData(prev => {
-        const next = applyStatDigit(prev, s.statCursorRef.current.row, s.statCursorRef.current.col, s.statType, s.statFrequencyEnabled, val);
+        const next = applyStatDigit(
+          prev,
+          s.statCursorRef.current.row,
+          s.statCursorRef.current.col,
+          s.statType,
+          s.statFrequencyEnabled,
+          val,
+          replace,
+        );
         return next === undefined ? prev : next;
       });
       return;
@@ -324,12 +347,16 @@ export function useModeRouter(s: CalculatorStore) {
       expr += ')'.repeat(Math.max(0, openCount - closeCount));
 
       const statVars = calculateStatVars(s.statType, s.statData, s.statFrequencyEnabled);
-      let val = evaluateExpression(expr, usedVars, s.ans, s.angleMode, statVars, s.displayFormat);
+      const varsWrite: PolRecWrite = { X: Number.NaN, Y: Number.NaN };
+      let val = evaluateExpression(expr, usedVars, s.ans, s.angleMode, statVars, s.displayFormat, varsWrite);
+      const written = Number.isFinite(varsWrite.X) && Number.isFinite(varsWrite.Y)
+        ? { X: varsWrite.X, Y: varsWrite.Y }
+        : undefined;
 
       const raw = s.currentInput.replace('‸', '');
       const finalSequence = reconstructSequence(raw);
 
-      return { val, raw, finalSequence };
+      return { val, raw, finalSequence, varsWrite: written };
     } catch (e) {
       if (e instanceof CalcError) s.setLcdError(e);
       else s.setLcdError(new CalcError('syntax'));
@@ -337,8 +364,13 @@ export function useModeRouter(s: CalculatorStore) {
     }
   }, [s]);
 
-  const applyEvalSuccess = useCallback((evalRes: { val: CalcValue; raw: string; finalSequence: string[] }) => {
-    const { val, raw, finalSequence } = evalRes;
+  const applyEvalSuccess = useCallback((evalRes: {
+    val: CalcValue;
+    raw: string;
+    finalSequence: string[];
+    varsWrite?: PolRecWrite;
+  }) => {
+    const { val, raw, finalSequence, varsWrite } = evalRes;
     const n = calcPrimary(val);
     s.prependHistory({
       rawInput: raw,
@@ -349,6 +381,7 @@ export function useModeRouter(s: CalculatorStore) {
       kind: 'calc',
     });
     s.setAns(n);
+    if (varsWrite) s.setVars(prev => mergePolRecVars(prev, varsWrite));
     s.setCurrentSequence([]);
     s.setLastValue(val);
     s.setShowingResult(true);
@@ -385,6 +418,11 @@ export function useModeRouter(s: CalculatorStore) {
   }, [s]);
 
   const handleCalc = useCallback(() => {
+    if (!allowsCalcSolveHyp(s.calcMode)) {
+      if (s.isShift) s.setIsShift(false);
+      if (s.isAlpha) s.setIsAlpha(false);
+      return;
+    }
     if (s.isShift) {
       s.setIsShift(false);
       s.setLcdError(null);
@@ -402,7 +440,7 @@ export function useModeRouter(s: CalculatorStore) {
         s.setPromptVarsQueue(others);
         const first = others[0];
         s.setPromptVar(first);
-        s.setPromptValue('0');
+        s.setPromptValue('');
         s.setPrevPromptValue(String(s.vars[first] ?? 0));
       } else {
         s.setPromptVar(null);
@@ -422,7 +460,7 @@ export function useModeRouter(s: CalculatorStore) {
       s.setPromptVarsQueue(varsInExpr);
       const firstVar = varsInExpr[0];
       s.setPromptVar(firstVar);
-      s.setPromptValue("0");
+      s.setPromptValue("");
       s.setPrevPromptValue(s.vars[firstVar]?.toString() || "0");
     } else {
       s.solveRef.current();
@@ -432,7 +470,7 @@ export function useModeRouter(s: CalculatorStore) {
   const tackleNextPrompt = useCallback(() => {
     if (!s.promptVar) return;
 
-    const val = parseFloat(s.promptValue) || parseFloat(s.prevPromptValue) || 0;
+    const val = commitPromptValue(s.promptValue, s.prevPromptValue);
     const merged = { ...s.vars, [s.promptVar]: val };
     s.setVars(merged);
 
@@ -442,7 +480,7 @@ export function useModeRouter(s: CalculatorStore) {
     if (nextQueue.length > 0) {
       const nextVar = nextQueue[0];
       s.setPromptVar(nextVar);
-      s.setPromptValue("0");
+      s.setPromptValue("");
       s.setPrevPromptValue(String(merged[nextVar] ?? 0));
     } else {
       s.setPromptVar(null);
@@ -498,14 +536,19 @@ export function useModeRouter(s: CalculatorStore) {
         s.setEqnIndex(prev => prev + 1);
         return;
       }
-      const results = solveQuadratic(
-        parseFloat(s.eqnCoeffs[0]) || 0,
-        parseFloat(s.eqnCoeffs[1]) || 0,
-        parseFloat(s.eqnCoeffs[2]) || 0,
-      );
-      s.setEqnResults(results);
-      s.setCalcMode('EQN_RESULT');
-      s.setEqnResultIdx(0);
+      try {
+        const results = solveQuadratic(
+          parseFloat(s.eqnCoeffs[0]) || 0,
+          parseFloat(s.eqnCoeffs[1]) || 0,
+          parseFloat(s.eqnCoeffs[2]) || 0,
+        );
+        s.setLcdError(null);
+        s.setEqnResults(results);
+        s.setCalcMode('EQN_RESULT');
+        s.setEqnResultIdx(0);
+      } catch (e) {
+        s.setLcdError(e instanceof CalcError ? e : new CalcError('math'));
+      }
       return;
     }
 
@@ -529,7 +572,7 @@ export function useModeRouter(s: CalculatorStore) {
 
   const del = useCallback(() => {
     if (s.promptVar) {
-      s.setPromptValue(prev => prev.length > 1 ? prev.slice(0, -1) : "0");
+      s.setPromptValue(prev => prev.length > 1 ? prev.slice(0, -1) : "");
       return;
     }
     s.setReplayIndex(-1);
@@ -562,29 +605,31 @@ export function useModeRouter(s: CalculatorStore) {
     s.setCurrentInput(nextInput);
   }, [s]);
 
+  const applyOverlayClear = useCallback(() => {
+    s.setShowHypMenu(false);
+    s.setPromptVar(null);
+    s.setPromptVarsQueue([]);
+    s.setSolveScreen(null);
+    s.setLcdError(null);
+    s.solveAfterPromptsRef.current = false;
+  }, [s]);
+
   const clearAll = useCallback(() => {
-    if (
-      s.calcMode === 'STAT_DATA' || s.calcMode === 'STAT_MENU' ||
-      s.calcMode === 'STAT_RESULT' || s.calcMode === 'STAT_RESULT_SUB' ||
-      s.calcMode === 'STAT_EDITOR_MENU' || s.calcMode === 'STAT_EDIT'
-    ) {
-      s.setCalcMode('COMP');
-      return;
-    }
-    if (s.calcMode === 'EQN_QUAD' || s.calcMode === 'EQN_RESULT') {
+    const patch = applyAllClear(s.calcMode);
+    if (patch.resetEqn) {
+      applyOverlayClear();
       s.setEqnCoeffs(["0", "0", "0"]);
       s.setEqnIndex(0);
-      s.setCalcMode('EQN_QUAD');
+      s.setCalcMode(patch.calcMode);
       s.setCurrentSequence([]);
       return;
     }
-    if (s.solveScreen || (s.promptVar && s.solveAfterPromptsRef.current)) {
-      s.setSolveScreen(null);
-      s.setPromptVar(null);
-      s.setPromptVarsQueue([]);
+    const dismissSolveOnly =
+      !patch.clearStatType &&
+      (s.solveScreen || (s.promptVar && s.solveAfterPromptsRef.current));
+    applyOverlayClear();
+    if (dismissSolveOnly) {
       s.setShowingResult(false);
-      s.setLcdError(null);
-      s.solveAfterPromptsRef.current = false;
       return;
     }
     s.setCurrentInput("‸");
@@ -594,19 +639,29 @@ export function useModeRouter(s: CalculatorStore) {
     s.setIsAlpha(false);
     s.setIsSto(false);
     s.setIsRcl(false);
-    s.setCalcMode('COMP');
-    s.setLcdError(null);
-    s.setSolveScreen(null);
-    s.setPromptVar(null);
-    s.setPromptVarsQueue([]);
-    s.solveAfterPromptsRef.current = false;
-    s.setShowHypMenu(false);
     s.setSetupPrompt(null);
     s.setSetupPage(0);
     s.setEngMode(null);
     s.setDmsResult(false);
     s.setReplayIndex(-1);
-  }, [s]);
+    s.setCalcMode(patch.calcMode);
+    if (patch.clearStatType) s.setStatType(null);
+  }, [s, applyOverlayClear]);
+
+  const handleHistoryLoad = useCallback((rawInput: string, sequence: string[]) => {
+    const patch = applyHistoryLoad(rawInput, sequence);
+    s.setCurrentInput(patch.currentInput);
+    s.setCurrentSequence(patch.currentSequence);
+    s.setShowingResult(patch.showingResult);
+    s.setReplayIndex(patch.replayIndex);
+    s.setCalcMode(patch.calcMode);
+    if (patch.clearStatType) s.setStatType(null);
+    applyOverlayClear();
+    s.setIsShift(false);
+    s.setIsAlpha(false);
+    s.setIsSto(false);
+    s.setIsRcl(false);
+  }, [s, applyOverlayClear]);
 
   const dismissLcdError = useCallback(() => {
     if (!s.lcdError) return false;
@@ -767,6 +822,7 @@ export function useModeRouter(s: CalculatorStore) {
           s.setLastValue(evalRes.val);
           s.setShowingResult(true);
           s.setDisplayMode(resultDisplayMode(valToUse));
+          if (evalRes.varsWrite) s.setVars(prev => mergePolRecVars(prev, evalRes.varsWrite));
         } else {
           return;
         }
@@ -803,21 +859,23 @@ export function useModeRouter(s: CalculatorStore) {
         storedRaw = `Ans→${v}`;
         s.setCurrentInput(`${storedRaw}‸`);
       } else {
-        try {
-          const sVars = calculateStatVars(s.statType, s.statData, s.statFrequencyEnabled);
-          storedResult = evaluateExpression(operand.replace(/Ans/g, String(s.ans)), { ...s.vars }, s.ans, s.angleMode, sVars);
-          storedVal = calcPrimary(storedResult);
-          s.setVars(prev => ({ ...prev, [v]: storedVal }));
-          s.setAns(storedVal);
-          s.setLastValue(storedResult);
-          s.setDisplayMode(resultDisplayMode(storedVal));
-          storedRaw = beforeText + `→${v}`;
-          s.setCurrentInput(storedRaw + '‸');
-        } catch {
-          s.setVars(prev => ({ ...prev, [v]: s.ans }));
-          storedRaw = beforeText + `→${v}`;
-          s.setCurrentInput(storedRaw + '‸');
+        const sVars = calculateStatVars(s.statType, s.statData, s.statFrequencyEnabled);
+        const attempt = attemptStoreOperand(operand, s.vars, s.ans, s.angleMode, sVars);
+        if (attempt.ok === false) {
+          s.setLcdError(attempt.error);
+          s.setIsSto(false);
+          s.setIsShift(false);
+          s.setIsAlpha(false);
+          return;
         }
+        storedResult = attempt.value;
+        storedVal = calcPrimary(storedResult);
+        s.setVars(prev => mergePolRecVars({ ...prev, [v]: storedVal }, attempt.varsWrite));
+        s.setAns(storedVal);
+        s.setLastValue(storedResult);
+        s.setDisplayMode(resultDisplayMode(storedVal));
+        storedRaw = beforeText + `→${v}`;
+        s.setCurrentInput(storedRaw + '‸');
       }
       s.prependHistory({
         rawInput: storedRaw,
@@ -847,8 +905,12 @@ export function useModeRouter(s: CalculatorStore) {
         else handleInput('°');
       }
       if (v === 'C') {
-        if (s.isShift) { handleInput('abs(‸'); s.setIsShift(false); }
-        else s.setShowHypMenu(true);
+        if (s.isShift) {
+          if (allowsCalcSolveHyp(s.calcMode)) handleInput('abs(‸');
+          s.setIsShift(false);
+        } else if (allowsCalcSolveHyp(s.calcMode)) {
+          s.setShowHypMenu(true);
+        }
       }
       if (v === 'D') handleTrigRef.current?.('sin', 'D');
       if (v === 'E') handleTrigRef.current?.('cos', 'E');
@@ -888,7 +950,10 @@ export function useModeRouter(s: CalculatorStore) {
   handleParenthesesRef.current = handleParentheses;
 
   const handleFracKey = useCallback(() => {
-    if (s.isShift) {
+    const shifted = s.isShift;
+    s.setIsShift(false);
+    if (!allowsCompLineEdit(s.calcMode)) return;
+    if (shifted) {
       handleInput("mix(‸,,)");
     } else {
       const wrapped = wrapFracTemplate(s.currentInput, s.showingResult);
@@ -899,7 +964,6 @@ export function useModeRouter(s: CalculatorStore) {
         s.setShowingResult(wrapped.showingResult);
       }
     }
-    s.setIsShift(false);
   }, [s, handleInput]);
 
   const handlePermComb = useCallback((type: 'P' | 'C') => {
@@ -907,10 +971,11 @@ export function useModeRouter(s: CalculatorStore) {
       handleInput(type === 'P' ? '×' : '÷');
       return;
     }
+    s.setIsShift(false);
+    if (!allowsCompLineEdit(s.calcMode)) return;
     const wrapped = wrapPrecedingBinary(s.currentInput, s.showingResult, type === 'P' ? 'nPr' : 'nCr');
     s.setCurrentInput(wrapped.input);
     s.setShowingResult(wrapped.showingResult);
-    s.setIsShift(false);
   }, [s, handleInput]);
 
   const handleIntegralKey = useCallback(() => {
@@ -920,18 +985,12 @@ export function useModeRouter(s: CalculatorStore) {
   }, [s, handleInput]);
 
   const handleSquareKey = useCallback(() => {
-    let parts = s.currentInput.split('‸');
-    let before = parts[0], after = parts[1] || '';
-    let symbol = s.isShift ? '³' : '²';
-
-    if (s.showingResult) {
-      s.setCurrentInput(`Ans${symbol}‸`);
-      s.setShowingResult(false);
-      return;
-    }
-
-    s.setCurrentInput(before + `${symbol}‸` + after);
+    const shifted = s.isShift;
     s.setIsShift(false);
+    if (!allowsCompLineEdit(s.calcMode)) return;
+    const next = applySquareKey(s.currentInput, s.showingResult, shifted);
+    s.setCurrentInput(next.input);
+    s.setShowingResult(next.showingResult);
   }, [s]);
 
   const handleExpKey = useCallback(() => {
@@ -958,25 +1017,12 @@ export function useModeRouter(s: CalculatorStore) {
   }, [s, handleInput]);
 
   const handlePowerKey = useCallback((arg?: unknown) => {
-    const forcePwr = arg === true;
-    let parts = s.currentInput.split('‸');
-    let before = parts[0], after = parts[1] || '';
-    let operand = findPrecedingOperand(before);
-
-    if (s.isShift && !forcePwr) {
-      if (operand) {
-        s.setCurrentInput(before.slice(0, -operand.length) + `root(${operand},‸)` + after);
-      } else {
-        s.setCurrentInput(before + `root(‸,)` + after);
-      }
-    } else {
-      if (operand) {
-        s.setCurrentInput(before + `^(‸)` + after);
-      } else {
-        s.setCurrentInput(before + `pwr(‸,)` + after);
-      }
-    }
+    const shifted = s.isShift;
     s.setIsShift(false);
+    if (!allowsCompLineEdit(s.calcMode)) return;
+    const next = applyPowerKey(s.currentInput, s.showingResult, shifted, arg === true);
+    s.setCurrentInput(next.input);
+    s.setShowingResult(next.showingResult);
   }, [s]);
 
   const handleFactorialKey = useCallback(() => {
@@ -1059,6 +1105,7 @@ export function useModeRouter(s: CalculatorStore) {
     solve,
     del,
     clearAll,
+    handleHistoryLoad,
     handleRight,
     handleLeft,
     handleUp,

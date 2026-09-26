@@ -9,8 +9,8 @@ import { pairLabels, type CalcValue } from './types.ts';
  * Both the LCD (`formatMath`, HTML) and the History pane (`toLaTeX`, LaTeX) walk
  * THIS list so the two renderers cannot drift: every stem here has a `html` and a
  * `latex` painter. An IR stem must never survive onto the screen as literal
- * ASCII — closed OR open. See `docs/prompts/now-visual-slice.md` (vis-no-literal /
- * ir-leak) and `docs/principles.md`.
+ * ASCII — closed OR open. See `docs/principles.md` **Match function
+ * behavior** and `roadmap.md` `vis-no-literal`. ×10ˣ input is `R28`.
  */
 
 const CURSOR = '‸';
@@ -357,7 +357,7 @@ export const SciNotation: React.FC<{ mantissa: string; exponent: number }> = ({ 
   </span>
 );
 
-/** Casio-style a+bi for EQN complex roots (E-28). */
+/** hardware-style a+bi for EQN complex roots (E-28). */
 export function formatComplexPair(real: number, imag: number): string {
   const near0 = (n: number) => Math.abs(n) < 1e-12;
   const near1 = (n: number) => Math.abs(Math.abs(n) - 1) < 1e-12;

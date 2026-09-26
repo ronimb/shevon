@@ -1,8 +1,9 @@
 # Kickoff — `p2-calc` (unshifted CALC, E-19)
 
 Copy everything below the line into a **new agent chat**. Only after
-`p2-edit` has landed (or after sanity if you are told to take CALC next).
-Do not start Dist, stay-in-STAT, EQN 1/2/4, LineIO, or packaging in that
+`roadmap.md` **Now** rows 1–3 (`R17` `R28` `R29`) or Ron pulls CALC
+forward. Do not start Dist,
+stay-in-STAT, EQN 1/2/4, LineIO, packaging, or a `ti-*` slice in that
 chat. Do not change SOLVE except to share prompt helpers.
 
 ---
@@ -54,13 +55,13 @@ default, then `evaluateExpression`. No letters → it just runs `=`.
 - `src/modeRouter.ts` — unshifted `handleCalc` / `tackleNextPrompt`
 - `src/modes/comp.ts` — letter collection helpers
 - `src/lcd.tsx` — prompt paint if E-19 needs a tweak
-- `src/casio-manual.golden.test.ts` — E-19 samples (prompt order, no
+- `src/manual.golden.test.ts` — E-19 samples (prompt order, no
   stem-letter false positives, recalc, equality if the figure has one)
 
 ## Done when
 
 - Browser: `3A+B` CALC prompts A then B with previous values; `=` yields
-  the Casio result; CALC again re-prompts. A Syntax-looking letter inside
+  the hardware result; CALC again re-prompts. A Syntax-looking letter inside
   a function name is not a prompt.
 - Existing SOLVE tests still pass.
 - `issues.md` `calc-ux` checked only if E-19 behavior is in.

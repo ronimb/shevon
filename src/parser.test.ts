@@ -143,6 +143,23 @@ describe('evaluator: no new Function, AST-backed', () => {
     });
   });
 
+  it('tokenizes adjacent memory letters as separate idents (R2)', () => {
+    expect(tokenize('XY').map((t) => t.type === 'ident' ? t.value : t.type)).toEqual(['X', 'Y']);
+    expect(tokenize('AB').map((t) => t.type === 'ident' ? t.value : t.type)).toEqual(['A', 'B']);
+    expect(tokenize('Ans').map((t) => t.type === 'ident' ? t.value : t.type)).toEqual(['Ans']);
+    expect(shape(parse('XY'))).toEqual({
+      type: 'binary',
+      op: '*',
+      left: { type: 'var', name: 'X' },
+      right: { type: 'var', name: 'Y' },
+    });
+    expect(evalComp('XY', 'DEG', { ...EMPTY_VARS, X: 3, Y: 4 })).toBe(12);
+    expect(evalComp('AB', 'DEG', { ...EMPTY_VARS, A: 2, B: 5 })).toBe(10);
+    expect(calcPrimary(evaluateExpression('AnsX', { ...EMPTY_VARS, X: 3 }, 5, 'DEG', {}))).toBe(15);
+    expect(tokenize('__log10').map((t) => t.type === 'ident' ? t.value : t.type)).toEqual(['__log10']);
+    expect(tokenize('stat_n').map((t) => t.type === 'ident' ? t.value : t.type)).toEqual(['stat_n']);
+  });
+
   it('evaluates a summation via the Σ lambda form', () => {
     // Σ(X, x, 1, 5) = 1+2+3+4+5 = 15
     expect(evalComp('Σ(X,X,1,5)')).toBe(15);

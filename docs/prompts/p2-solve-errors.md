@@ -11,7 +11,7 @@ Phase 2 `p2-solve`, `issues.md` `solve-errors`, `docs/coverage.md` CALC/SOLVE.
 Update those files in the same change as the code. Refresh canvases if the
 Phase 2 story changed.
 
-Behavior spec: `fx-570_991ES_PLUS_EN.pdf` **E-20, E-21, E-41**. Element +
+Behavior spec: `manual.pdf` **E-20, E-21, E-41**. Element +
 behavior parity vs those figures — not pixel-perfect.
 
 You are implementing **priority-1 technical gap: two-bucket errors**, as the
@@ -33,7 +33,7 @@ Rules:
 - Throw or return `CalcError`. Stop using the string `"MathError"` and a
   bare `catch` that always calls `setSyntaxError(true)`.
 - LCD state is one `lcdError: CalcErrorKind | null` (or equivalent), not two
-  booleans. Paint the Casio label:
+  booleans. Paint the hardware label:
   - `syntax` → `Syntax ERROR`
   - `math` → `Math ERROR`
   - `variable` → `Variable ERROR`
@@ -99,7 +99,7 @@ Prompt remaining non-X letters the way CALC already does (`promptVar` /
 - `src/modes/comp.ts` — `newtonSolveX` success vs failure
 - `src/Calculator.tsx` — SOLVE path, LCD error paint, initial-X / L−R /
   Continue
-- `src/casio-manual.golden.test.ts` — new cases below
+- `src/manual.golden.test.ts` — new cases below
 
 ## Done when
 

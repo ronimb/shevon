@@ -20,15 +20,15 @@ behavior). Do not invent a menu that the hardware does not show.
 
 1. In the STAT editor, DEL deletes the **current row**, not one digit of
    the cell. `applyStatDelete` in `src/modes/stat.tsx` currently slices
-   the field string — replace that with Casio line-delete (and keep a
+   the field string — replace that with hardware line-delete (and keep a
    legal empty/zero row so the editor does not vanish).
 2. Ins inserts a blank row at the caret (SHIFT DEL / INS on the unit).
    Respect FREQ row caps (80 / 40 / 26).
-3. Del-A deletes all sample data (Casio Edit → Del-A). Put the command
+3. Del-A deletes all sample data (hardware Edit → Del-A). Put the command
    where the hardware puts it (STAT Edit menu), not as a hidden COMP
-   key. After Del-A the editor is empty in the Casio sense (one blank
+   key. After Del-A the editor is empty in the hardware sense (one blank
    row is fine if that is what E-23 shows).
-4. Tests in `src/casio-manual.golden.test.ts` (and STAT helpers) cover
+4. Tests in `src/manual.golden.test.ts` (and STAT helpers) cover
    line-delete, Ins, Del-A, and the cap.
 
 ## Do not
@@ -44,7 +44,7 @@ behavior). Do not invent a menu that the hardware does not show.
 - `src/modes/stat.tsx` — `applyStatDelete`, Ins, Del-A, any Edit screen
 - `src/modeRouter.ts` — DEL / SHIFT DEL / Edit menu routing
 - `src/lcd.tsx` — Edit menu paint if the hardware shows one
-- `src/casio-manual.golden.test.ts` — editor behavior
+- `src/manual.golden.test.ts` — editor behavior
 
 ## Done when
 

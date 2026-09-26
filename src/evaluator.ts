@@ -106,16 +106,84 @@ type LambdaFn = (f: (v: number) => number, ...rest: number[]) => number;
 type HelperFn = NumFn | LambdaFn;
 type HelperBag = Record<string, number | HelperFn | typeof Math>;
 
+/** Integers only — do not round (R6). Cap stays 170 (`fact-max` is 69). */
 export const factorial = (n: number): number => {
-  const v = Math.round(n);
-  if (v < 0) return NaN;
-  if (v === 0) return 1;
-  if (v > 170) return Infinity; 
+  if (!Number.isInteger(n) || n < 0) return NaN;
+  if (n === 0) return 1;
+  if (n > 170) return Infinity;
   let r = 1;
-  for (let i = 2; i <= v; i++) r *= i;
+  for (let i = 2; i <= n; i++) r *= i;
   return r;
 };
 
+/** Odd quarter-turns (90° / GRA 100 / π/2 and equivalents) are poles (R1). */
+function isTanPole(x: number, angleMode: AngleMode): boolean {
+  if (!Number.isFinite(x)) return true;
+  let k: number;
+  if (angleMode === 'DEG') k = (x - 90) / 180;
+  else if (angleMode === 'GRA') k = (x - 100) / 200;
+  else k = (x - Math.PI / 2) / Math.PI;
+  return Math.abs(k - Math.round(k)) <= 1e-12;
+}
+
+/** Real odd root of a negative; even / non-integer index stays NaN (R5). */
+function nthRoot(n: number, x: number): number {
+  if (!Number.isFinite(n) || n === 0) return NaN;
+  if (x < 0) {
+    if (Number.isInteger(n) && Math.abs(n) % 2 === 1) {
+      return -Math.pow(-x, 1 / n);
+    }
+    return NaN;
+  }
+  return Math.pow(x, 1 / n);
+}
+
+/** Hardware: 0^0 is Math ERROR, not JS 1 (R20). */
+function realPow(base: number, exp: number): number {
+  if (base === 0 && exp === 0) return NaN;
+  return Math.pow(base, exp);
+}
+
+function requireNonnegInts(n: number, r: number): boolean {
+  return Number.isInteger(n) && Number.isInteger(r) && n >= 0 && r >= 0 && r <= n;
+}
+
+export type PolRecWrite = { X: number; Y: number };
+
+/** Copy Pol/Rec X,Y onto a vars snapshot for setVars (R16). */
+export function mergePolRecVars(vars: Vars, write: PolRecWrite | null | undefined): Vars {
+  if (!write || !Number.isFinite(write.X) || !Number.isFinite(write.Y)) return vars;
+  return { ...vars, X: write.X, Y: write.Y };
+}
+
+function finitePolRecWrite(write: PolRecWrite): PolRecWrite | undefined {
+  if (!Number.isFinite(write.X) || !Number.isFinite(write.Y)) return undefined;
+  return { X: write.X, Y: write.Y };
+}
+
+/**
+ * Hardware `%` is ÷100 on every path (R17 / E-11).
+ * `200+10%` is 200.1; `200-10%` is 199.9. Not percent-of.
+ */
+function rewritePercentMapped(m: Mapped): Mapped {
+  let curr = m;
+  while (true) {
+    const idx = curr.text.lastIndexOf('%');
+    if (idx === -1) return curr;
+    const pctOrig = curr.map[idx] ?? 0;
+    curr = concatMapped([
+      sliceMapped(curr, 0, idx),
+      mappedLit('/100', pctOrig),
+      sliceMapped(curr, idx + 1),
+    ]);
+  }
+}
+
+/**
+ * Preceding operand for postfix x² / % / nCr.
+ * Hardware priority: postfix x² is above prefix (−), so `(−) 3 x²`
+ * is `-3²` = −9, not (−3)². Do not swallow a leading unary minus (R15).
+ */
 export const findPrecedingOperand = (text: string): string => {
   if (!text) return '';
   
@@ -156,7 +224,7 @@ export const findPrecedingOperand = (text: string): string => {
   return '';
 };
 
-/** 10-digit Casio: n/d must match the value to displayed precision. */
+/** 10-digit hardware: n/d must match the value to displayed precision. */
 const fractionFits = (value: number, n: number, d: number) => {
   if (d <= 0 || !Number.isFinite(n / d)) return false;
   const scale = Math.max(Math.abs(value), Math.abs(n / d), 1e-12);
@@ -198,7 +266,81 @@ export const resultDisplayMode = (val: number): 'decimal' | 'fraction' => {
   return f !== null && f.d > 1 ? 'fraction' : 'decimal';
 };
 
-export const evaluateExpression = (expr: string, scope: Vars, ans: number, angleMode: AngleMode, statVars: Vars, displayFormat: DisplayFormat = DEFAULT_FORMAT): CalcValue => {
+/** Regression / sample letters stay in user memory. STAT recall uses stat_*. */
+const STAT_SCOPE_BLOCK = new Set(['A', 'B', 'C', 'R', 'N', 'type', 'xHat', 'yHat']);
+
+function statRecallEnv(statVars: Vars): Vars {
+  const env: Vars = {};
+  for (const key of Object.keys(statVars)) {
+    if (!STAT_SCOPE_BLOCK.has(key)) env[key] = statVars[key];
+  }
+  return env;
+}
+
+function finiteStat(v: unknown): number {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : NaN;
+}
+
+/** Inverse estimate. Invalid domain is NaN → Math ERROR (R18), never a fake 0. */
+function xhatEstimate(statVars: Vars, y: number, root: 1 | 2): number {
+  const a = finiteStat(statVars.A);
+  const b = finiteStat(statVars.B);
+  const c = finiteStat(statVars.C);
+  const t = String(statVars.type || 'A+BX');
+  if (!Number.isFinite(y) || !Number.isFinite(a) || !Number.isFinite(b)) return NaN;
+
+  if (t === '_+CX2' || root === 2) {
+    if (!Number.isFinite(c)) return NaN;
+    if (c === 0) return b !== 0 ? (y - a) / b : NaN;
+    const disc = b * b - 4 * c * (a - y);
+    if (disc < 0) return NaN;
+    const sign = root === 2 ? -1 : 1;
+    return (-b + sign * Math.sqrt(disc)) / (2 * c);
+  }
+  if (t === 'A+BX') return b !== 0 ? (y - a) / b : NaN;
+  if (t === 'ln X') return b !== 0 ? Math.exp((y - a) / b) : NaN;
+  if (t === 'e^X') {
+    if (a === 0 || b === 0 || y / a <= 0) return NaN;
+    return Math.log(y / a) / b;
+  }
+  if (t === 'A*B^X') {
+    if (a === 0 || b <= 0 || y / a <= 0) return NaN;
+    return Math.log(y / a) / Math.log(b);
+  }
+  if (t === 'A*X^B') {
+    if (a === 0 || b === 0 || y / a <= 0) return NaN;
+    return Math.exp(Math.log(y / a) / b);
+  }
+  if (t === '1/X') return y !== a ? b / (y - a) : NaN;
+  return NaN;
+}
+
+function yhatEstimate(statVars: Vars, x: number): number {
+  const a = finiteStat(statVars.A);
+  const b = finiteStat(statVars.B);
+  const c = finiteStat(statVars.C);
+  const t = String(statVars.type || 'A+BX');
+  if (!Number.isFinite(x) || !Number.isFinite(a) || !Number.isFinite(b)) return NaN;
+  if (t === 'A+BX') return a + b * x;
+  if (t === 'ln X') return x > 0 ? a + b * Math.log(x) : NaN;
+  if (t === 'e^X') return a * Math.exp(b * x);
+  if (t === 'A*B^X') return b > 0 ? a * Math.pow(b, x) : NaN;
+  if (t === 'A*X^B') return x > 0 ? a * Math.pow(x, b) : NaN;
+  if (t === '1/X') return x !== 0 ? a + b / x : NaN;
+  if (t === '_+CX2') return Number.isFinite(c) ? a + b * x + c * x * x : NaN;
+  return NaN;
+}
+
+export const evaluateExpression = (
+  expr: string,
+  scope: Vars,
+  ans: number,
+  angleMode: AngleMode,
+  statVars: Vars,
+  displayFormat: DisplayFormat = DEFAULT_FORMAT,
+  varsWrite?: PolRecWrite,
+): CalcValue => {
     const toRad = (x: number) => {
     if (angleMode === 'DEG') return x * Math.PI / 180;
     if (angleMode === 'GRA') return x * Math.PI / 200;
@@ -210,41 +352,41 @@ export const evaluateExpression = (expr: string, scope: Vars, ans: number, angle
     return x;
   };
 
+  const polRecWrite: PolRecWrite = { X: Number.NaN, Y: Number.NaN };
+
   const h: HelperBag = {
     pi: Math.PI, e: Math.E,
     __sin: (x: number) => Math.sin(toRad(x)),
     __cos: (x: number) => Math.cos(toRad(x)),
-    __tan: (x: number) => Math.tan(x === 90 && angleMode === 'DEG' ? Infinity : toRad(x)),
+    __tan: (x: number) => (isTanPole(x, angleMode) ? NaN : Math.tan(toRad(x))),
     __asin: (x: number) => fromRad(Math.asin(x)),
     __acos: (x: number) => fromRad(Math.acos(x)),
     __atan: (x: number) => fromRad(Math.atan(x)),
     __sinh: Math.sinh, __cosh: Math.cosh, __tanh: Math.tanh,
     __asinh: Math.asinh, __acosh: Math.acosh, __atanh: Math.atanh,
-    __sqrt: Math.sqrt, __log: Math.log, __log10: Math.log10, __exp: Math.exp, __pow: Math.pow,
+    __sqrt: Math.sqrt, __log: Math.log, __log10: Math.log10, __exp: Math.exp, __pow: realPow,
     __abs: Math.abs, Math: Math,
     __rnd: (x: number) => roundToFormat(x, displayFormat),
-    __nthroot: (n: number, x: number) => Math.pow(x, 1 / n),
+    __nthroot: nthRoot,
     __logb: (b: number, x: number) => Math.log(x) / Math.log(b),
     __factorial: factorial,
     __ncr: (n: number, r: number) => {
-      const nv = Math.floor(Math.abs(n)), rv = Math.floor(Math.abs(r));
-      if (rv < 0 || rv > nv) return 0;
-      if (nv > 1000000) return Infinity;
-      if (rv === 0 || rv === nv) return 1;
+      if (!requireNonnegInts(n, r)) return NaN;
+      if (n > 1000000) return Infinity;
+      if (r === 0 || r === n) return 1;
       let res = 1;
-      const k = Math.min(rv, nv - rv);
+      const k = Math.min(r, n - r);
       for (let i = 1; i <= k; i++) {
-        res = res * (nv - i + 1) / i;
+        res = res * (n - i + 1) / i;
       }
       return Math.round(res);
     },
     __npr: (n: number, r: number) => {
-      const nv = Math.floor(Math.abs(n)), rv = Math.floor(Math.abs(r));
-      if (rv < 0 || rv > nv) return 0;
-      if (nv > 1000000) return Infinity;
+      if (!requireNonnegInts(n, r)) return NaN;
+      if (n > 1000000) return Infinity;
       let res = 1;
-      for (let i = 0; i < rv; i++) {
-        res *= (nv - i);
+      for (let i = 0; i < r; i++) {
+        res *= (n - i);
         if (!isFinite(res)) break;
       }
       return Math.round(res);
@@ -254,68 +396,27 @@ export const evaluateExpression = (expr: string, scope: Vars, ans: number, angle
       const max = Math.max(a, b);
       return Math.floor(Math.random() * (max - min + 1)) + min;
     },
-    // Casio Ran#: three-digit decimal in [0, 1), i.e. 0.000 … 0.999.
+    // hardware Ran#: three-digit decimal in [0, 1), i.e. 0.000 … 0.999.
     '__ranhash': () => Math.floor(Math.random() * 1000) / 1000,
     __pol: (x: number, y: number) => {
       const r = Math.sqrt(x*x + y*y);
       const theta = fromRad(Math.atan2(y, x));
-      scope.X = r; scope.Y = theta;
+      polRecWrite.X = r;
+      polRecWrite.Y = theta;
       return r;
     },
     __rec: (r: number, theta: number) => {
       const x = r * Math.cos(toRad(theta));
       const y = r * Math.sin(toRad(theta));
-      scope.X = x; scope.Y = y;
+      polRecWrite.X = x;
+      polRecWrite.Y = y;
       return x;
     },
-    __xhat: (y: number) => {
-       const { A, B, C, type } = statVars;
-       const a = A || 0, b = B || 0, c = C || 0;
-       const t = type || 'A+BX';
-       if (t === 'A+BX') return (y - a) / (b || 1);
-       if (t === 'ln X') return Math.exp((y - a) / (b || 1));
-       if (t === 'e^X') return b !== 0 ? Math.log(y / (a || 1)) / b : 0;
-       if (t === 'A*B^X') return (a !== 0 && b > 0) ? Math.log(y / a) / Math.log(b) : 0;
-       if (t === 'A*X^B') return (a !== 0 && b !== 0) ? Math.exp(Math.log(y / a) / b) : 0;
-       if (t === '1/X') return b / (y - a);
-       if (t === '_+CX2') {
-         if (c === 0) return b !== 0 ? (y - a) / b : 0;
-         const disc = b * b - 4 * c * (a - y);
-         if (disc < 0) return 0;
-         return (-b + Math.sqrt(disc)) / (2 * c);
-       }
-       return 0;
-    },
-    __xhat1: (y: number) => {
-       const { A, B, C } = statVars;
-       const a = A || 0, b = B || 0, c = C || 0;
-       if (c === 0) return b !== 0 ? (y - a) / b : 0;
-       const disc = b * b - 4 * c * (a - y);
-       if (disc < 0) return 0;
-       return (-b + Math.sqrt(disc)) / (2 * c);
-    },
-    __xhat2: (y: number) => {
-       const { A, B, C } = statVars;
-       const a = A || 0, b = B || 0, c = C || 0;
-       if (c === 0) return b !== 0 ? (y - a) / b : 0;
-       const disc = b * b - 4 * c * (a - y);
-       if (disc < 0) return 0;
-       return (-b - Math.sqrt(disc)) / (2 * c);
-    },
-    __yhat: (x: number) => {
-       const { A, B, C, type } = statVars;
-       const a = A || 0, b = B || 0, c = C || 0;
-       const t = type || 'A+BX';
-       if (t === 'A+BX') return a + b * x;
-       if (t === 'ln X') return x > 0 ? a + b * Math.log(x) : 0;
-       if (t === 'e^X') return a * Math.exp(b * x);
-       if (t === 'A*B^X') return a * Math.pow(b, x);
-       if (t === 'A*X^B') return (a !== 0 && x > 0) ? a * Math.pow(x, b) : 0;
-       if (t === '1/X') return x !== 0 ? a + b / x : 0;
-       if (t === '_+CX2') return a + b * x + c * x * x;
-       return 0;
-    },
-    // Adaptive Gauss–Kronrod (G7–K15), the same family the fx-991ES PLUS uses,
+    __xhat: (y: number) => xhatEstimate(statVars, y, 1),
+    __xhat1: (y: number) => xhatEstimate(statVars, y, 1),
+    __xhat2: (y: number) => xhatEstimate(statVars, y, 2),
+    __yhat: (x: number) => yhatEstimate(statVars, x),
+    // Adaptive Gauss–Kronrod (G7–K15), the same family the hardware uses,
     // so ∫ matches the hardware to displayed precision instead of the old
     // fixed-step trapezoid.
     __int: (f: (v: number) => number, a: number, b: number) => {
@@ -323,6 +424,13 @@ export const evaluateExpression = (expr: string, scope: Vars, ans: number, angle
       const sign = b < a ? -1 : 1;
       const lo = Math.min(a, b);
       const hi = Math.max(a, b);
+      // Hardware times out near a singularity (R22). Count f-evals, not depth.
+      const INT_EVAL_BUDGET = 8000;
+      let nEval = 0;
+      const fb = (v: number) => {
+        if (++nEval > INT_EVAL_BUDGET) throw new CalcError('timeout');
+        return f(v);
+      };
 
       const XGK = [
         0.991455371120813, 0.949107912342759, 0.864864423359769,
@@ -342,20 +450,20 @@ export const evaluateExpression = (expr: string, scope: Vars, ans: number, angle
       const gk15 = (lo2: number, hi2: number) => {
         const center = 0.5 * (lo2 + hi2);
         const halfLength = 0.5 * (hi2 - lo2);
-        const fc = f(center);
+        const fc = fb(center);
         let resGauss = WG[3] * fc;
         let resKronrod = WGK[7] * fc;
         for (let j = 0; j < 3; j++) {
           const jtw = 2 * j + 1;
           const x = halfLength * XGK[jtw];
-          const fsum = f(center - x) + f(center + x);
+          const fsum = fb(center - x) + fb(center + x);
           resGauss += WG[j] * fsum;
           resKronrod += WGK[jtw] * fsum;
         }
         for (let j = 0; j < 4; j++) {
           const jtwm = 2 * j;
           const x = halfLength * XGK[jtwm];
-          resKronrod += WGK[jtwm] * (f(center - x) + f(center + x));
+          resKronrod += WGK[jtwm] * (fb(center - x) + fb(center + x));
         }
         return {
           integral: resKronrod * halfLength,
@@ -531,8 +639,8 @@ export const evaluateExpression = (expr: string, scope: Vars, ans: number, angle
   for (const [from, to] of statLit) mapped = replaceLiteral(mapped, from, to);
   mapped = replaceRegex(mapped, /\bsx\b/g, () => 'stat_sx');
   mapped = replaceRegex(mapped, /\bsy\b/g, () => 'stat_sy');
-  mapped = replaceRegex(mapped, /\bn\b/g, () => 'N');
-  mapped = replaceRegex(mapped, /\br\b/g, () => 'R');
+  mapped = replaceRegex(mapped, /\bn\b/g, () => 'stat_n');
+  mapped = replaceRegex(mapped, /\br\b/g, () => 'stat_r');
 
   // Robust xHat/yHat replacement
   for (const sym of ['x̂1', 'x̂2', 'x̂', 'ŷ'].map(s => s.normalize('NFD'))) {
@@ -706,7 +814,7 @@ export const evaluateExpression = (expr: string, scope: Vars, ans: number, angle
   mapped = replaceLiteral(mapped, '×', '*');
   mapped = replaceLiteral(mapped, '÷', '/');
   mapped = replaceLiteral(mapped, 'Ran#', '__ranhash()');
-  mapped = replaceLiteral(mapped, '%', '/100');
+  mapped = rewritePercentMapped(mapped);
   mapped = replaceLiteral(mapped, '×10^', '*10**');
 
   const resolveExponentsMapped = (m: Mapped): Mapped => {
@@ -801,7 +909,8 @@ export const evaluateExpression = (expr: string, scope: Vars, ans: number, angle
   // Identifiers that resolve to a value (variables and constants). Function
   // names live in `h` and are looked up separately when a call node is walked.
   const constants: Vars = { pi: Math.PI, e: Math.E, NaN: NaN, Infinity: Infinity };
-  const baseEnv: Vars = { Ans: ans, ...scope, ...statVars, ...constants };
+  // STAT A/B/C/R/N are fit letters, not user memory (R3). Recall uses stat_*.
+  const baseEnv: Vars = { Ans: ans, ...scope, ...statRecallEnv(statVars), ...constants };
 
   // Functions whose FIRST argument is a sub-expression in the calculator
   // variable X rather than a value: differentiation, integration and Σ. The
@@ -834,7 +943,7 @@ export const evaluateExpression = (expr: string, scope: Vars, ans: number, angle
           case '-': val = l - r; break;
           case '*': val = l * r; break;
           case '/': val = l / r; break;
-          case '**': val = Math.pow(l, r); break;
+          case '**': val = realPow(l, r); break;
         }
         if (!Number.isFinite(val) || Math.abs(val) >= 1e100) {
           throw new CalcError('math', node.offset);
@@ -870,7 +979,12 @@ export const evaluateExpression = (expr: string, scope: Vars, ans: number, angle
     if (!Number.isFinite(val) || Math.abs(val) >= 1e100) {
       throw new CalcError('math', ast.offset);
     }
-    return wrapCalcValue(val, ast, scope);
+    const written = finitePolRecWrite(polRecWrite);
+    if (written && varsWrite) {
+      varsWrite.X = written.X;
+      varsWrite.Y = written.Y;
+    }
+    return wrapCalcValue(val, ast, polRecWrite);
   } catch (e) {
     if (e instanceof CalcError) throw e;
     if (e instanceof ParseError) throw new CalcError('syntax', toOrig(mapped.map, e.pos, origLen));
@@ -879,12 +993,12 @@ export const evaluateExpression = (expr: string, scope: Vars, ans: number, angle
 };
 
 /** Top-level Pol/Rec is a pair; everything else stays IEEE `real`. */
-function wrapCalcValue(val: number, ast: AstNode, scope: Vars): CalcValue {
+function wrapCalcValue(val: number, ast: AstNode, write: PolRecWrite): CalcValue {
   if (ast.type === 'call' && ast.name === '__pol') {
-    return calcPair('pol', val, Number(scope.Y));
+    return calcPair('pol', val, write.Y);
   }
   if (ast.type === 'call' && ast.name === '__rec') {
-    return calcPair('rec', val, Number(scope.Y));
+    return calcPair('rec', val, write.Y);
   }
   return calcReal(val);
 }

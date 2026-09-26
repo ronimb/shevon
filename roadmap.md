@@ -1,15 +1,17 @@
 # Roadmap
 
-Detailed plan for Shevon, the Casio fx-991ES PLUS emulator. This file is the
+Detailed plan for Shevon. This file is the
 **source of truth for scheduled work**.
 
 | If you need… | Go here |
 |--------------|---------|
 | Design rules (visual fidelity, behavior matching) | [`docs/principles.md`](docs/principles.md) |
-| Open bugs | [`issues.md`](issues.md) |
+| Open bugs (honesty / leftovers) | [`issues.md`](issues.md) |
+| Landed-correctness review (`R*` / `ti-*`) | [`docs/tech-issues.md`](docs/tech-issues.md) |
 | Ideas not yet assigned to a phase | [`backlog.md`](backlog.md) |
-| Feature-by-feature Casio map | [`docs/coverage.md`](docs/coverage.md) |
+| Feature-by-feature hardware map | [`docs/coverage.md`](docs/coverage.md) |
 | LCD element audit | [`docs/visual-fidelity-inventory.md`](docs/visual-fidelity-inventory.md) |
+| Triage / oversight (no implementation) | [`docs/prompts/triage.md`](docs/prompts/triage.md) |
 
 Canvases (`canvases/*.canvas.tsx`) are **views**. If a canvas disagrees with
 this file, this file wins — refresh the canvas in the same change when the
@@ -22,44 +24,33 @@ wrap-up, then move them to **Landed**).
 
 ## Now
 
-Priority (25 Sep 2026, after debt A–C): **sanity on landed COMP/STAT/EQN**,
-then the six remaining Phase 2 items, then packaging. Daily-driver bar is
-still COMP + STAT + EQN. Do not open Phase 3 until Phase 2 closes. Lying
-menus wait for the matching feature. Unbounded MthIO / LineIO is parked.
+Daily-driver bar: COMP + STAT + EQN. One slice per chat. Do not open
+Phase 3 until Phase 2 closes. Lying menus wait for the matching
+feature. LineIO / 99-byte / `:` / `hist-letters` stay parked.
 
-Engine debt A–C is in **Landed**. Historical index:
-[`docs/prompts/tech-debt.md`](docs/prompts/tech-debt.md).
-Phase 2 leftovers:
-[`docs/prompts/phase-2.md`](docs/prompts/phase-2.md).
-Next slice: [`p2-calc.md`](docs/prompts/p2-calc.md).
-Sanity: [`sanity-landed.md`](docs/prompts/sanity-landed.md).
+Catalog of landed-correctness ids: [`docs/tech-issues.md`](docs/tech-issues.md).
+Honesty leftovers: [`issues.md`](issues.md). After every slice: [`sanity-landed.md`](docs/prompts/sanity-landed.md).
+STAT / EQN pairing (no code): [`sanity-stat.md`](docs/prompts/sanity-stat.md).
+Triage (no code): [`triage.md`](docs/prompts/triage.md).
 
-### 1. Sanity check (landed functionality only)
+### Queue
 
-`npm test`, `npm run lint`, and a browser pass of COMP (trig, frac, SOLVE
-Variable / Can’t Solve / L−R, Syntax ERROR ◀▶ jump), STAT editor + recall,
-EQN quadratic real + a+bi, Pol/Rec pair line. File new defects in
-`issues.md`. Do not treat leftovers (LineIO, Dist, linear EQN) as failures.
+| Order | Id | What | Kickoff |
+|------:|----|------|---------|
+| 1 | `R28` | ×10ˣ paints condensed `×10`; caret keeps the exponent | write when opening |
+| 2 | `R29` | ∫ limits on the symbol; caret path matches the unit | write when opening |
+| 3 | `p2-calc` | Unshifted CALC E-19 | [`p2-calc.md`](docs/prompts/p2-calc.md) |
+| 4 | `p2-dist` | 1-VAR Dist P( Q( R( `'t` | write when opening |
+| 5 | `p2-stat-mode` | Stay in STAT on recall | write when opening |
+| 6 | `p2-eqn-linear` | EQN 2-unk / 3-unk | write when opening |
+| 7 | `p2-eqn-cubic` | EQN cubic | write when opening |
+| 8 | `p4-packaging` | Pages / PWA / portable exe / icon | write when opening |
 
-### 2. Remaining Phase 2
+`ti-stat` … `ti-edges` and `R17` (`r17-percent`) are in **Landed**. Do
+not start row 3 until rows 1–2 are in (COMP entry is still wrong).
+`R27` closed (PC `3` works).
 
-`p2-freq`, `p2-solve`, and `p2-edit` have landed. Then: `p2-calc`, `p2-dist`,
-`p2-stat-mode`, `p2-eqn-linear`, `p2-eqn-cubic`. See **Phase 2**. `p2-calc`
-is unshifted CALC (E-19), pulled in from `comp-calc` so COMP CALC matches
-the hardware the way SOLVE already does.
-
-### 3. Packaging (pulled forward)
-
-`p4-packaging` — GitHub Pages, PWA, electron-builder portable exe, real app
-icon. Still after the Phase 2 list; still before Phase 3 modes.
-
-### Parked extra — Current history
-
-Letter-shortcut audit (`hist-letters`) stays under **Emulator extras**. Not
-this program.
-
-Visual leftovers that are not tech debt (STAT ▲▼, Disp, `vis-elements`) stay
-on the cross-cutting list. `vis-no-literal` has landed.
+Engine debt A–C historical: [`tech-debt.md`](docs/prompts/tech-debt.md).
 
 ---
 
@@ -68,9 +59,8 @@ on the cross-cutting list. `vis-no-literal` has landed.
 Applies to **every** phase. Principles:
 [`docs/principles.md`](docs/principles.md).
 
-- [ ] `vis-elements` — Audit each screen vs the hardware and add missing
-      elements (mode/menu captions, dual-line answers, leftover unlabeled
-      editors). EQN quadratic a/b/c labels and cell carets already landed.
+- [ ] `vis-elements` — Missing or misplaced chrome on shipped screens.
+      Open: `R29` (∫), `prompt-prev-size`. EQN a/b/c and carets landed.
 - [ ] `vis-indicators` — Light status indicators from real state. ◀▶ and the
       COMP-history ▲▼ now light (Now slice); STAT ▲▼ and Disp still pending;
       CMPLX, MAT, VCT when those modes ship. (S/A/M/STO/RCL/STAT/D/R/G/FIX/SCI
@@ -88,6 +78,7 @@ Applies to **every** phase. Principles:
       shows a symbol or opens a menu. ENG/hyp dumps are gone; trig/hyp/`ln` now
       paint styled names and unclosed templates no longer leak IR stems (one
       shared table in `src/display.tsx` for the LCD and History).
+      Hole: `R28` (×10ˣ still paints `10^`).
 - [ ] `vis-checklist` — Definition of done per feature: element + behavior
       parity vs the manual figure. Pixel-exactness not required.
 
@@ -101,13 +92,13 @@ bottom-left entry) have landed — do not re-open unless a regression shows up.
 **Status: landed.** Goal was a repo that is understandable, testable, and
 honest about what it is.
 
-See **Landed**. One leftover diagnostic: [`issues.md`](issues.md) `p0-console`.
+See **Landed**. (`p0-console` is closed.)
 
 ---
 
 ## Phase 1 — Make COMP and SETUP honest
 
-**Status: landed.** Goal: every COMP faceplate key does the Casio thing, or is
+**Status: landed.** Goal: every COMP faceplate key does the hardware thing, or is
 explicitly disabled — never dump the letters ENG or hyp onto the LCD.
 
 See **Landed**. Remaining COMP gaps that did not block Phase 1 are listed under
@@ -142,7 +133,7 @@ See **Landed**. Remaining COMP gaps that did not block Phase 1 are listed under
 
 ---
 
-## Phase 3 — Remaining Casio modes
+## Phase 3 — Remaining hardware modes
 
 **Status: not started.** One mode per slice, with manual sample operations as
 tests before done. Do not start until Phase 2 closes.
@@ -170,7 +161,7 @@ policy). Do not add a separate not-implemented pass.
       regression suite.
 - [ ] `p4-packaging` — Verify GitHub Pages, PWA, and electron-builder portable
       exe; real app icon. **Pulled forward:** run after remaining Phase 2
-      (see **Now** §4), before Phase 3.
+      (see **Now** §3), before Phase 3.
 
 ---
 
@@ -200,8 +191,12 @@ as the keycaps (`sin`, `x^□`, `)`, `S⇔D`), not logical letters.
       non-calc operations (STO letter, MODE, SETUP, CLR, M+/M−).
 - [ ] Remaining letter shortcuts (and SHIFT/ALPHA overlays for A–F / M)
       audited against this contract.
+- [ ] `shift-ac-mem` — SHIFT AC clears memory with a visible
+      indication. Hardware SHIFT AC is OFF (skip). Today: SHIFT 9 →
+      2. Kickoff: [`docs/prompts/shift-ac-mem.md`](docs/prompts/shift-ac-mem.md).
 
-Related defects: [`issues.md`](issues.md) `hist-letters`, `comp-keys`.
+Related defects: [`issues.md`](issues.md) `hist-letters`, `comp-keys`,
+`shift-ac-mem`.
 
 ---
 
@@ -261,8 +256,44 @@ X= result, L−R residual, Continue (`p2-solve`). LCD errors are one
 `lcdError` (`CalcError`), not Syntax/Math booleans.
 
 **Tests** — golden (manual samples + Phase 1/2 + vis-no-literal +
-history/keys + SOLVE + E-40 offset/jump + STAT Edit) + parser (implicit
-multiply) > 86.
+history/keys + SOLVE + E-40 offset/jump + STAT Edit + `ti-stat` +
+`ti-numerics` + `ti-store` + `ti-parse` + `ti-keys` + `ti-escape` +
+`ti-edges` + `r17-percent`) + parser (implicit multiply) = 138
+(26 Sep 2026).
+
+**ti-stat** — STAT editor first keystroke replaces the cell (FREQ `1` → `5`);
+`evaluateExpression` does not overlay A/B/C/R/N on user memory; invalid
+x̂/ŷ is Math ERROR. STAT `n` / `r` / `stat_*` still resolve.
+
+**ti-numerics** — tan poles at every odd quarter-turn are Math ERROR;
+odd roots of negatives are real (`root(3,-8)` = −2); factorial / nCr /
+nPr reject non-integers and negatives; `0^0` and a lone `!` are Math
+ERROR. Factorial max stays 170 (`fact-max`).
+
+**ti-store** — STO evaluates `Ans` as a numeric env binding (huge Ans
+is not `"1e+21"` text); a failing operand does not write the letter.
+CALC/SOLVE `commitPromptValue` stores typed `0`; empty keeps previous.
+
+**ti-parse** — Adjacent memory letters multiply (`XY` is X×Y, `AB` is
+A×B). SOLVE does not prompt letters inside `Ans` / `nCr` / function
+stems. Unshifted CALC E-19 stays `p2-calc`.
+
+**ti-keys** — After `=`, x^n is `Ans^(‸)` (SHIFT: `root(Ans,‸)`);
+x² / cube always clear SHIFT. Caret jumps `pol(` `rec(` `^(`.
+frac / nPr / nCr / x^n / x² write the COMP line only in COMP.
+
+**ti-escape** — CALC / SOLVE / hyp run only on a COMP calc line (STAT
+recall already jumps to COMP). AC from STAT enters COMP with STAT off
+and overlays cleared; EQN AC stays in the editor and still clears hyp /
+prompt / SOLVE / `lcdError`. History Load enters COMP and drops overlays.
+
+**ti-edges** — `(−) 3 x²` is −9 (postfix x² above prefix `(−)`);
+Pol/Rec write X,Y via `setVars`; EQN a=0 is Math ERROR; `|x| < 1e-15`
+uses Norm sci; singular ∫ is Time Out; persisted Ans/vars/angle are
+validated; the result line is blank while typing.
+
+**r17-percent** — `%` is ÷100 on every path (`200+10%` = 200.1,
+`200-10%` = 199.9). Not percent-of.
 
 **debt-source-map** — IR rewrite carries original offsets onto AST nodes and
 `CalcError.offset`. Syntax / Math ERROR ◀▶ jumps to the fault token. Implicit
@@ -284,5 +315,8 @@ history. STAT recall lives in `modes/stat.tsx` (still jumps to COMP).
 
 When you pick up, finish, defer, or add **scheduled** work, edit this file in
 that same change. New ideas with no phase go in [`backlog.md`](backlog.md).
-Defects go in [`issues.md`](issues.md), with a phase or action id when one
-exists.
+Honesty / leftover defects go in [`issues.md`](issues.md), with a phase or
+action id when one exists. Landed-correctness review items (`R*`, `ti-*`) go in
+[`docs/tech-issues.md`](docs/tech-issues.md). Triage /
+oversight chats follow [`docs/prompts/triage.md`](docs/prompts/triage.md)
+and do not implement leftovers.

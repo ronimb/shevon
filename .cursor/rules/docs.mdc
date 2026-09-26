@@ -12,15 +12,20 @@ behave.
 | File | Role |
 |------|------|
 | `roadmap.md` | Scheduled work (Now, phases, vis-*, leftovers, landed) |
-| `issues.md` | Open bugs; include phase/action id when one exists |
+| `issues.md` | Honesty / leftover bugs; include phase/action id when one exists |
+| `docs/tech-issues.md` | Landed-correctness review (`R*` / `ti-*`) |
 | `backlog.md` | Unassigned ideas only — not the task list |
-| `docs/coverage.md` | Casio feature coverage |
+| `docs/coverage.md` | hardware feature coverage |
 | `docs/visual-fidelity-inventory.md` | LCD element audit |
 | `docs/prompts/tech-debt.md` | Engine debt A–C (landed; historical) |
-| `docs/prompts/phase-2.md` | Remaining Phase 2 leftovers (one slice per chat) |
+| `docs/prompts/triage.md` | Triage / oversight chats (not an implementation slice) |
 
 - Update the matching `.md` file in the same change when you add, finish,
   defer, or close work.
 - Canvases (`canvases/*.canvas.tsx`) are visual views. If they disagree with
   markdown, markdown wins — refresh the canvas when the story changed.
+- Do not name the hardware vendor or the original calculator model.
+  Follow `docs/principles.md` **Naming**.
+- Triage / oversight chats follow `docs/prompts/triage.md`. Do not
+  implement leftovers in those chats.
 - Do not recreate a competing task list in chat, a canvas, or the README.

@@ -6,4 +6,5 @@ coverage/
 *.log
 .env*
 !.env.example
-fx-570_991ES_PLUS_EN.pdf
+# Local hardware manual (do not commit). Do not widen to *.pdf.
+manual.pdf

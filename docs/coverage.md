@@ -1,4 +1,4 @@
-# Casio fx-991ES PLUS coverage
+# Hardware coverage
 
 Feature-by-feature map of the official user guide against the emulator.
 **Source of truth** for coverage status. The coverage canvas is a view of
@@ -8,12 +8,15 @@ Status is about **behavior**, not whether a menu label exists.
 
 | Status | Meaning |
 |--------|---------|
-| Done | User can perform the Casio operation from the overlay keys and get a plausible result |
-| Partial | Menu, evaluator helper, or a subset exists, but the Casio procedure is incomplete or wrong |
+| Done | User can perform the hardware operation from the overlay keys and get a plausible result |
+| Partial | Menu, evaluator helper, or a subset exists, but the hardware procedure is incomplete or wrong |
 | Missing | MODE/SETUP row is decorative, or the key is a no-op / literal text dump |
 
-Scheduled work: [`roadmap.md`](../roadmap.md). Defects: [`issues.md`](../issues.md).
-Refreshed 25 Sep 2026 after `p2-edit` (STAT Ins / Del-A / DEL-deletes-line).
+Scheduled work: [`roadmap.md`](../roadmap.md). Honesty leftovers:
+[`issues.md`](../issues.md). Landed-correctness review:
+[`docs/tech-issues.md`](tech-issues.md).
+Refreshed 26 Sep 2026. Test count: 138. Queue: `roadmap.md` **Now**.
+Percent is Done (`R17` / `r17-percent`).
 
 ---
 
@@ -53,7 +56,7 @@ MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
 | Fix / Sci / Norm | E-6 6/7/8 | Done | Digit count, rounding, Norm 1 vs 2; FIX/SCI indicators | — |
 | Display digits | E-38 | Done | Driven by Fix/Sci/Norm (Norm 1 uses 1e-2) | — |
 | ab/c vs d/c | E-6 c1/c2 | Done | SETUP page 2; mixed vs improper results | — |
-| STAT FREQ ON/OFF | E-6 c4 | Done | SETUP page 2; 80/40/26 row caps | — |
+| STAT FREQ ON/OFF | E-6 c4 | Done | SETUP page 2 item 3; 80/40/26 row caps | Unit page 2 puts STAT on 4 (`setup-page2`) |
 | Dot / Comma | E-6 c5 | Missing | Always dot | Result decimal separator |
 | Contrast | E-3, E-6 c6 | Missing | Not applicable to photo LCD | Skip (roadmap out of scope) |
 
@@ -64,9 +67,9 @@ MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
 | Natural templates | E-8 | Done | frac, mix, sqrt, pwr, int, diff, Σ, log_b, abs… | Height/nesting limits not enforced (backlog) |
 | INS wrap-as-argument | E-9 | Partial | frac/nPr/root wrap preceding operand | No general SHIFT DEL (INS) for arbitrary functions |
 | 99-byte input limit | E-7 | Missing | Unlimited string | Cursor-k warning at 10 bytes remaining |
-| Implicit multiply | E-7 | Partial | Token-level in the parser: 2π, 2sin, )( ; `__log10(100)` stays a call | Edge cases vs Casio priority (omitted × is 7th) |
-| Priority sequence | E-8 | Partial | Parser `**` / `*` / `+` after template rewrite | Unary minus vs x², metric/STAT postfix, AND/OR |
-| Percent | E-11 SHIFT ( | Done | SHIFT ( inserts % → /100 | Confirm Casio percent-of semantics on +/− (backlog) |
+| Implicit multiply | E-7 | Partial | Token-level in the parser: 2π, 2sin, )( , XY/AB; `__log10(100)` stays a call | Edge cases vs hardware priority (omitted × is 7th) |
+| Priority sequence | E-8 | Partial | Parser `**` / `*` / `+` after template rewrite; `(−) 3 x²` = −9 (`ti-edges`) | Metric/STAT postfix, AND/OR |
+| Percent | E-11 SHIFT ( | Done | SHIFT ( inserts %; `%` is ÷100 (`200+10%` = 200.1) | — |
 | Sexagesimal ° ′ ″ | E-11 | Done | Input and result use ° ′ ″; °′″ key toggle | — |
 | Multi-statements : | E-11 ALPHA 7 | Missing | ALPHA CALC inserts = | Colon chain + Disp indicator |
 | Engineering notation | E-11 ENG | Done | ENG / SHIFT ENG shift the displayed result | — |
@@ -76,8 +79,8 @@ MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
 
 | Feature | Manual | Status | In the emulator | Gap |
 |---------|--------|--------|-----------------|-----|
-| Ans | E-12 | Done | `ans` state; persisted localStorage | — |
-| Variables A–F, X, Y | E-13 | Done | ALPHA + keys; STO/RCL; persisted | RCL A/B/C NaN overlay fixed; `5` STO letter without `=` shows `5→C` |
+| Ans | E-12 | Done | `ans` state; persisted localStorage; load rejects non-finite | — |
+| Variables A–F, X, Y | E-13 | Done | ALPHA + keys; STO/RCL; persisted letters validated; STO evals Ans as a value | `5` STO letter without `=` shows `5→C` |
 | Independent M | E-13 | Done | M+ / SHIFT M−; M indicator | — |
 | CLR Setup / Memory / All | E-2, E-13 | Done | SHIFT 9 CLR menu: 1:Setup 2:Memory 3:All | — |
 
@@ -86,38 +89,38 @@ MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
 | Feature | Manual | Status | In the emulator | Gap |
 |---------|--------|--------|-----------------|-----|
 | π and e | E-13 | Done | SHIFT EXP → π; ALPHA EXP → e | Display vs 15-digit internal values (backlog) |
-| sin cos tan + inverse | E-13 | Done | Keys + SHIFT; angleMode conversion | Input-range Math ERROR from E-38 |
+| sin cos tan + inverse | E-13 | Done | Keys + SHIFT; angleMode conversion; tan poles Math ERROR | Remaining E-38 input-range checks |
 | Hyperbolic menu | E-13 hyp | Done | Overlay menu; evaluator sinh…atanh | — |
 | Abs | E-15 SHIFT hyp | Done | SHIFT hyp inserts Abs template | — |
 | ° r g conversions | E-14 SHIFT DRG | Missing | None | 1G(DRG′) menu |
 | 10^ and e^ | E-14 | Done | SHIFT log / SHIFT ln templates | — |
 | log, log_b, ln | E-14 | Done | log10, log_b, ln templates | LineIO log(a,b) comma form |
-| x² x³ x^ √ ³√ x⁻¹ | E-14 | Done | sqr, cube, ^, sqrt, root, SHIFT x⁻¹ | Consecutive x² ignored on Casio (backlog) |
-| ∫ integration | E-14, E-15 | Done | Adaptive Gauss–Kronrod (G7–K15) | Time Out Error; COMP-only rule (backlog) |
+| x² x³ x^ √ ³√ x⁻¹ | E-14 | Done | sqr, cube, ^, sqrt, root, SHIFT x⁻¹ | Consecutive x² ignored on the hardware (backlog) |
+| ∫ integration | E-14, E-15 | Done | Adaptive Gauss–Kronrod (G7–K15); evaluation budget → Time Out | COMP-only rule (backlog) |
 | d/dx derivative | E-14 | Done | Central difference + Richardson | Time Out |
 | Σ summation | E-14 | Partial | Integer loop; end capped at start+1000 | ±1e10 bounds; nested Pol/∫/d/dx/Σ ban |
 | Pol / Rec | E-14 | Done | SHIFT + / −; writes X,Y; `Pol(` / `Rec(` (no built-in comma); `=` paints `r=…, θ=…` or bottom-right `x=…, y=…` | Nested Pol/Rec still a scalar (primary r or X) |
-| x! | E-15 | Done | SHIFT x⁻¹; factorial() | Casio max 69; we allow 170 |
+| x! | E-15 | Done | SHIFT x⁻¹; factorial() | Hardware max 69; we allow 170 |
 | Ran# / RanInt# | E-15 | Done | SHIFT . and ALPHA . wired; templates | — |
-| nPr / nCr | E-18 | Done | SHIFT × / ÷ wrap operand | Range checks from E-39 |
+| nPr / nCr | E-18 | Done | SHIFT × / ÷ wrap operand; non-integer / negative Math ERROR | Remaining E-39 max-range checks |
 | Rnd | E-15 | Done | Respects current Fix/Sci/Norm | — |
 
 ## CALC / SOLVE
 
 | Feature | Manual | Status | In the emulator | Gap |
 |---------|--------|--------|-----------------|-----|
-| CALC | E-19 | Partial | Prompts every `[A-MYX]` in the raw string, then evaluates | Scheduled as `p2-calc` / `calc-ux`: memory letters only, previous value, recalc, equalities. Not SETUP LineIO |
-| SOLVE | E-20 SHIFT CALC | Done | Prompts other letters; “solve for x”; Newton 40 steps; equation + x= + L-R=; Continue; Variable ERROR / Can’t Solve | Unshifted CALC is `p2-calc` |
+| CALC | E-19 | Partial | Prompts every `[A-MYX]` in the raw string, then evaluates; typed `0` stores 0 | Scheduled as `p2-calc` / `calc-ux`: memory letters only, previous-value figure, recalc, equalities. Not SETUP LineIO |
+| SOLVE | E-20 SHIFT CALC | Done | Prompts other letters (not letters inside `Ans` / `nCr` / stems); “solve for x”; Newton 40 steps; equation + x= + L-R=; Continue; Variable ERROR / Can’t Solve | Unshifted CALC is `p2-calc` |
 
 ## STAT
 
 | Feature | Manual | Status | In the emulator | Gap |
 |---------|--------|--------|-----------------|-----|
-| Eight calculation types | E-22 | Done | 1-VAR through 1/X; linear transforms + quadratic Cramer's | Quadratic r vs Casio A B C m1 m2 n (backlog) |
-| Stat Editor | E-23 | Done | Grid, caret, FREQ, = advances cell, row caps; DEL deletes the line; SHIFT 1 → Edit → Ins / Del-A | — |
-| FREQ column | E-23 | Done | SETUP STAT ON; 80/40/26 caps | — |
-| Sum / Var / MinMax | E-23 | Done | SHIFT 1 STAT menu; inserts symbols | On Casio you recall while STAT stays active |
-| Reg + estimates | E-24 | Done | A B r C; __yhat __xhat __xhat1/2 | Quadratic r not shown (Casio uses A B C m1 m2 n) |
+| Eight calculation types | E-22 | Done | 1-VAR through 1/X; linear transforms + quadratic Cramer's | Quadratic r vs hardware A B C m1 m2 n (backlog) |
+| Stat Editor | E-23 | Done | Grid, caret, FREQ, = advances cell, row caps; first keystroke replaces the cell; DEL deletes the line; SHIFT 1 → Edit → Ins / Del-A | — |
+| FREQ column | E-23 | Done | SETUP STAT ON; 80/40/26 caps; first digit replaces default 1 | — |
+| Sum / Var / MinMax | E-23 | Done | SHIFT 1 STAT menu; inserts symbols | On the hardware you recall while STAT stays active |
+| Reg + estimates | E-24 | Done | A B r C; __yhat __xhat __xhat1/2 | Quadratic r not shown (hardware uses A B C m1 m2 n) |
 | Normal Dist P Q R 't | E-25 | Missing | Dist appears on STAT_RESULT; submenu empty | Standard normal probabilities |
 
 ## EQN
@@ -149,7 +152,7 @@ MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
 |---------|--------|--------|-----------------|-----|
 | Math ERROR / Syntax ERROR | E-40 | Partial | LCD strings; NaN/Infinity → Math ERROR; ◀▶ jumps to `CalcError.offset` | AC already clears the expression; Stack / Argument screens still missing |
 | Stack / Argument / Dimension | E-40 | Missing | None | Needed once MATRIX/VECTOR/deep nests exist |
-| Variable / Can’t Solve / Time Out | E-41 | Partial | Variable ERROR and Can’t Solve via `CalcError` | Time Out for slow ∫ / d/dx (backlog) |
+| Variable / Can’t Solve / Time Out | E-41 | Partial | Variable ERROR, Can’t Solve, and ∫ Time Out via `CalcError` | Time Out for slow d/dx (backlog) |
 | Calculation range ±1×10^99 | E-38 | Partial | Overflow beyond ±10¹⁰⁰ raises Math ERROR | Per-function ranges from E-38–39; factorial 69 |
 
 ## Platform (emulator extras)
@@ -158,9 +161,9 @@ MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
 |---------|--------|--------|-----------------|-----|
 | Photo overlay + hitboxes | — | Done | Absolute keys; triple-click calibration; `calculator_new.png` | — |
 | PC keyboard | — | Partial | Enter, arrows, Shift/Alt, comma (SHIFT )), S/C/T/L/R/Q/A, X/Y vars | Letter keys steal typing; Shift hold vs overlay toggle |
-| History / LaTeX pane | — | Done | 50 items, Load, physical-key Show Keys; STO / MODE / SETUP actions | Not Casio behavior; keep as extra. Live Current keys strip is on top |
+| History / LaTeX pane | — | Done | 50 items, Load, physical-key Show Keys; STO / MODE / SETUP actions | Not hardware behavior; keep as extra. Live Current keys strip is on top |
 | Electron + Pages + PWA | — | Partial | Scripts and workflow present | Verify portable exe, Pages deploy, and PWA install end-to-end |
-| Tests | E-16 examples | Partial | Golden + parser + CalcValue (101 after debt-value) | Remaining numbered sample operations in the PDF |
+| Tests | E-16 examples | Partial | Golden + parser + CalcValue + STAT Edit (111) | Remaining numbered sample operations in the PDF |
 
 ---
 
@@ -168,8 +171,8 @@ MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
 
 SHIFT and ALPHA are latched toggles on the overlay (momentary hold on the PC
 keyboard). After a shifted function the emulator usually clears SHIFT. Closing
-parentheses of sin/log-style functions can be omitted at `=` the same way Casio
-does.
+parentheses of sin/log-style functions can be omitted at `=` the same way the
+hardware does.
 
 | Key | Normal | SHIFT | ALPHA |
 |-----|--------|-------|-------|

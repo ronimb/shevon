@@ -1,10 +1,10 @@
 /**
- * Casio-style number formatting and display-format state.
+ * Hardware-style number formatting and display-format state.
  *
  * These helpers consume the IEEE `real` payload (`CalcValue.kind === 'real'`).
  * Complex, pair, BASE-N integer, and matrix dispatch stays at the LCD.
  *
- * The fx-991ES PLUS SETUP menu lets the user pick how results are displayed:
+ * The SETUP menu lets the user pick how results are displayed:
  *   - Fix n   (n = 0..9):  fixed number of decimal places
  *   - Sci n   (n = 1..10): scientific notation with n significant digits
  *   - Norm 1 / Norm 2:     "normal" display; Norm 1 switches to exponential
@@ -84,9 +84,9 @@ function plainDisplay(value: number): NumberDisplay {
 export function formatForDisplay(value: number, fmt: DisplayFormat): NumberDisplay {
   if (!isFinite(value) || isNaN(value)) return { type: 'plain', text: 'Error' };
 
-  const absVal = Math.abs(value);
-  if (absVal < 1e-15) return { type: 'plain', text: fmt.kind === 'fix' ? (0).toFixed(fmt.digits) : '0' };
+  if (value === 0) return { type: 'plain', text: fmt.kind === 'fix' ? (0).toFixed(fmt.digits) : '0' };
 
+  const absVal = Math.abs(value);
   switch (fmt.kind) {
     case 'fix': {
       const rounded = roundToFormat(value, fmt);

@@ -1,12 +1,10 @@
 import React from 'react';
-import { calcComplex, calcReal, type EqnResult } from '../types.ts';
+import { CalcError, calcComplex, calcReal, type EqnResult } from '../types.ts';
 import { EditorCaret, formatComplexPair, formatResultNumber } from '../display.tsx';
 
+/** Hardware quadratic needs a≠0. a=0 is Math ERROR, not a line (R19). */
 export function solveQuadratic(a: number, b: number, c: number): EqnResult[] {
-  if (a === 0) {
-    if (b === 0) return [{ label: "No solution", value: calcReal(NaN) }];
-    else return [{ label: "X =", value: calcReal(-c / b) }];
-  }
+  if (a === 0) throw new CalcError('math');
   let disc = b * b - 4 * a * c;
   if (disc < 0) {
     const real = -b / (2 * a);

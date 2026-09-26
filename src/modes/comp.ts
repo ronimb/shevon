@@ -1,21 +1,78 @@
-import { evaluateExpression, findPrecedingOperand } from '../evaluator.ts';
+import { evaluateExpression, findPrecedingOperand, type PolRecWrite } from '../evaluator.ts';
+import { DEFAULT_FORMAT } from '../format.ts';
 import { CURSOR_PATS, DELETE_STEMS, PATS } from '../keys.ts';
-import { CalcError, calcPrimary, type AngleMode, type Vars } from '../types.ts';
+import { CalcError, calcPrimary, type AngleMode, type CalcMode, type CalcValue, type Vars } from '../types.ts';
+
+/** CALC/SOLVE prompt commit. Typed 0 is 0 — do not treat parseFloat("0") as empty (R7). */
+export function commitPromptValue(typed: string, previous: string): number {
+  const n = Number.parseFloat(typed);
+  if (Number.isFinite(n)) return n;
+  const p = Number.parseFloat(previous);
+  return Number.isFinite(p) ? p : 0;
+}
+
+export type StoreAttempt =
+  | { ok: true; value: CalcValue; varsWrite?: PolRecWrite }
+  | { ok: false; error: CalcError };
+
+/** STO operand. Ans is the numeric env binding — never String(ans) (R4). */
+export function attemptStoreOperand(
+  operand: string,
+  scope: Vars,
+  ans: number,
+  angleMode: AngleMode,
+  statVars: Vars,
+): StoreAttempt {
+  const varsWrite: PolRecWrite = { X: Number.NaN, Y: Number.NaN };
+  try {
+    const value = evaluateExpression(operand, { ...scope }, ans, angleMode, statVars, DEFAULT_FORMAT, varsWrite);
+    const written = Number.isFinite(varsWrite.X) && Number.isFinite(varsWrite.Y)
+      ? { X: varsWrite.X, Y: varsWrite.Y }
+      : undefined;
+    return { ok: true, value, varsWrite: written };
+  } catch (e) {
+    return { ok: false, error: e instanceof CalcError ? e : new CalcError('syntax') };
+  }
+}
 
 /** SOLVE unknown is X. Dummy template `x` (∫ / d/dx / Σ) does not count. */
 export function expressionHasSolveUnknown(expr: string): boolean {
   return expr.replace(/[‸⬚]/g, '').includes('X');
 }
 
+/** IR stems whose letters are not memory (Ans, nCr, sin, …). Longest first (R8). */
+const SOLVE_IR_STEMS = Array.from(new Set([
+  ...PATS.map((p) => p.replace(/\($/, '')),
+  ...DELETE_STEMS,
+  'Ans', 'nCr', 'nPr', 'Ran#', 'RanInt',
+  'minX', 'maxX', 'minY', 'maxY',
+])).sort((a, b) => b.length - a.length);
+
+const SOLVE_PROMPT_LETTERS = 'ABCDEFMY';
+
 /** Non-X letters SOLVE prompts before the initial-X guess (A–F, M, Y). */
 export function collectSolvePromptVars(expr: string): string[] {
+  const raw = expr.replace(/[‸⬚]/g, '');
   const seen = new Set<string>();
   const order: string[] = [];
-  for (const ch of expr.replace(/[‸⬚]/g, '')) {
-    if ('ABCDEFMY'.includes(ch) && !seen.has(ch)) {
+  let i = 0;
+  while (i < raw.length) {
+    if (raw.startsWith('stat_', i)) {
+      i += 5;
+      while (i < raw.length && /[A-Za-z0-9_]/.test(raw[i])) i++;
+      continue;
+    }
+    const stem = SOLVE_IR_STEMS.find((s) => raw.startsWith(s, i));
+    if (stem) {
+      i += stem.length;
+      continue;
+    }
+    const ch = raw[i];
+    if (SOLVE_PROMPT_LETTERS.includes(ch) && !seen.has(ch)) {
       seen.add(ch);
       order.push(ch);
     }
+    i++;
   }
   return order;
 }
@@ -64,6 +121,140 @@ export function wrapFracTemplate(currentInput: string, showingResult: boolean): 
     return { input: before.slice(0, -operand.length) + `frac(${operand},‸)` + after, showingResult: false };
   }
   return { input: currentInput, showingResult: false, insertInstead: "frac(‸,)" };
+}
+
+/** x^n / x² / frac / nPr / nCr write the COMP line only in COMP (R9 / R10 / R25). */
+export function allowsCompLineEdit(calcMode: CalcMode): boolean {
+  return calcMode === 'COMP';
+}
+
+/**
+ * CALC / SOLVE / hyp overlays. COMP, or a STAT calc line that already
+ * jumped to COMP (`insertStatVar` / `stat-jump-comp`). Not STAT/EQN screens (R12).
+ */
+export function allowsCalcSolveHyp(calcMode: CalcMode): boolean {
+  return calcMode === 'COMP';
+}
+
+export function isStatSessionMode(calcMode: CalcMode): boolean {
+  return (
+    calcMode === 'STAT_DATA' || calcMode === 'STAT_MENU' ||
+    calcMode === 'STAT_RESULT' || calcMode === 'STAT_RESULT_SUB' ||
+    calcMode === 'STAT_EDITOR_MENU' || calcMode === 'STAT_EDIT'
+  );
+}
+
+export function isEqnEditorMode(calcMode: CalcMode): boolean {
+  return calcMode === 'EQN_QUAD' || calcMode === 'EQN_RESULT';
+}
+
+export type OverlayClear = {
+  showHypMenu: false;
+  promptVar: null;
+  promptVarsQueue: [];
+  solveScreen: null;
+  lcdError: null;
+};
+
+/** hyp / prompt / SOLVE / lcdError — AC and History Load both use this (R13 / R26). */
+export function clearedOverlays(): OverlayClear {
+  return {
+    showHypMenu: false,
+    promptVar: null,
+    promptVarsQueue: [],
+    solveScreen: null,
+    lcdError: null,
+  };
+}
+
+export type AllClearPatch = OverlayClear & {
+  calcMode: CalcMode;
+  clearStatType: boolean;
+  resetEqn: boolean;
+  resetCompLine: boolean;
+};
+
+/** AC: leave STAT with the indicator off; EQN stays in the editor; always drop overlays (R13). */
+export function applyAllClear(calcMode: CalcMode): AllClearPatch {
+  const overlays = clearedOverlays();
+  if (isEqnEditorMode(calcMode)) {
+    return {
+      calcMode: 'EQN_QUAD',
+      clearStatType: false,
+      resetEqn: true,
+      resetCompLine: false,
+      ...overlays,
+    };
+  }
+  return {
+    calcMode: 'COMP',
+    clearStatType: isStatSessionMode(calcMode),
+    resetEqn: false,
+    resetCompLine: true,
+    ...overlays,
+  };
+}
+
+export type HistoryLoadPatch = OverlayClear & {
+  currentInput: string;
+  currentSequence: string[];
+  showingResult: false;
+  replayIndex: -1;
+  calcMode: 'COMP';
+  clearStatType: true;
+};
+
+/** History Load always enters COMP and drops overlays so the line is visible (R26). */
+export function applyHistoryLoad(rawInput: string, sequence: string[]): HistoryLoadPatch {
+  return {
+    currentInput: rawInput + '‸',
+    currentSequence: [...sequence],
+    showingResult: false,
+    replayIndex: -1,
+    calcMode: 'COMP',
+    clearStatType: true,
+    ...clearedOverlays(),
+  };
+}
+
+export function applyPowerKey(
+  currentInput: string,
+  showingResult: boolean,
+  isShift: boolean,
+  forcePwr?: boolean,
+): { input: string; showingResult: false } {
+  if (showingResult) {
+    if (isShift && !forcePwr) return { input: 'root(Ans,‸)', showingResult: false };
+    return { input: 'Ans^(‸)', showingResult: false };
+  }
+  const parts = currentInput.split('‸');
+  const before = parts[0], after = parts[1] || '';
+  const operand = findPrecedingOperand(before);
+  if (isShift && !forcePwr) {
+    if (operand) {
+      return { input: before.slice(0, -operand.length) + `root(${operand},‸)` + after, showingResult: false };
+    }
+    return { input: before + `root(‸,)` + after, showingResult: false };
+  }
+  if (operand) {
+    return { input: before + `^(‸)` + after, showingResult: false };
+  }
+  return { input: before + `pwr(‸,)` + after, showingResult: false };
+}
+
+/** x² / cube. After a result, SHIFT is always consumed (R10). */
+export function applySquareKey(
+  currentInput: string,
+  showingResult: boolean,
+  isShift: boolean,
+): { input: string; showingResult: false; isShift: false } {
+  const symbol = isShift ? '³' : '²';
+  if (showingResult) {
+    return { input: `Ans${symbol}‸`, showingResult: false, isShift: false };
+  }
+  const parts = currentInput.split('‸');
+  const before = parts[0], after = parts[1] || '';
+  return { input: before + `${symbol}‸` + after, showingResult: false, isShift: false };
 }
 
 export function newtonSolveX(expr: string, vars: Vars, ans: number, angleMode: AngleMode, statVars: Vars): NewtonSolveOk {

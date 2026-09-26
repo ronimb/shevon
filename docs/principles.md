@@ -3,14 +3,24 @@
 These rules apply to every feature, mode, and phase. Agents must follow them
 when implementing, reviewing, or claiming something is done.
 
-The Casio manual `fx-570_991ES_PLUS_EN.pdf` is the **behavior spec**. Manual
+The hardware manual `manual.pdf` is the **behavior spec**. Manual
 page references (e.g. `E-16`) appear in code and tests.
+
+---
+
+## Naming
+
+Do not name the hardware vendor or the original calculator model in
+source, comments, docs, canvases, filenames, commit messages, or chat.
+Say **the hardware**, **the unit**, **the manual**, or **Shevon**. The
+local spec file is `manual.pdf` — do not delete, move, or rename it.
+Golden tests live in `src/manual.golden.test.ts`.
 
 ---
 
 ## Match function behavior
 
-Shevon is a Casio **fx-991ES PLUS** emulator, not a generic scientific
+Shevon is a hardware overlay emulator, not a generic scientific
 calculator.
 
 - Every key, menu, and mode must do what the hardware does — or be **explicitly
@@ -57,5 +67,5 @@ manual figure: same elements, same placement/role, same behavior.
 Pixel-exactness is not required.
 
 Do not claim a phase or feature complete without updating
-[`roadmap.md`](../roadmap.md) (and [`issues.md`](../issues.md) if a defect
-closed).
+[`roadmap.md`](../roadmap.md) (and [`issues.md`](../issues.md) or
+[`docs/tech-issues.md`](tech-issues.md) if a defect closed).

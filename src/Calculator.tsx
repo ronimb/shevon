@@ -371,10 +371,7 @@ const Calculator: React.FC = () => {
                                {isReplayableHistory(item) && (
                                <button
                                  onClick={() => {
-                                   store.setCurrentInput(item.rawInput + "‸");
-                                   store.setCurrentSequence([...item.sequence]);
-                                   store.setShowingResult(false);
-                                   store.setReplayIndex(-1);
+                                   actions.handleHistoryLoad(item.rawInput, item.sequence);
                                  }}
                                  className="text-[9px] text-blue-400/40 hover:text-blue-400 transition-colors uppercase font-bold tracking-widest cursor-pointer"
                                >

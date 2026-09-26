@@ -6,11 +6,13 @@ roadmap**. This file is not the task list.
 | If you need… | Go here |
 |--------------|---------|
 | Scheduled work (phases, Now, vis-*) | [`roadmap.md`](roadmap.md) |
-| Open bugs | [`issues.md`](issues.md) |
+| Honesty / leftover bugs | [`issues.md`](issues.md) |
+| Landed-correctness review | [`docs/tech-issues.md`](docs/tech-issues.md) |
 | Design rules | [`docs/principles.md`](docs/principles.md) |
 
 When an idea gets a phase, action id, or a “do this next”, **move it** to
-[`roadmap.md`](roadmap.md) (or [`issues.md`](issues.md) if it is a defect)
+[`roadmap.md`](roadmap.md) (or [`issues.md`](issues.md) /
+[`docs/tech-issues.md`](docs/tech-issues.md) if it is a defect)
 and delete it from here. Do not leave the same item in two files.
 
 ---
@@ -18,16 +20,15 @@ and delete it from here. Do not leave the same item in two files.
 ## Engine / COMP edges
 
 - Natural-display **height and nesting limits** from E-8 (templates currently
-  nest without Casio’s caps).
-- **Omitted-× priority** (Casio ranks it 7th) vs our rewrite-then-parse
+  nest without the hardware's caps).
+- **Omitted-× priority** (hardware ranks it 7th) vs our rewrite-then-parse
   implicit multiply (`2π`, `2sin`, `)(`).
-- Confirm **percent-of** semantics on `+` / `−` (SHIFT `(` inserts `%` → `/100`).
-- Casio **ignores consecutive `x²`**; we do not.
+- The hardware **ignores consecutive `x²`**; we do not.
 - Internal **15-digit** vs displayed values for π and e.
 
 ## STAT extras
 
-- On quadratic regression, Casio shows **A B C m1 m2 n**, not r. We expose r
+- On quadratic regression, hardware shows **A B C m1 m2 n**, not r. We expose r
   like the linear types.
 - **STO / M+** from inside the STAT editor (blocked on the hardware in ways we
   have not modeled).
@@ -46,8 +47,8 @@ it unless a regression shows up.)
 
 ## Diagnostics
 
-- **Time Out Error** for slow ∫ / d/dx (Casio). Related to `comp-range` but
-  not scheduled as its own action.
+- **Time Out** for slow-but-convergent ∫ / d/dx (singular ∫ already
+  times out — `R22`). Related to `comp-range`.
 - **COMP-only** rule for integration (reject ∫ outside COMP).
 
 ---

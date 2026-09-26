@@ -21,7 +21,7 @@ You are implementing **slice A only**: source-map the IR rewrite so
    each stem’s start index in the **original** string. Put that span on
    the AST node and on thrown `CalcError.offset`.
 3. LCD: on Syntax ERROR / Math ERROR, left/right moves the caret to
-   `offset` (E-40). AC still clears the error (and on Casio, AC clears the
+   `offset` (E-40). AC still clears the error (and on the hardware, AC clears the
    expression — match E-40 if that is what the figure shows; do not
    invent extra recovery).
 4. Move implicit multiply into the parser (token-level). Delete the
@@ -42,7 +42,7 @@ You are implementing **slice A only**: source-map the IR rewrite so
 - `src/parser.ts` — implicit multiply
 - `src/types.ts` — `CalcError.offset` already exists; use it
 - `src/Calculator.tsx` — left/right on an error jumps the caret
-- `src/casio-manual.golden.test.ts` — offset + jump + `log10(100)`
+- `src/manual.golden.test.ts` — offset + jump + `log10(100)`
 
 ## Done when
 

@@ -3,7 +3,7 @@ import type { CalcMode, StatEntry, StatType, Vars } from '../types.ts';
 import { EditorCaret, renderMathSymbol } from '../display.tsx';
 
 /**
- * fx-991ES PLUS STAT editor row caps (manual E-23):
+ * STAT editor row caps (manual E-23):
  * 1-VAR FREQ OFF = 80, 1-VAR FREQ ON or 2-VAR FREQ OFF = 40, 2-VAR FREQ ON = 26.
  */
 export function getStatMaxRows(statType: StatType | null, freqEnabled: boolean): number {
@@ -14,7 +14,7 @@ export function getStatMaxRows(statType: StatType | null, freqEnabled: boolean):
   return 40;
 }
 
-/** Blank STAT editor row. Casio always keeps at least one after Del / Del-A. */
+/** Blank STAT editor row. The hardware always keeps at least one after Del / Del-A. */
 export function emptyStatRow(): StatEntry {
   return { x: '', y: '', freq: '1' };
 }
@@ -241,6 +241,10 @@ export const calculateStatVars = (
         s['yHat'] = 0; // Handled in __yhat
       }
     }
+    // Recall tokens for STAT menu n / r. A/B/C/R/N stay on this object for
+    // x̂/ŷ but must not overlay user memory in evaluateExpression (R3).
+    s['stat_n'] = s['N'];
+    if (typeof s['R'] === 'number' && !isNaN(s['R'])) s['stat_r'] = s['R'];
     if (isNaN(s['A'])) delete s['A'];
     if (isNaN(s['B'])) delete s['B'];
     if (isNaN(s['C'])) delete s['C'];
@@ -286,12 +290,20 @@ export function applyStatDigit(
   statType: StatType | null,
   statFrequencyEnabled: boolean,
   val: string,
+  replace = true,
 ): StatEntry[] | undefined {
   if (isNaN(Number(val)) && val !== '.' && val !== '-') return undefined;
   const next = [...data];
   if (row < 0 || row >= next.length) return undefined;
   const entry = { ...next[row] };
   const field = getStatField(statType, statFrequencyEnabled, col);
+  // First digit / sign / dot into a cell replaces it (R14). DEL deletes the
+  // line (E-23), so overwrite is how you change a default FREQ of 1.
+  if (replace) {
+    entry[field] = val;
+    next[row] = entry;
+    return next;
+  }
   let currentStr = String(entry[field] || "0");
   if (currentStr === "0" && val !== '.') currentStr = "";
   if (val === '-' && currentStr.startsWith('-')) return data;

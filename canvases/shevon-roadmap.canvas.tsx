@@ -1,9 +1,6 @@
 import {
   Button,
   Callout,
-  Card,
-  CardBody,
-  CardHeader,
   H1,
   H2,
   Pill,
@@ -12,318 +9,121 @@ import {
   Stat,
   Table,
   Text,
-  TodoListCard,
-  UsageBar,
   useCanvasAction,
 } from "cursor/canvas";
 
+const TRIAGE = `Follow docs/prompts/triage.md exactly. You are triage and oversight only. Do not implement leftovers. Start with one briefing from the files as they are now.`;
+
+const R28 = `R28 is next (roadmap.md Now row 1). Write the kickoff under docs/prompts/ when opening. ×10ˣ paints condensed ×10; caret keeps the exponent. Afterward run docs/prompts/sanity-landed.md. Do not start R29 or p2-calc.`;
+
 export default function ShevonRoadmap() {
   const dispatch = useCanvasAction();
-
-  const start = (prompt: string) => {
+  const open = (path: string) => dispatch({ type: "openFile", path });
+  const start = (prompt: string) =>
     dispatch({ type: "newComposerChat", userPrompt: prompt });
-  };
 
   return (
-    <Stack gap={28}>
+    <Stack gap={24}>
       <Stack gap={8}>
         <H1>Roadmap</H1>
         <Text tone="secondary">
-          Visual view of `roadmap.md` (refreshed 25 Sep 2026). Markdown is
-          the source of truth. This canvas is a phase board and launch pad,
-          not a second plan.
+          View of `roadmap.md` **Now**. Markdown wins if this disagrees.
         </Text>
       </Stack>
 
       <Row gap={8} wrap>
-        <Button
-          variant="primary"
-          onClick={() => dispatch({ type: "openFile", path: "roadmap.md" })}
-        >
+        <Button variant="primary" onClick={() => open("roadmap.md")}>
           Open roadmap.md
         </Button>
-        <Button
-          variant="secondary"
-          onClick={() => dispatch({ type: "openFile", path: "issues.md" })}
-        >
-          Open issues.md
+        <Button variant="secondary" onClick={() => open("docs/tech-issues.md")}>
+          Tech issues
+        </Button>
+        <Button variant="secondary" onClick={() => open("issues.md")}>
+          Issues
+        </Button>
+        <Button variant="ghost" onClick={() => open("docs/coverage.md")}>
+          Coverage
         </Button>
         <Button
           variant="ghost"
-          onClick={() => dispatch({ type: "openFile", path: "backlog.md" })}
+          onClick={() => open("canvases/coverage.canvas.tsx")}
         >
-          Open backlog.md
+          Coverage canvas
         </Button>
         <Button
           variant="ghost"
-          onClick={() =>
-            dispatch({ type: "openFile", path: "docs/principles.md" })
-          }
+          onClick={() => open("canvases/tech-issues.canvas.tsx")}
         >
-          Principles
-        </Button>
-        <Button
-          variant="ghost"
-          onClick={() =>
-            dispatch({
-              type: "openFile",
-              path: "canvases/tech-debt.canvas.tsx",
-            })
-          }
-        >
-          Tech-debt canvas
+          Tech-issues canvas
         </Button>
       </Row>
 
       <Row gap={24} align="end">
-        <Stat value="Phase 2" label="Current phase" tone="warning" />
-        <Stat value="5" label="Phase 2 items open" />
-        <Stat value="13" label="Open issues" tone="warning" />
+        <Stat value="R28" label="Next slice" tone="warning" />
+        <Stat value="Phase 2" label="Current phase" />
         <Stat value="38/76" label="Coverage done" />
       </Row>
 
-      <UsageBar
-        total={5}
-        topLeftLabel="Phase progress (source: roadmap.md)"
-        topRightLabel="0 and 1 landed · 2 in progress · 3 and 4 not started"
-        segments={[
-          { id: "p0", value: 1, color: "green" },
-          { id: "p1", value: 1, color: "green" },
-          { id: "p2", value: 1, color: "yellow" },
-          { id: "p3", value: 1, color: "gray" },
-          { id: "p4", value: 1, color: "gray" },
-        ]}
-      />
-
-      <Callout tone="success" title="Visual fidelity = elements + placement + behavior">
-        Not pixel-perfect mimicry. Every hardware element must be present,
-        in the hardware’s position/role, and behave the same. Never dump
-        literal function text. Never let a menu silently fall through to
-        COMP. Full rules: `docs/principles.md`.
+      <Callout tone="warning" title="COMP entry before CALC UX">
+        ×10ˣ and ∫ entry are wrong (`R28` `R29`). Do not start
+        `p2-calc` until those two are in.
       </Callout>
 
-      <H2>Phases</H2>
+      <H2>Now</H2>
       <Table
-        headers={["Phase", "Status", "Goal"]}
-        columnAlign={["left", "left", "left"]}
-        rowTone={["success", "success", "warning", "neutral", "neutral"]}
-        rows={[
-          [
-            "0 Foundation",
-            "Landed",
-            "Typed AST, tests, no AI Studio deps, honest README",
-          ],
-          [
-            "1 COMP / SETUP",
-            "Landed",
-            "Fix/Sci/Norm, hyp, Ran#, ENG, DMS, Rnd, Gauss–Kronrod, CLR",
-          ],
-          [
-            "2 STAT / EQN",
-            "In progress",
-            "CALC E-19, Dist, stay in STAT, linear/cubic EQN",
-          ],
-          [
-            "3 Remaining modes",
-            "Not started",
-            "CMPLX, BASE-N, MATRIX, VECTOR, TABLE, CONST/CONV — after Phase 2",
-          ],
-          [
-            "4 Fidelity / packaging",
-            "Packaging pulled forward",
-            "p4-packaging after remaining P2; surd/π and PDF samples stay here",
-          ],
-        ]}
         striped
-      />
-
-      <Callout tone="info" title="Priority (25 Sep 2026, after debt)">
-        Sanity on landed COMP/STAT/EQN/SOLVE, then remaining Phase 2
-        (`p2-calc` next), then packaging. Engine debt A–C and `p2-edit`
-        are landed. Phase 3 stays gated.
-      </Callout>
-
-      <H2>Now — remaining Phase 2</H2>
-      <Card>
-        <CardHeader trailing={<Pill size="sm" active>start here</Pill>}>
-          After sanity: p2-calc
-        </CardHeader>
-        <CardBody>
-          <Stack gap={10}>
-            <Text>
-              Debt A–C and STAT Edit landed. Next leftover is unshifted
-              CALC (E-19). Then Dist, stay in STAT, linear/cubic EQN, then
-              packaging.
-            </Text>
-            <Row gap={8} wrap>
-              <Button
-                variant="primary"
-                onClick={() =>
-                  start(
-                    "Follow docs/prompts/p2-calc.md exactly. Slice p2-calc only (unshifted CALC, E-19). Afterward run docs/prompts/sanity-landed.md. Do not start Dist, stay-in-STAT, EQN 1/2/4, LineIO, or packaging.",
-                  )
-                }
-              >
-                Start p2-calc
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() =>
-                  dispatch({
-                    type: "openFile",
-                    path: "docs/prompts/p2-calc.md",
-                  })
-                }
-              >
-                Open p2-calc prompt
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() =>
-                  dispatch({
-                    type: "openFile",
-                    path: "docs/prompts/sanity-landed.md",
-                  })
-                }
-              >
-                Sanity checklist
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() =>
-                  dispatch({
-                    type: "openFile",
-                    path: "docs/prompts/phase-2.md",
-                  })
-                }
-              >
-                Phase 2 index
-              </Button>
-            </Row>
-          </Stack>
-        </CardBody>
-      </Card>
-
-      <H2>Phase 2 remaining</H2>
-      <Text tone="secondary">
-        After sanity. Close these before opening Phase 3. Ids match
-        `roadmap.md`. Start `p2-calc` from the card above, not from a
-        leftover id that has no prompt yet.
-      </Text>
-      <TodoListCard
-        defaultExpanded
-        todos={[
-          {
-            id: "p2-solve",
-            status: "completed",
-            content:
-              "p2-solve — typed CalcError + SOLVE UX landed (Variable ERROR / Can’t Solve / solve for x / x= + L-R= / Continue)",
-          },
-          {
-            id: "p2-edit",
-            status: "completed",
-            content:
-              "p2-edit — STAT Edit Ins and Del-A; DEL deletes a line (issue stat-del)",
-          },
-          {
-            id: "p2-calc",
-            status: "pending",
-            content:
-              "p2-calc — Unshifted CALC E-19: memory-letter prompts, previous value, recalc, equalities (issue calc-ux)",
-          },
-          {
-            id: "p2-dist",
-            status: "pending",
-            content:
-              "p2-dist — 1-VAR Dist: P( Q( R( and normalized variate 't (issue dist-empty)",
-          },
-          {
-            id: "p2-stat-mode",
-            status: "pending",
-            content:
-              "p2-stat-mode — Stay in STAT when recalling variables (issue stat-jump-comp)",
-          },
-          {
-            id: "p2-eqn-linear",
-            status: "pending",
-            content: "p2-eqn-linear — EQN 2-unknown and 3-unknown linear systems",
-          },
-          {
-            id: "p2-eqn-cubic",
-            status: "pending",
-            content:
-              "p2-eqn-cubic — EQN cubic (quadratic a+bi already landed; exact √ form is p4-exact)",
-          },
+        headers={["#", "Id", "What", "Kickoff"]}
+        rows={[
+          ["1", "R28", "×10ˣ condensed; caret keeps exponent", "write when opening"],
+          ["2", "R29", "∫ limits + caret path", "write when opening"],
+          ["3", "p2-calc", "Unshifted CALC E-19", "p2-calc.md"],
+          ["4–7", "Phase 2", "Dist, stay-in-STAT, EQN 1/2/4", "roadmap Phase 2"],
+          ["8", "p4-packaging", "Pages / PWA / exe / icon", "after Phase 2"],
         ]}
-        onTodoClick={(todo) => {
-          if (todo.id === "p2-edit") {
-            dispatch({
-              type: "openFile",
-              path: "docs/prompts/p2-edit.md",
-            });
-            return;
-          }
-          if (todo.id === "p2-calc") {
-            dispatch({
-              type: "openFile",
-              path: "docs/prompts/p2-calc.md",
-            });
-            return;
-          }
-          if (todo.status === "completed") return;
-          dispatch({
-            type: "openFile",
-            path: "docs/prompts/phase-2.md",
-          });
-        }}
       />
 
-      <H2>Cross-cutting visual fidelity</H2>
+      <Row gap={8} wrap>
+        <Button variant="primary" onClick={() => start(R28)}>
+          Start R28
+        </Button>
+        <Button
+          variant="secondary"
+          onClick={() => open("docs/tech-issues.md")}
+        >
+          Open tech-issues.md
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={() =>
+            start(
+              "Follow docs/prompts/sanity-stat.md exactly. Pairing / verification only. Do not implement leftovers or R28.",
+            )
+          }
+        >
+          Start STAT pairing
+        </Button>
+        <Button variant="ghost" onClick={() => start(TRIAGE)}>
+          Start triage
+        </Button>
+      </Row>
+
+      <H2>Gates</H2>
       <Text>
-        Runs alongside every phase. Inventory:
-        `docs/visual-fidelity-inventory.md`. `vis-cursor` and EQN quadratic
-        placement have landed.
+        No Phase 3 until Phase 2 closes. No LineIO / 99-byte / `:` /
+        `hist-letters` in this queue. Lying MODE/EQN rows wait on the
+        matching feature. Debt A–C stays landed.
       </Text>
-      <Table
-        headers={["Id", "Open work"]}
-        rows={[
-          ["vis-elements", "Missing captions, dual-line answers, leftover unlabeled editors"],
-          ["vis-indicators", "◀▶ + COMP ▲▼ landed. Remaining: STAT ▲▼, Disp; CMPLX/MAT/VCT with Phase 3"],
-          ["vis-menus", "Not a standalone pass — fix when the matching feature ships"],
-          ["vis-result", "Surd/π forms, complex a+bi (Pol/Rec dual-line landed with debt-value)"],
-          ["vis-errors", "◀▶ jump landed (debt-source-map). Stack / Argument screens still open"],
-          ["vis-no-literal", "Landed: trig/hyp/ln painted; unclosed templates no longer leak IR"],
-          ["vis-checklist", "Element + behavior parity vs the manual figure"],
-        ]}
-        striped
-      />
 
-      <H2>COMP leftovers (unphased)</H2>
-      <Text tone="secondary">
-        Pull into the current phase when they block honesty. Full list in
-        `roadmap.md`.
-      </Text>
-      <Table
-        headers={["Id", "Gap"]}
-        rows={[
-          ["comp-lineio", "MthIO / LineIO still display-only"],
-          ["comp-colon", "Multi-statements : and Disp"],
-          ["comp-drg", "SHIFT DRG ° r g conversions"],
-          ["comp-bytes", "99-byte input limit + cursor-k"],
-          ["comp-sep", "SETUP Dot / Comma separator"],
-          ["comp-calc", "Pulled into Phase 2 as p2-calc (E-19 CALC)"],
-          ["comp-range", "Per-function ranges; factorial 69; Σ bounds"],
-          ["comp-keys", "Letter keys steal typing; Shift hold vs toggle"],
-        ]}
-        striped
-      />
-
-      <H2>Out of scope until later</H2>
-      <Text tone="secondary">
-        Hardware contrast, battery, auto power-off. Pixel-perfect LCD font
-        (not before Phase 3 is done). Do not re-implement Phase 0 / Phase 1.
-        Unassigned ideas live in `backlog.md`, not here.
-      </Text>
+      <Row gap={8} wrap>
+        <Pill active onClick={() => open("docs/prompts/triage.md")}>
+          triage.md
+        </Pill>
+        <Pill onClick={() => open("docs/principles.md")}>principles</Pill>
+        <Pill onClick={() => open("backlog.md")}>backlog</Pill>
+        <Pill onClick={() => open("docs/prompts/tech-debt.md")}>
+          tech-debt (historical)
+        </Pill>
+      </Row>
     </Stack>
   );
 }

@@ -1,0 +1,13 @@
+---
+description: Triage and oversight chats follow docs/prompts/triage.md
+alwaysApply: true
+---
+
+# Triage pointer
+
+If this chat is **triage, oversight, routing, “what’s next”, or a done-check**
+— follow [`docs/prompts/triage.md`](docs/prompts/triage.md) for the whole
+session. Do not implement a leftover in that chat.
+
+Implementation chats still follow the slice prompt named in `roadmap.md`
+**Now** (one slice per chat). Do not invent a second plan.

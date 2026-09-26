@@ -44,6 +44,27 @@ type Token =
 const IDENT_START = /[A-Za-z_]/;
 const IDENT_PART = /[A-Za-z0-9_]/;
 const DIGIT = /[0-9]/;
+/** Hardware memory letters. Adjacent ones multiply (XY → X×Y), not one name (R2). */
+const MEMORY_LETTERS = new Set(['A', 'B', 'C', 'D', 'E', 'F', 'M', 'X', 'Y']);
+/** Multi-char value names. Longest first so Ans is not A then ns. */
+const RESERVED_IDENTS = ['Infinity', 'Ans', 'NaN', 'pi'];
+
+function takeIdent(input: string, start: number): number {
+  const n = input.length;
+  const rest = input.slice(start);
+  if (rest.startsWith('__') || rest.startsWith('stat_')) {
+    let i = start;
+    while (i < n && IDENT_PART.test(input[i])) i++;
+    return i;
+  }
+  for (const name of RESERVED_IDENTS) {
+    if (rest.startsWith(name)) return start + name.length;
+  }
+  if (MEMORY_LETTERS.has(input[start])) return start + 1;
+  let i = start;
+  while (i < n && IDENT_PART.test(input[i])) i++;
+  return i;
+}
 
 export function tokenize(input: string): Token[] {
   const tokens: Token[] = [];
@@ -74,11 +95,11 @@ export function tokenize(input: string): Token[] {
       continue;
     }
 
-    // Identifiers: letters, digits, underscore. Covers pi, e, Ans, X, __sin,
-    // stat_sigx2, NaN, Infinity, single-letter variables, etc.
+    // Identifiers: reserved names (Ans, pi, __sin, stat_*), then one memory
+    // letter each so XY / AB are X×Y / A×B (R2), then other idents (e, …).
     if (IDENT_START.test(c)) {
       const start = i;
-      while (i < n && IDENT_PART.test(input[i])) i++;
+      i = takeIdent(input, start);
       tokens.push({ type: 'ident', value: input.slice(start, i), pos: start });
       continue;
     }

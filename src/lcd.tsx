@@ -5,7 +5,7 @@ import { CalcError, calcErrorLabel } from './types.ts';
 import { formatMath, formatResultNumber, SciNotation } from './display.tsx';
 import { formatEngineering, formatDMS, type DisplayFormat } from './format.ts';
 import { toFraction } from './evaluator.ts';
-import { moveCompCursorRight } from './modes/comp.ts';
+import { allowsCalcSolveHyp, moveCompCursorRight } from './modes/comp.ts';
 import {
   StatDataScreen,
   StatEditScreen,
@@ -31,9 +31,12 @@ export function isLcdMenu(opts: {
   calcMode: CalcMode;
 }): boolean {
   const { showHypMenu, solveScreen, calcMode } = opts;
-  return (
+  const calcOverlay = allowsCalcSolveHyp(calcMode) && (
     showHypMenu ||
-    solveScreen === 'confirm' || solveScreen === 'continue' ||
+    solveScreen === 'confirm' || solveScreen === 'continue'
+  );
+  return (
+    calcOverlay ||
     calcMode === 'MENU' || calcMode === 'SETUP' || calcMode === 'CLR_MENU' ||
     calcMode === 'EQN_MENU' || calcMode === 'STAT_MENU' || calcMode === 'STAT_RESULT' ||
     calcMode === 'STAT_RESULT_SUB' || calcMode === 'STAT_DATA' ||
@@ -76,6 +79,13 @@ export function lcdIndicators(opts: {
     indicatorUp: (calcMode === 'EQN_RESULT' && eqnResultIdx > 0) || canReplayUp,
     indicatorDown: (calcMode === 'EQN_RESULT' && eqnResultIdx < eqnResults.length - 1) || canReplayDown,
   };
+}
+
+/** Hardware: idle AC shows 0; while typing the result line stays blank (R24). */
+export function resultLineWhileEditing(currentInput: string, showingResult: boolean): '0' | '' {
+  if (showingResult) return '';
+  const raw = currentInput.replace(/[‸⬚]/g, '');
+  return raw.length === 0 ? '0' : '';
 }
 
 export interface LcdProps {
@@ -134,13 +144,14 @@ export function LcdScreen(p: LcdProps) {
   });
 
   const renderInput = () => {
-    if (p.solveScreen === 'confirm') {
+    const calcOverlay = allowsCalcSolveHyp(p.calcMode);
+    if (calcOverlay && p.solveScreen === 'confirm') {
       return <div className="mode-menu"><div className="mode-item">solve for x</div></div>;
     }
-    if (p.solveScreen === 'continue') {
+    if (calcOverlay && p.solveScreen === 'continue') {
       return <div className="mode-menu"><div className="mode-item">Continue?</div></div>;
     }
-    if (p.showHypMenu) {
+    if (calcOverlay && p.showHypMenu) {
       return (
         <div className="mode-menu grid grid-cols-3 gap-x-4 gap-y-2 text-[0.95rem]">
           <div className="mode-item"><span className="mode-num mr-1 text-black/40">1:</span>sinh</div>
@@ -152,7 +163,7 @@ export function LcdScreen(p: LcdProps) {
         </div>
       );
     }
-    if (p.promptVar) {
+    if (calcOverlay && p.promptVar) {
       return (
         <div className="flex flex-col">
           <div className="text-[0.9rem] opacity-70 mb-1" dangerouslySetInnerHTML={{ __html: formatMath(p.currentInput.replace('‸', '')) }} />
@@ -266,7 +277,7 @@ export function LcdScreen(p: LcdProps) {
   };
 
   const renderResult = () => {
-    if (p.promptVar) {
+    if (allowsCalcSolveHyp(p.calcMode) && p.promptVar) {
       return (
         <div className="decimal-result flex flex-col items-end">
           <div className="text-[0.7rem] opacity-50 mb-[-4px]">{p.prevPromptValue}</div>
@@ -356,7 +367,8 @@ export function LcdScreen(p: LcdProps) {
       return <div className="decimal-result">{formatResultNumber(p.ans, p.displayFormat)}</div>;
     }
 
-    return <div className="decimal-result">0</div>;
+    const idle = resultLineWhileEditing(p.currentInput, p.showingResult);
+    return idle === '0' ? <div className="decimal-result">0</div> : null;
   };
 
   return (

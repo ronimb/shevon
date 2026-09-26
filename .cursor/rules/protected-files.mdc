@@ -1,0 +1,15 @@
+---
+description: Do not delete, move, or rename the local manual or other user files
+alwaysApply: true
+---
+
+# Protected files
+
+`manual.pdf` (and any other local hardware manual) is **Ron’s file**. Do not
+delete, move, rename, overwrite, or gitignore-widen it. Do not add `*.pdf`.
+Ignore only `manual.pdf`.
+
+Never delete or rename a file Ron did not ask you to touch in this chat.
+Bulk debrand / cleanup of filenames needs an explicit “yes, rename these
+files” first. If a protected file is missing, stop and say so — do not
+assume you may recreate or fetch a replacement.

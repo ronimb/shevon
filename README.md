@@ -1,7 +1,6 @@
-# Shevon — Casio fx-991ES PLUS emulator
+# Shevon — scientific calculator emulator
 
-A photo-realistic overlay emulator of the Casio **fx-991ES PLUS**
-scientific calculator. The UI is an overlay: absolutely-positioned key
+A photo-realistic overlay of a scientific calculator. The UI is an overlay: absolutely-positioned key
 hitboxes sit on top of `src/calculator_new.png`, and the LCD is rendered with
 standard browser fonts and HTML (fractions, roots, and so on) — a close-enough
 approximation, not a pixel-perfect or pixelated copy of the hardware display.
@@ -9,12 +8,12 @@ Visual fidelity means every on-screen element is present in the same relative
 location and behaves the same (same timing, input, and output); exact
 coordinates are not required.
 
-The goal is Casio accuracy, not a generic scientific calculator. Design rules
+The goal is hardware accuracy, not a generic scientific calculator. Design rules
 are in [`docs/principles.md`](docs/principles.md). Expressions are parsed into
 a typed AST (`src/parser.ts`) and evaluated by a custom engine
 (`src/evaluator.ts`) — there is no `eval`/`new Function` and no third-party
 math library. Behavior is checked against the official manual
-(`fx-570_991ES_PLUS_EN.pdf`).
+(`manual.pdf`).
 
 ## Prerequisites
 
@@ -47,7 +46,7 @@ npm run build:exe             # build a portable Windows .exe into dist-desktop/
 
 ## Reference manual
 
-The Casio manual `fx-570_991ES_PLUS_EN.pdf` is the source of truth for expected
+The hardware manual `manual.pdf` is the source of truth for expected
 behavior. It is intentionally **gitignored** (it is a large binary); drop your
 own copy in the repo root to cross-check sample operations. Manual page
 references (e.g. `E-16`) appear throughout the code and tests.
@@ -61,18 +60,22 @@ from those files — not a second plan.
 |------|------|
 | [`docs/principles.md`](docs/principles.md) | Visual fidelity and function-behavior rules |
 | [`roadmap.md`](roadmap.md) | Phased roadmap, current work, landed work |
-| [`issues.md`](issues.md) | Open bugs (with phase/action when one exists) |
+| [`issues.md`](issues.md) | Honesty / leftover bugs (with phase/action when one exists) |
+| [`docs/tech-issues.md`](docs/tech-issues.md) | Landed-correctness review (`R*` / `ti-*`) |
 | [`backlog.md`](backlog.md) | Feature ideas not yet assigned to a phase |
-| [`docs/coverage.md`](docs/coverage.md) | Feature-by-feature Casio coverage |
+| [`docs/coverage.md`](docs/coverage.md) | Feature-by-feature hardware coverage |
 | [`docs/visual-fidelity-inventory.md`](docs/visual-fidelity-inventory.md) | LCD element audit |
 
-Agents: [`AGENTS.md`](AGENTS.md) and `.cursor/rules/`.
+Agents: [`AGENTS.md`](AGENTS.md) and `.cursor/rules/`. Triage / oversight
+chats follow [`docs/prompts/triage.md`](docs/prompts/triage.md). Do not
+name the hardware vendor or original model (`docs/principles.md` **Naming**).
 
 ## Status
 
-COMP mode is usable for everyday scientific work. STAT and EQN are the next
-most complete (FREQ, quadratic editor). CMPLX, BASE-N, MATRIX, VECTOR, TABLE,
-CONST, and CONV are menu chrome only.
+COMP mode is usable for everyday scientific work. STAT (FREQ, Edit) and EQN
+(quadratic, real + a+bi) plus SOLVE are in the tree. CMPLX, BASE-N, MATRIX,
+VECTOR, TABLE, CONST, and CONV are menu chrome only.
 
-Current phase: **Phase 2 — finish STAT and EQN**. See [`roadmap.md`](roadmap.md).
-Coverage snapshot: [`docs/coverage.md`](docs/coverage.md).
+Current phase: **Phase 2 — finish STAT and EQN**. Next id is in
+[`roadmap.md`](roadmap.md) **Now**. Coverage:
+[`docs/coverage.md`](docs/coverage.md).

@@ -2,7 +2,9 @@
 
 Run after debt A–C, and after **every** remaining Phase 2 slice. Leftovers
 (LineIO, Dist empty, EQN types 1/2/4, letter-key steal) are **not**
-failures. File new defects in `issues.md` with an associated id.
+failures. File new **honesty / leftover** defects in `issues.md` with an
+associated id. File new **landed-correctness** defects in
+[`docs/tech-issues.md`](../tech-issues.md) (`R*` / `ti-*`), not both.
 
 ## Commands
 
@@ -11,7 +13,7 @@ npm test
 npm run lint
 ```
 
-Expect the current suite to stay green (101 after debt-value; more is
+Expect the current suite to stay green (138 after `ti-edges`; more is
 fine).
 
 ## Browser (http://localhost:3000)

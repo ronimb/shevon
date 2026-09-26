@@ -67,44 +67,44 @@ const FEATURES: Feature[] = [
   { area: "Input", name: "Natural templates", manual: "E-8", status: "done", inCode: "frac, mix, sqrt, pwr, int, diff, Σ, log_b, abs…", gap: "Height/nesting limits not enforced (backlog)" },
   { area: "Input", name: "INS wrap-as-argument", manual: "E-9", status: "partial", inCode: "frac/nPr/root wrap preceding operand", gap: "No general SHIFT DEL (INS) for arbitrary functions" },
   { area: "Input", name: "99-byte input limit", manual: "E-7", status: "missing", inCode: "Unlimited string", gap: "Cursor-k warning at 10 bytes remaining" },
-  { area: "Input", name: "Implicit multiply", manual: "E-7", status: "partial", inCode: "Token-level in the parser: 2π, 2sin, )( ; log10(100) stays a call", gap: "Edge cases vs Casio priority (omitted × is 7th)" },
-  { area: "Input", name: "Priority sequence", manual: "E-8", status: "partial", inCode: "Parser ** / * / + after template rewrite", gap: "Unary minus vs x², metric/STAT postfix, AND/OR" },
-  { area: "Input", name: "Percent", manual: "E-11 SHIFT (", status: "done", inCode: "SHIFT ( inserts % → /100", gap: "Confirm Casio percent-of semantics on +/− (backlog)" },
+  { area: "Input", name: "Implicit multiply", manual: "E-7", status: "partial", inCode: "Token-level in the parser: 2π, 2sin, )( , XY/AB; log10(100) stays a call", gap: "Edge cases vs hardware priority (omitted × is 7th)" },
+  { area: "Input", name: "Priority sequence", manual: "E-8", status: "partial", inCode: "Parser ** / * / + after template rewrite; (−) 3 x² = −9", gap: "Metric/STAT postfix, AND/OR" },
+  { area: "Input", name: "Percent", manual: "E-11 SHIFT (", status: "done", inCode: "SHIFT ( inserts %; % is ÷100 (200+10% = 200.1)", gap: "" },
   { area: "Input", name: "Sexagesimal ° ′ ″", manual: "E-11", status: "done", inCode: "Input and result use ° ′ ″; °′″ key toggle", gap: "" },
   { area: "Input", name: "Multi-statements :", manual: "E-11 ALPHA 7", status: "missing", inCode: "ALPHA CALC inserts =", gap: "Colon chain + Disp indicator" },
   { area: "Input", name: "Engineering notation", manual: "E-11 ENG", status: "done", inCode: "ENG / SHIFT ENG shift the displayed result", gap: "" },
   { area: "Input", name: "Calculation history replay", manual: "E-12", status: "done", inCode: "LCD ▲/▼ replay; live Current keys strip; side pane extra", gap: "Remaining A–F / M keyboard-shortcut audit (hist-letters)" },
 
-  { area: "Memory", name: "Ans", manual: "E-12", status: "done", inCode: "ans state; persisted localStorage", gap: "" },
-  { area: "Memory", name: "Variables A–F, X, Y", manual: "E-13", status: "done", inCode: "ALPHA + keys; STO/RCL; persisted", gap: "" },
+  { area: "Memory", name: "Ans", manual: "E-12", status: "done", inCode: "ans state; persisted localStorage; load rejects non-finite", gap: "" },
+  { area: "Memory", name: "Variables A–F, X, Y", manual: "E-13", status: "done", inCode: "ALPHA + keys; STO/RCL; persisted letters validated", gap: "" },
   { area: "Memory", name: "Independent M", manual: "E-13", status: "done", inCode: "M+ / SHIFT M−; M indicator", gap: "" },
   { area: "Memory", name: "CLR Setup / Memory / All", manual: "E-2, E-13", status: "done", inCode: "SHIFT 9 CLR menu: 1:Setup 2:Memory 3:All", gap: "" },
 
   { area: "Functions", name: "π and e", manual: "E-13", status: "done", inCode: "SHIFT EXP → π; ALPHA EXP → e", gap: "Display vs 15-digit internal values (backlog)" },
-  { area: "Functions", name: "sin cos tan + inverse", manual: "E-13", status: "done", inCode: "Keys + SHIFT; angleMode conversion", gap: "Input-range Math ERROR from E-38" },
+  { area: "Functions", name: "sin cos tan + inverse", manual: "E-13", status: "done", inCode: "Keys + SHIFT; angleMode conversion; tan poles Math ERROR", gap: "Remaining E-38 input-range checks" },
   { area: "Functions", name: "Hyperbolic menu", manual: "E-13 hyp", status: "done", inCode: "Overlay menu; evaluator sinh…atanh", gap: "" },
   { area: "Functions", name: "Abs", manual: "E-15 SHIFT hyp", status: "done", inCode: "SHIFT hyp inserts Abs template", gap: "" },
   { area: "Functions", name: "° r g conversions", manual: "E-14 SHIFT DRG", status: "missing", inCode: "None", gap: "1G(DRG′) menu" },
   { area: "Functions", name: "10^ and e^", manual: "E-14", status: "done", inCode: "SHIFT log / SHIFT ln templates", gap: "" },
   { area: "Functions", name: "log, log_b, ln", manual: "E-14", status: "done", inCode: "log10, log_b, ln templates", gap: "LineIO log(a,b) comma form" },
-  { area: "Functions", name: "x² x³ x^ √ ³√ x⁻¹", manual: "E-14", status: "done", inCode: "sqr, cube, ^, sqrt, root, SHIFT x⁻¹", gap: "Consecutive x² ignored on Casio (backlog)" },
-  { area: "Functions", name: "∫ integration", manual: "E-14, E-15", status: "done", inCode: "Adaptive Gauss–Kronrod (G7–K15)", gap: "Time Out Error; COMP-only rule (backlog)" },
+  { area: "Functions", name: "x² x³ x^ √ ³√ x⁻¹", manual: "E-14", status: "done", inCode: "sqr, cube, ^, sqrt, root, SHIFT x⁻¹", gap: "Consecutive x² ignored on the hardware (backlog)" },
+  { area: "Functions", name: "∫ integration", manual: "E-14, E-15", status: "done", inCode: "Adaptive Gauss–Kronrod (G7–K15); evaluation budget → Time Out", gap: "COMP-only rule (backlog)" },
   { area: "Functions", name: "d/dx derivative", manual: "E-14", status: "done", inCode: "Central difference + Richardson", gap: "Time Out" },
   { area: "Functions", name: "Σ summation", manual: "E-14", status: "partial", inCode: "Integer loop; end capped at start+1000", gap: "±1e10 bounds; nested Pol/∫/d/dx/Σ ban" },
   { area: "Functions", name: "Pol / Rec", manual: "E-14", status: "done", inCode: "SHIFT + / −; writes X,Y; Pol( / Rec( no built-in comma; = paints r=…, θ=… or bottom-right x=…, y=…", gap: "Nested Pol/Rec still a scalar (primary r or X)" },
-  { area: "Functions", name: "x!", manual: "E-15", status: "done", inCode: "SHIFT x⁻¹; factorial()", gap: "Casio max 69; we allow 170" },
+  { area: "Functions", name: "x!", manual: "E-15", status: "done", inCode: "SHIFT x⁻¹; factorial()", gap: "Hardware max 69; we allow 170" },
   { area: "Functions", name: "Ran# / RanInt#", manual: "E-15", status: "done", inCode: "SHIFT . and ALPHA . wired; templates", gap: "" },
-  { area: "Functions", name: "nPr / nCr", manual: "E-18", status: "done", inCode: "SHIFT × / ÷ wrap operand", gap: "Range checks from E-39" },
+  { area: "Functions", name: "nPr / nCr", manual: "E-18", status: "done", inCode: "SHIFT × / ÷ wrap operand; non-integer / negative Math ERROR", gap: "Remaining E-39 max-range checks" },
   { area: "Functions", name: "Rnd", manual: "E-15", status: "done", inCode: "Respects current Fix/Sci/Norm", gap: "" },
 
   { area: "CALC / SOLVE", name: "CALC", manual: "E-19", status: "partial", inCode: "Prompts every [A-MYX] in the raw string, then evaluates", gap: "Scheduled p2-calc: memory letters, previous value, recalc, equalities. Not SETUP LineIO" },
-  { area: "CALC / SOLVE", name: "SOLVE", manual: "E-20 SHIFT CALC", status: "done", inCode: "Prompts other letters; solve for x; Newton; equation + x= + L-R=; Continue; Variable ERROR / Can’t Solve", gap: "Unshifted CALC is p2-calc" },
+  { area: "CALC / SOLVE", name: "SOLVE", manual: "E-20 SHIFT CALC", status: "done", inCode: "Prompts other letters (not letters inside Ans / nCr / stems); solve for x; Newton; equation + x= + L-R=; Continue; Variable ERROR / Can’t Solve", gap: "Unshifted CALC is p2-calc" },
 
-  { area: "STAT", name: "Eight calculation types", manual: "E-22", status: "done", inCode: "1-VAR through 1/X; linear transforms + quadratic Cramer's", gap: "Quadratic r vs Casio A B C m1 m2 n (backlog)" },
-  { area: "STAT", name: "Stat Editor", manual: "E-23", status: "done", inCode: "Grid, caret, FREQ, = advances cell, row caps; DEL deletes the line; SHIFT 1 → Edit → Ins / Del-A", gap: "" },
-  { area: "STAT", name: "FREQ column", manual: "E-23", status: "done", inCode: "SETUP STAT ON; 80/40/26 caps", gap: "" },
-  { area: "STAT", name: "Sum / Var / MinMax", manual: "E-23", status: "done", inCode: "SHIFT 1 STAT menu; inserts symbols", gap: "On Casio you recall while STAT stays active" },
-  { area: "STAT", name: "Reg + estimates", manual: "E-24", status: "done", inCode: "A B r C; __yhat __xhat __xhat1/2", gap: "Quadratic r not shown (Casio uses A B C m1 m2 n)" },
+  { area: "STAT", name: "Eight calculation types", manual: "E-22", status: "done", inCode: "1-VAR through 1/X; linear transforms + quadratic Cramer's", gap: "Quadratic r vs hardware A B C m1 m2 n (backlog)" },
+  { area: "STAT", name: "Stat Editor", manual: "E-23", status: "done", inCode: "Grid, caret, FREQ, = advances cell, row caps; first keystroke replaces the cell; DEL deletes the line; SHIFT 1 → Edit → Ins / Del-A", gap: "" },
+  { area: "STAT", name: "FREQ column", manual: "E-23", status: "done", inCode: "SETUP STAT ON; 80/40/26 caps; first digit replaces default 1", gap: "" },
+  { area: "STAT", name: "Sum / Var / MinMax", manual: "E-23", status: "done", inCode: "SHIFT 1 STAT menu; inserts symbols", gap: "On the hardware you recall while STAT stays active" },
+  { area: "STAT", name: "Reg + estimates", manual: "E-24", status: "done", inCode: "A B r C; __yhat __xhat __xhat1/2", gap: "Quadratic r not shown (hardware uses A B C m1 m2 n)" },
   { area: "STAT", name: "Normal Dist P Q R 't", manual: "E-25", status: "missing", inCode: "Dist appears on STAT_RESULT; submenu empty", gap: "Standard normal probabilities" },
 
   { area: "EQN", name: "2-unknown linear", manual: "E-28 1", status: "missing", inCode: "Menu text only", gap: "Coefficient editor + X,Y solutions" },
@@ -127,14 +127,14 @@ const FEATURES: Feature[] = [
 
   { area: "Errors", name: "Math ERROR / Syntax ERROR", manual: "E-40", status: "partial", inCode: "LCD strings; NaN/Infinity → Math ERROR; ◀▶ jumps to CalcError.offset", gap: "Stack / Argument screens still missing" },
   { area: "Errors", name: "Stack / Argument / Dimension", manual: "E-40", status: "missing", inCode: "None", gap: "Needed once MATRIX/VECTOR/deep nests exist" },
-  { area: "Errors", name: "Variable / Can’t Solve / Time Out", manual: "E-41", status: "partial", inCode: "Variable ERROR and Can’t Solve via CalcError", gap: "Time Out for slow ∫ / d/dx (backlog)" },
+  { area: "Errors", name: "Variable / Can’t Solve / Time Out", manual: "E-41", status: "partial", inCode: "Variable ERROR, Can’t Solve, and ∫ Time Out via CalcError", gap: "Time Out for slow d/dx (backlog)" },
   { area: "Errors", name: "Calculation range ±1×10^99", manual: "E-38", status: "partial", inCode: "Overflow beyond ±10¹⁰⁰ raises Math ERROR", gap: "Per-function ranges from E-38–39; factorial 69" },
 
   { area: "Platform", name: "Photo overlay + hitboxes", manual: "—", status: "done", inCode: "Absolute keys; triple-click calibration; calculator_new.png", gap: "" },
   { area: "Platform", name: "PC keyboard", manual: "—", status: "partial", inCode: "Enter, arrows, Shift/Alt, comma (SHIFT )), S/C/T/L/R/Q/A, X/Y vars", gap: "Letter keys steal typing; Shift hold vs overlay toggle" },
-  { area: "Platform", name: "History / LaTeX pane", manual: "—", status: "done", inCode: "50 items, Load, physical-key Show Keys; STO/MODE/SETUP actions", gap: "Not Casio behavior; keep as extra. Live Current keys strip is on top" },
+  { area: "Platform", name: "History / LaTeX pane", manual: "—", status: "done", inCode: "50 items, Load, physical-key Show Keys; STO/MODE/SETUP actions", gap: "Not hardware behavior; keep as extra. Live Current keys strip is on top" },
   { area: "Platform", name: "Electron + Pages + PWA", manual: "—", status: "partial", inCode: "Scripts and workflow present", gap: "Verify portable exe, Pages deploy, and PWA install end-to-end" },
-  { area: "Platform", name: "Tests", manual: "E-16 examples", status: "partial", inCode: "Golden + parser + CalcValue + STAT Edit (p2-edit)", gap: "Remaining numbered sample operations in the PDF" },
+  { area: "Platform", name: "Tests", manual: "E-16 examples", status: "partial", inCode: "Golden + parser + CalcValue + STAT Edit (111)", gap: "Remaining numbered sample operations in the PDF" },
 ];
 
 const AREAS: Array<Area | "All"> = [
@@ -169,7 +169,7 @@ function toneFor(status: Status): "success" | "warning" | "danger" {
   return "danger";
 }
 
-export default function CasioCoverage() {
+export default function Coverage() {
   const dispatch = useCanvasAction();
   const [statusFilter, setStatusFilter] = useCanvasState<Status | "all">(
     "coverage-status",
@@ -198,11 +198,12 @@ export default function CasioCoverage() {
   return (
     <Stack gap={24}>
       <Stack gap={8}>
-        <H1>Casio fx-991ES PLUS coverage</H1>
+        <H1>Hardware coverage</H1>
         <Text tone="secondary">
-          View of `docs/coverage.md` (refreshed 25 Sep 2026). Status is
+          View of `docs/coverage.md` (refreshed 26 Sep 2026). Status is
           behavior, not whether a menu label exists. Scheduled work is in
-          `roadmap.md`; bugs are in `issues.md`.
+          `roadmap.md`; honesty leftovers in `issues.md`; landed-correctness
+          review in `docs/tech-issues.md`.
         </Text>
       </Stack>
 
@@ -219,6 +220,11 @@ export default function CasioCoverage() {
           onClick={() => dispatch({ type: "openFile", path: "roadmap.md" })}
         >
           Roadmap
+        </Pill>
+        <Pill
+          onClick={() => dispatch({ type: "openFile", path: "docs/tech-issues.md" })}
+        >
+          Tech issues
         </Pill>
         <Pill
           onClick={() => dispatch({ type: "openFile", path: "issues.md" })}
@@ -249,9 +255,9 @@ export default function CasioCoverage() {
       />
 
       <Callout tone="info" title="How to read status">
-        Done means a user can perform the Casio operation from the overlay
+        Done means a user can perform the hardware operation from the overlay
         keys and get a plausible result. Partial means the menu, evaluator
-        helper, or a subset exists but the Casio procedure is incomplete or
+        helper, or a subset exists but the hardware procedure is incomplete or
         wrong. Missing means the MODE/SETUP row is decorative or the key is
         a no-op / literal text dump.
       </Callout>
@@ -313,12 +319,12 @@ export default function CasioCoverage() {
         emptyMessage="No features match this filter."
       />
 
-      <H2>Casio key behavior already in COMP</H2>
+      <H2>Key behavior already in COMP</H2>
       <Text>
         SHIFT and ALPHA are latched toggles on the overlay (momentary hold
         on the PC keyboard). After a shifted function the emulator usually
         clears SHIFT. Closing parentheses of sin/log-style functions can be
-        omitted at `=` the same way Casio does.
+        omitted at `=` the same way the hardware does.
       </Text>
       <Table
         headers={["Key", "Normal", "SHIFT", "ALPHA"]}
@@ -376,12 +382,12 @@ export default function CasioCoverage() {
           </Text>
           <Text tone="secondary">
             MODE 5 → only 3 is handled. Coefficients are decimal strings.
-            Negative discriminant paints Casio-style a+bi / a−bi. Linear
+            Negative discriminant paints hardware-style a+bi / a−bi. Linear
             and cubic types are still menu text only.
           </Text>
         </Stack>
       </CollapsibleSection>
-      <CollapsibleSection title="Display vs Casio LCD">
+      <CollapsibleSection title="Display vs hardware LCD">
         <Stack gap={8}>
           <Text>
             Input uses HTML (stacked fractions, ∫ bounds, Σ bounds). Results

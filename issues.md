@@ -1,7 +1,11 @@
 # Issues
 
 Open defects — behavior that exists but is wrong, incomplete, or dishonest.
-This file is the **source of truth for bugs**.
+This file is the **source of truth for honesty leftovers and leftover-linked
+bugs**.
+
+Landed-correctness items (`R*` / `ti-*`) live in
+[`docs/tech-issues.md`](docs/tech-issues.md). Do not copy those R-ids here.
 
 Missing modes and net-new features live in [`roadmap.md`](roadmap.md). Ideas
 with no phase yet live in [`backlog.md`](backlog.md).
@@ -30,6 +34,11 @@ Status: `[ ]` open · `[x]` fixed (move to **Closed** at the next wrap-up).
 - [ ] `lineio-display` — SETUP lists MthIO / LineIO; choosing them returns to
       COMP with no input-mode change.
       **Associated:** `comp-lineio`.
+- [ ] `setup-page2` — SETUP ▼ (page 2) on the unit is 1:ab/c 2:d/c
+      3:CMPLX 4:STAT 5:Disp 6:CONT. Shevon shows 1:ab/c 2:d/c 3:STAT
+      only. STAT FREQ still works on **3**. CMPLX format waits
+      `p3-cmplx`; Disp is `comp-sep`; CONT is out of scope.
+      **Associated:** `vis-menus`.
 
 ---
 
@@ -42,14 +51,14 @@ Status: `[ ]` open · `[x]` fixed (move to **Closed** at the next wrap-up).
       the value, not SETUP LineIO.
       **Associated:** `p2-calc` (was `comp-calc`).
       Kickoff: [`docs/prompts/p2-calc.md`](docs/prompts/p2-calc.md).
+      Waits until `roadmap.md` **Now** reaches row 4 (`R17` / `R28` /
+      `R29` first). Shared prompt helper already landed (`ti-store` /
+      `ti-parse`).
 
 ---
 
 ## STAT / EQN
 
-- [x] `stat-del` — In the STAT editor, DEL deletes the data line (E-23). Ins
-      and Del-A are on the STAT Edit menu (SHIFT 1 from the editor → 3 Edit).
-      **Associated:** `p2-edit`.
 - [ ] `stat-jump-comp` — Recalling a STAT variable (`insertStatVar` in
       `src/modes/stat.tsx`) forces COMP. The unit stays in STAT.
       **Associated:** `p2-stat-mode`.
@@ -58,21 +67,6 @@ Status: `[ ]` open · `[x]` fixed (move to **Closed** at the next wrap-up).
 
 ## Display / LCD
 
-- [x] `ncr-empty-box` — SHIFT × / ÷ (nPr / nCr) with no n painted `C⬚` / `P⬚`.
-      Hardware is infix (`10C4`); a lone press is just C/P with the caret after
-      the letter, no empty-slot box.
-
-- [x] `root-sup-collision` — Superscript inside a radical used to strike the
-      vinculum. Radicals now wrap in `.root` (flex) so the exponent sits in the
-      body box under the bar. Round-2 re-smoke (24 Sep 2026).
-- [x] `x2-vs-xy-visual` — x² key inserted unicode `²` while x^y used `.sup`;
-      both now paint via `.sup`. Smoke A1 follow-up.
-- [x] `trig-open-trap` — LCD used to paint a phantom `)` on open `sin(`.
-      Closing `)` is user-typed only; the painter draws it only when it is in
-      the IR. Insert is `sin(‸`.
-- [x] `log10-implicit-mul` — `log10(100)` rewrote to `__log10*(100)` → Syntax
-      ERROR (smoke B5). Implicit `digit(` multiply skips digits inside helper
-      names.
 - [ ] `ind-hardcoded` — CMPLX, MAT, VCT, and Disp render but stay dim
       (`opacity-10`); never tied to real state.
       **Associated:** `vis-indicators`. CMPLX/MAT/VCT lighting waits on Phase 3
@@ -83,63 +77,24 @@ Status: `[ ]` open · `[x]` fixed (move to **Closed** at the next wrap-up).
       from caret navigability, and ▲/▼ light for COMP history replay (not only
       the EQN result). STAT row-nav lighting is the remaining gap.
       **Associated:** `vis-indicators`.
-- [x] `err-jump` — Syntax / Math ERROR: ◀▶ now jumps the caret to
-      `CalcError.offset` (E-40). AC still clears the error and the expression.
-      Variable ERROR / Can’t Solve still dismiss without a jump (no token).
-      Stack / Argument ERROR screens remain missing (`vis-errors`).
-      **Associated:** `vis-errors`, `debt-source-map`.
-- [x] `ascii-tokens` — Remaining function glyphs (trig/hyp/`ln`) now paint a
-      styled hardware-style name via the shared template table in
-      `src/display.tsx`; the LCD no longer emits the ASCII stem (`sin(`, `ln(`,
-      `sinh(`, …). ENG/hyp/Abs/Ran# already passed when closed.
-      **Associated:** `vis-no-literal`.
-- [x] `ir-leak` — Fixed. `formatMath`/`toLaTeX` share one template table and a
-      walker (`paintTemplates`) that paints unclosed `name(` with the SAME glyph
-      (body = the rest of the string, like `^(`) instead of `break`ing, so IR
-      stems never reach the LCD. Repro `sqrt(24^(2-2)‸` now shows a radical whose
-      body still superscripts `2-2`; nested open templates no longer abort the
-      pass. Not a Math ERROR / evaluator bug.
-      **Associated:** `vis-no-literal` (Now visual slice). Prior review:
-      agent transcript `65992cab-7adc-41c2-8ade-4549a8e80074`.
-- [x] `pol-rec-line` — Pol/Rec insert as `pol(` / `rec(` (no built-in
-      comma). Top-level `=` paints a single line: `r=…, θ=…` (Pol) or
-      right-aligned bottom `x=…, y=…` (Rec). Nested Pol/Rec still
-      contributes the primary scalar and writes X,Y.
-      **Associated:** `vis-result`, `debt-value`.
 - [ ] `surd-pi-form` — Surd input templates exist; results fall back to
       decimal (or an exact p/q). π stays decimal unless the value is an integer.
       **Associated:** `p4-exact`, `vis-result`.
-- [x] `invented-frac` — S⇔D / Natural Display used the closest d≤1000 ratio
-      (`cos(6°)` → 363/365). Now only exact p/q (e.g. `cos(60)=1/2`); otherwise
-      10-digit decimal, and S⇔D does not invent a fraction.
+- [ ] `prompt-prev-size` — SOLVE/CALC previous value (bottom-right, e.g.
+      `12` at `Y?`) is painted smaller and faded (`0.7rem` / 50%
+      opacity). The unit uses the normal result size. R7 behavior is
+      fine; this is chrome only. Same paint as unshifted CALC.
+      **Associated:** `vis-elements`.
 
 ---
 
 ## Engine / ranges
 
-- [ ] `fact-max` — Factorial accepts up to 170; Casio Math ERROR above 69.
+- [ ] `fact-max` — Factorial accepts up to 170; the hardware raises Math ERROR above 69.
       **Associated:** `comp-range`.
 - [ ] `sigma-bounds` — Σ end is capped at `start+1000`, not the manual ±1e10
       bounds; nested Pol/∫/d/dx/Σ is not banned.
       **Associated:** `comp-range`.
-- [x] `solve-errors` — SOLVE failures were Syntax ERROR. Now Variable ERROR
-      (no X), Can’t Solve (Newton miss), initial-X prompt, L−R, and Continue
-      match E-20/E-21/E-41. LCD uses `CalcError` / `lcdError`.
-      **Associated:** `p2-solve`.
-      Kickoff: [`docs/prompts/p2-solve-errors.md`](docs/prompts/p2-solve-errors.md).
-
----
-
-## Memory
-
-- [x] `mem-abc-nan` — STO/RCL A/B/C Math ERROR when STAT type is null:
-      `calculateStatVars(null)` used to return `A/B/C: NaN`, and
-      `evaluateExpression` spread that over user memory. Fixed: null STAT
-      returns `{}`. Smoke E2/E3.
-- [x] `sto-without-equals` — Typed operand then STO letter stores that value
-      and shows `5→C`; after `=` it shows `Ans→C`.
-- [x] `sto-result-stale` — After `5` STO A the previous answer stayed on the
-      result line. Store now puts the stored value there.
 
 ---
 
@@ -153,21 +108,50 @@ Status: `[ ]` open · `[x]` fixed (move to **Closed** at the next wrap-up).
       because those characters are typed with a held Shift (otherwise
       `+` would become Pol).
       **Associated:** `comp-keys` (COMP leftovers).
+- [ ] `shift-ac-mem` — No OFF. Ron wants SHIFT AC to clear memory
+      (A–F, X, Y, M, Ans) with a short LCD indication. Hardware SHIFT
+      AC is OFF (roadmap **Out of scope**). CLR already does this:
+      SHIFT 9 → 2 Memory (or 3 All).
+      **Associated:** Emulator extras `shift-ac-mem`.
+      Kickoff: [`docs/prompts/shift-ac-mem.md`](docs/prompts/shift-ac-mem.md).
 - [ ] `hist-letters` — Remaining letter shortcuts (A–F / M) are not fully
       audited against the physical-key History sequence contract (`ALPHA` +
       the faceplate key, not a chip labelled A–F). X/Y already log
       `ALPHA`, `)` / `ALPHA`, `S⇔D`. `L` now matches the log key (`log10`),
       not log□ / Sum.
-      **Associated:** Now → Current history.
-- [x] `replay-no-result` — ▲ recalled the expression but cleared the answer
-      line. Replay now shows the stored result underneath.
-- [x] `flash-map` — Calibration overlay removed from the app.
-- [x] `p0-console` — Hitbox-calibration `console.log` went with the flash map.
+      **Associated:** Emulator extras (`hist-letters`).
 
 ---
 
 ## Closed
 
-None yet in this file. Landed behavior (Fix/Sci/Norm, ENG, hyp, DMS symbols,
-FREQ, EQN a/b/c labels, carets) is recorded in [`roadmap.md`](roadmap.md)
-**Landed** — do not re-file those unless they regress.
+Wrap-up 26 Sep 2026 after `p2-edit` + sanity. Do not re-file unless they
+regress. Landed behavior is also in [`roadmap.md`](roadmap.md) **Landed**.
+
+- [x] `stat-del` — STAT editor DEL deletes the data line (E-23); Ins / Del-A
+      on SHIFT 1 → 3 Edit. **Associated:** `p2-edit`.
+- [x] `ncr-empty-box` — Lone nPr / nCr is infix C/P with the caret after the
+      letter, no `⬚` box.
+- [x] `root-sup-collision` — Superscript inside a radical sits under the
+      vinculum (`.root` flex wrap).
+- [x] `x2-vs-xy-visual` — x² and x^y both paint via `.sup`.
+- [x] `trig-open-trap` — Open `sin(` does not paint a phantom `)`. Insert is
+      `sin(‸`.
+- [x] `log10-implicit-mul` — `log10(100)` stays a call (no `__log10*` rewrite).
+- [x] `err-jump` — Syntax / Math ERROR ◀▶ jumps to `CalcError.offset` (E-40).
+      Variable ERROR / Can’t Solve dismiss without a jump. **Associated:**
+      `vis-errors`, `debt-source-map`.
+- [x] `ascii-tokens` / `ir-leak` — Shared `paintTemplates` table; trig/hyp/`ln`
+      paint styled names; unclosed templates never leak IR stems.
+      **Associated:** `vis-no-literal`.
+- [x] `pol-rec-line` — Top-level Pol/Rec paints `r=…, θ=…` or bottom-right
+      `x=…, y=…`. **Associated:** `vis-result`, `debt-value`.
+- [x] `invented-frac` — S⇔D / Natural Display only show an exact p/q.
+- [x] `solve-errors` — Variable ERROR, Can’t Solve, initial-X, L−R, Continue.
+      **Associated:** `p2-solve`.
+- [x] `mem-abc-nan` — Null STAT no longer overlays A/B/C with NaN.
+- [x] `sto-without-equals` / `sto-result-stale` — Typed operand then STO letter
+      stores that value (`5→C`) and puts it on the result line.
+- [x] `replay-no-result` — ▲ replay shows the stored result underneath.
+- [x] `flash-map` / `p0-console` — Calibration overlay and its `console.log`
+      removed.

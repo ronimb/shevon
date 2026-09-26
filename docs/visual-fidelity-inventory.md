@@ -1,14 +1,14 @@
 # Visual fidelity inventory
 
-Inventory of which visual/UI elements currently exist in the Casio fx-991ES
-PLUS emulator, mapped against the roadmap’s “fix existing vs. add missing”
-split.
+Inventory of which visual/UI elements currently exist in Shevon, mapped
+against the roadmap’s “fix existing vs. add missing” split.
 
 **Source of truth** for the LCD audit. Principles:
 [`principles.md`](principles.md). Scheduled `vis-*` work:
-[`roadmap.md`](../roadmap.md). Defects: [`issues.md`](../issues.md).
+[`roadmap.md`](../roadmap.md). Honesty leftovers: [`issues.md`](../issues.md).
+Landed-correctness review: [`docs/tech-issues.md`](tech-issues.md).
 
-Refreshed 25 Sep 2026 after `p2-edit` (STAT Ins / Del-A / DEL-deletes-line).
+Refreshed 26 Sep 2026 after sanity on landed COMP/STAT/EQN. No inventory change.
 If this file disagrees with `roadmap.md` on what is scheduled, follow the
 roadmap.
 
@@ -84,6 +84,10 @@ Ids match [`issues.md`](../issues.md) and [`roadmap.md`](../roadmap.md).
 | `surd-pi-form` / `vis-result` | Surd `n√m` result | Input template exists; no surd result form | `display.tsx` |
 | `vis-errors` | Stack / Argument ERROR | Syntax / Math jump landed; these screens still missing | `lcd.tsx` |
 | `lineio-display` / `comp-lineio` | MthIO / LineIO | SETUP shows options; not functional | `lcd.tsx`, `modeRouter.ts` |
+| `setup-page2` / `vis-menus` | SETUP page 2 | Unit: 1 ab/c 2 d/c 3 CMPLX 4 STAT 5 Disp 6 CONT. Shevon: 1–2 plus STAT as 3 | `lcd.tsx` |
+| `R28` | ×10ˣ entry | Paints `10^`, caret splits the stem, exponent digits can escape | `display.tsx`, `keys.ts` |
+| `R29` | ∫ template | Limits sit left of ∫ like a fraction; caret path ≠ unit | `display.tsx`, `modes/comp.ts` |
+| `prompt-prev-size` / `vis-elements` | SOLVE/CALC previous value | Bottom-right number is 0.7rem / faded; unit uses result size | `lcd.tsx` |
 
 ---
 
@@ -93,7 +97,7 @@ Ids match [`issues.md`](../issues.md) and [`roadmap.md`](../roadmap.md).
 |---------|-------|
 | LCD history lines | No scrollable prior-calculation lines on LCD; ▲/▼ replaces single input line only. Side pane is an emulator extra. Live Current keys sit in a top strip. |
 | Complex `a+bi` in COMP / CMPLX | EQN quadratic paints a+bi; CMPLX mode and COMP complex I/O are not implemented |
-| Stack / Argument ERROR | Syntax / Math / Variable / Can’t Solve exist; Stack / Argument / Time Out do not |
+| Stack / Argument ERROR | Syntax / Math / Variable / Can’t Solve / Time Out exist; Stack / Argument do not |
 | CMPLX / BASE-N / MATRIX / VECTOR / TABLE modes | Listed in MODE menu only; all fall back to COMP |
 | Distribution menu body | No distribution UI beyond empty STAT submenu |
 | LineIO editing | SETUP page 1 shows options; not functional |
@@ -146,7 +150,7 @@ Status bar CSS: `index.css`.
 - Editor: `EqnQuadScreen` — a/b/c labels, 3-cell grid, caret, bottom-left
   entry via `EqnQuadEntry`.
 - Results: label on input line, value on result line; ▲/▼ between roots.
-  Negative discriminant paints Casio-style `a+bi` / `a−bi` via `formatComplexPair`.
+  Negative discriminant paints hardware-style `a+bi` / `a−bi` via `formatComplexPair`.
 
 ### 5. STAT mode
 
@@ -213,11 +217,9 @@ overlay size** as the faceplate keycap (`keys.ts`):
 
 ## Summary
 
-Most remaining visual-fidelity work is on elements that already exist —
-STAT ▲▼ lighting, hardcoded-dim CMPLX/MAT/VCT/Disp, and making listed menu
-options honest or real. `vis-no-literal` and E-40 jump-to-token have
-landed. The pure “add missing” list is shorter and mostly Phase 3 modes
-plus Dist / LineIO.
+Open visual holes on shipped COMP: `R28` (×10ˣ), `R29` (∫),
+`prompt-prev-size`. STAT ▲▼ and dim CMPLX/MAT/VCT/Disp stay on
+`vis-indicators`. Menu lies wait on the matching feature (`vis-menus`).
 
-Natural result forms (`n√m`, p/q·π) and the full PDF regression suite land in
-Phase 4. Pixel-perfect LCD font is out of scope until Phase 3 is done.
+Natural result forms (`n√m`, p/q·π) are `p4-exact`. Pixel-perfect LCD
+font waits until Phase 3 is done.

@@ -11,7 +11,7 @@ Update `roadmap.md` in the same change. After the slice, run
 [`sanity-landed.md`](sanity-landed.md).
 
 You are **splitting** `src/Calculator.tsx` along seams that already exist.
-Casio behavior must not change.
+hardware behavior must not change.
 
 ## Must do
 

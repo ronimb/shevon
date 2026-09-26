@@ -54,13 +54,14 @@ export interface Vars {
 }
 
 /** LCD errors. offset is the caret-stripped original index of the fault token. */
-export type CalcErrorKind = 'syntax' | 'math' | 'variable' | 'cantSolve';
+export type CalcErrorKind = 'syntax' | 'math' | 'variable' | 'cantSolve' | 'timeout';
 
 export const CALC_ERROR_LABEL: Record<CalcErrorKind, string> = {
   syntax: 'Syntax ERROR',
   math: 'Math ERROR',
   variable: 'Variable ERROR',
   cantSolve: "Can't Solve",
+  timeout: 'Time Out',
 };
 
 export function calcErrorLabel(kind: CalcErrorKind): string {
