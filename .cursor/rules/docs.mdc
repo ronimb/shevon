@@ -16,7 +16,8 @@ behave.
 | `backlog.md` | Unassigned ideas only — not the task list |
 | `docs/coverage.md` | Casio feature coverage |
 | `docs/visual-fidelity-inventory.md` | LCD element audit |
-| `docs/prompts/tech-debt.md` | Now kickoff index (one slice per chat) |
+| `docs/prompts/tech-debt.md` | Engine debt A–C (landed; historical) |
+| `docs/prompts/phase-2.md` | Remaining Phase 2 leftovers (one slice per chat) |
 
 - Update the matching `.md` file in the same change when you add, finish,
   defer, or close work.

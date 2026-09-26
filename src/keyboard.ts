@@ -144,7 +144,7 @@ export function usePcKeyboard(a: PcKeyboardActions) {
       else if (e.key === 'ArrowDown') { e.preventDefault(); press('down', cur.handleDown, '↓'); }
 
       else if (e.key === '0' && !e.shiftKey) { e.preventDefault(); press('0', cur.handleDigit0, '0'); }
-      else if (e.key === '1' && !e.shiftKey) { e.preventDefault(); press('1', cur.handleDigit1, '1'); }
+      else if (e.key === '1' || e.key === '!') { e.preventDefault(); press('1', cur.handleDigit1, '1'); }
       else if (e.key === '9' && !e.shiftKey) { e.preventDefault(); press('9', cur.handleDigit9, '9'); }
       else if (/^[2-8]$/.test(e.key) && !e.shiftKey) { e.preventDefault(); press(e.key, () => cur.handleInput(e.key), e.key); }
       else if (e.key === '.') { e.preventDefault(); press('dot', cur.handleDotKey, '.'); }

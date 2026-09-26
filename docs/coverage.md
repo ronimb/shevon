@@ -13,7 +13,7 @@ Status is about **behavior**, not whether a menu label exists.
 | Missing | MODE/SETUP row is decorative, or the key is a no-op / literal text dump |
 
 Scheduled work: [`roadmap.md`](../roadmap.md). Defects: [`issues.md`](../issues.md).
-Refreshed 25 Sep 2026 from the roadmap (`debt-value` landed), tests, and a code pass.
+Refreshed 25 Sep 2026 after `p2-edit` (STAT Ins / Del-A / DEL-deletes-line).
 
 ---
 
@@ -21,8 +21,8 @@ Refreshed 25 Sep 2026 from the roadmap (`debt-value` landed), tests, and a code 
 
 | Status | Count |
 |--------|------:|
-| Done | 37 |
-| Partial | 15 |
+| Done | 38 |
+| Partial | 14 |
 | Missing | 24 |
 | **Total** | **76** |
 
@@ -37,7 +37,7 @@ MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
 |---------|--------|--------|-----------------|-----|
 | COMP | E-5 N1 | Done | Default `calcMode`; full expression path | Several COMP leftovers still open |
 | CMPLX | E-5 N2 | Missing | Menu row only; CMPLX indicator always dim | No i, ∠, arg, Conjg, or polar/rect format |
-| STAT | E-5 N3, E-22 | Partial | Type menu, editor, Sum/Var/MinMax/Reg, FREQ | Dist, Ins/Del-A, STAT stays active on recall |
+| STAT | E-5 N3, E-22 | Partial | Type menu, editor, Sum/Var/MinMax/Reg, FREQ, Edit Ins/Del-A | Dist, STAT stays active on recall |
 | BASE-N | E-5 N4, E-26 | Missing | Menu row; selecting 4 returns to COMP | DEC/HEX/BIN/OCT, and/or/xor/xnor, Not, Neg |
 | EQN | E-5 N5, E-28 | Partial | Menu shown; quadratic editor + real and complex roots | 2-unk, 3-unk, cubic |
 | MATRIX | E-5 N6, E-29 | Missing | Menu row only | MatA/B/C, Dim, det, Trn, inverse, MatAns |
@@ -64,7 +64,7 @@ MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
 | Natural templates | E-8 | Done | frac, mix, sqrt, pwr, int, diff, Σ, log_b, abs… | Height/nesting limits not enforced (backlog) |
 | INS wrap-as-argument | E-9 | Partial | frac/nPr/root wrap preceding operand | No general SHIFT DEL (INS) for arbitrary functions |
 | 99-byte input limit | E-7 | Missing | Unlimited string | Cursor-k warning at 10 bytes remaining |
-| Implicit multiply | E-7 | Partial | Regex after rewrite: 2π, 2sin, )( | Edge cases vs Casio priority (omitted × is 7th) |
+| Implicit multiply | E-7 | Partial | Token-level in the parser: 2π, 2sin, )( ; `__log10(100)` stays a call | Edge cases vs Casio priority (omitted × is 7th) |
 | Priority sequence | E-8 | Partial | Parser `**` / `*` / `+` after template rewrite | Unary minus vs x², metric/STAT postfix, AND/OR |
 | Percent | E-11 SHIFT ( | Done | SHIFT ( inserts % → /100 | Confirm Casio percent-of semantics on +/− (backlog) |
 | Sexagesimal ° ′ ″ | E-11 | Done | Input and result use ° ′ ″; °′″ key toggle | — |
@@ -106,15 +106,15 @@ MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
 
 | Feature | Manual | Status | In the emulator | Gap |
 |---------|--------|--------|-----------------|-----|
-| CALC | E-19 | Partial | Prompts every A–F/M/X/Y in the expression | Casio CALC UX, equalities, Linear input during prompt |
-| SOLVE | E-20 SHIFT CALC | Done | Prompts other letters; “solve for x”; Newton 40 steps; equation + x= + L-R=; Continue; Variable ERROR / Can’t Solve | Unshifted CALC UX is `comp-calc` |
+| CALC | E-19 | Partial | Prompts every `[A-MYX]` in the raw string, then evaluates | Scheduled as `p2-calc` / `calc-ux`: memory letters only, previous value, recalc, equalities. Not SETUP LineIO |
+| SOLVE | E-20 SHIFT CALC | Done | Prompts other letters; “solve for x”; Newton 40 steps; equation + x= + L-R=; Continue; Variable ERROR / Can’t Solve | Unshifted CALC is `p2-calc` |
 
 ## STAT
 
 | Feature | Manual | Status | In the emulator | Gap |
 |---------|--------|--------|-----------------|-----|
 | Eight calculation types | E-22 | Done | 1-VAR through 1/X; linear transforms + quadratic Cramer's | Quadratic r vs Casio A B C m1 m2 n (backlog) |
-| Stat Editor | E-23 | Partial | Grid, caret, FREQ, = advances cell, row caps | Ins; Del-A; DEL should delete the line |
+| Stat Editor | E-23 | Done | Grid, caret, FREQ, = advances cell, row caps; DEL deletes the line; SHIFT 1 → Edit → Ins / Del-A | — |
 | FREQ column | E-23 | Done | SETUP STAT ON; 80/40/26 caps | — |
 | Sum / Var / MinMax | E-23 | Done | SHIFT 1 STAT menu; inserts symbols | On Casio you recall while STAT stays active |
 | Reg + estimates | E-24 | Done | A B r C; __yhat __xhat __xhat1/2 | Quadratic r not shown (Casio uses A B C m1 m2 n) |

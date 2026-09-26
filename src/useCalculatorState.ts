@@ -42,7 +42,15 @@ export function useCalculatorState() {
 
   const [lastValue, setLastValue] = useState<CalcValue>(() => calcReal(0));
   const [showingResult, setShowingResult] = useState<boolean>(false);
-  const [isShift, setIsShift] = useState<boolean>(false);
+  const [isShift, setIsShiftState] = useState<boolean>(false);
+  const isShiftRef = useRef(false);
+  const setIsShift = useCallback((val: boolean | ((prev: boolean) => boolean)) => {
+    setIsShiftState(prev => {
+      const next = typeof val === 'function' ? val(prev) : val;
+      isShiftRef.current = next;
+      return next;
+    });
+  }, []);
   const [isAlpha, setIsAlpha] = useState<boolean>(false);
   const [isSto, setIsSto] = useState<boolean>(false);
   const [isRcl, setIsRcl] = useState<boolean>(false);
@@ -103,6 +111,10 @@ export function useCalculatorState() {
 
   const statCursorRef = useRef(statCursor);
   useEffect(() => { statCursorRef.current = statCursor; }, [statCursor]);
+  const statTypeRef = useRef(statType);
+  useEffect(() => { statTypeRef.current = statType; }, [statType]);
+  const calcModeRef = useRef(calcMode);
+  useEffect(() => { calcModeRef.current = calcMode; }, [calcMode]);
 
   return {
     currentInput, setCurrentInput,
@@ -147,6 +159,9 @@ export function useCalculatorState() {
     solveRef,
     solveAfterPromptsRef,
     statCursorRef,
+    isShiftRef,
+    statTypeRef,
+    calcModeRef,
   };
 }
 

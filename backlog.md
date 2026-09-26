@@ -41,8 +41,8 @@ and delete it from here. Do not leave the same item in two files.
 
 ## Architecture
 
-(The `Calculator.tsx` shell split is scheduled as `debt-shell` in
-[`roadmap.md`](roadmap.md) **Now**.)
+(The `Calculator.tsx` shell split landed as `debt-shell`. Do not re-open
+it unless a regression shows up.)
 
 ## Diagnostics
 

@@ -28,7 +28,8 @@ reviewing UI or calculator behavior.
 | [`backlog.md`](backlog.md) | Unassigned feature ideas only |
 | [`docs/coverage.md`](docs/coverage.md) | Feature-by-feature Casio coverage |
 | [`docs/visual-fidelity-inventory.md`](docs/visual-fidelity-inventory.md) | LCD element audit |
-| [`docs/prompts/tech-debt.md`](docs/prompts/tech-debt.md) | Now kickoff index (one slice per chat) |
+| [`docs/prompts/tech-debt.md`](docs/prompts/tech-debt.md) | Engine debt A–C (landed; historical) |
+| [`docs/prompts/phase-2.md`](docs/prompts/phase-2.md) | Remaining Phase 2 leftovers (one slice per chat) |
 
 Canvases under `canvases/` are **views**. Refresh them from the markdown when
 the story changed. If a canvas disagrees with a markdown file, the markdown

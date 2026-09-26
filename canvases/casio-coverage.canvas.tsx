@@ -48,7 +48,7 @@ interface Feature {
 const FEATURES: Feature[] = [
   { area: "Modes", name: "COMP", manual: "E-5 N1", status: "done", inCode: "Default calcMode; full expression path", gap: "COMP leftovers still open" },
   { area: "Modes", name: "CMPLX", manual: "E-5 N2", status: "missing", inCode: "Menu row only; CMPLX indicator always dim", gap: "No i, ∠, arg, Conjg, or polar/rect format" },
-  { area: "Modes", name: "STAT", manual: "E-5 N3, E-22", status: "partial", inCode: "Type menu, editor, Sum/Var/MinMax/Reg, FREQ", gap: "Dist, Ins/Del-A, STAT stays active on recall" },
+  { area: "Modes", name: "STAT", manual: "E-5 N3, E-22", status: "partial", inCode: "Type menu, editor, Sum/Var/MinMax/Reg, FREQ, Edit Ins/Del-A", gap: "Dist, STAT stays active on recall" },
   { area: "Modes", name: "BASE-N", manual: "E-5 N4, E-26", status: "missing", inCode: "Menu row; selecting 4 returns to COMP", gap: "DEC/HEX/BIN/OCT, and/or/xor/xnor, Not, Neg" },
   { area: "Modes", name: "EQN", manual: "E-5 N5, E-28", status: "partial", inCode: "Menu shown; quadratic editor + real and complex roots", gap: "2-unk, 3-unk, cubic" },
   { area: "Modes", name: "MATRIX", manual: "E-5 N6, E-29", status: "missing", inCode: "Menu row only", gap: "MatA/B/C, Dim, det, Trn, inverse, MatAns" },
@@ -67,7 +67,7 @@ const FEATURES: Feature[] = [
   { area: "Input", name: "Natural templates", manual: "E-8", status: "done", inCode: "frac, mix, sqrt, pwr, int, diff, Σ, log_b, abs…", gap: "Height/nesting limits not enforced (backlog)" },
   { area: "Input", name: "INS wrap-as-argument", manual: "E-9", status: "partial", inCode: "frac/nPr/root wrap preceding operand", gap: "No general SHIFT DEL (INS) for arbitrary functions" },
   { area: "Input", name: "99-byte input limit", manual: "E-7", status: "missing", inCode: "Unlimited string", gap: "Cursor-k warning at 10 bytes remaining" },
-  { area: "Input", name: "Implicit multiply", manual: "E-7", status: "partial", inCode: "Regex after rewrite: 2π, 2sin, )(", gap: "Edge cases vs Casio priority (omitted × is 7th)" },
+  { area: "Input", name: "Implicit multiply", manual: "E-7", status: "partial", inCode: "Token-level in the parser: 2π, 2sin, )( ; log10(100) stays a call", gap: "Edge cases vs Casio priority (omitted × is 7th)" },
   { area: "Input", name: "Priority sequence", manual: "E-8", status: "partial", inCode: "Parser ** / * / + after template rewrite", gap: "Unary minus vs x², metric/STAT postfix, AND/OR" },
   { area: "Input", name: "Percent", manual: "E-11 SHIFT (", status: "done", inCode: "SHIFT ( inserts % → /100", gap: "Confirm Casio percent-of semantics on +/− (backlog)" },
   { area: "Input", name: "Sexagesimal ° ′ ″", manual: "E-11", status: "done", inCode: "Input and result use ° ′ ″; °′″ key toggle", gap: "" },
@@ -97,11 +97,11 @@ const FEATURES: Feature[] = [
   { area: "Functions", name: "nPr / nCr", manual: "E-18", status: "done", inCode: "SHIFT × / ÷ wrap operand", gap: "Range checks from E-39" },
   { area: "Functions", name: "Rnd", manual: "E-15", status: "done", inCode: "Respects current Fix/Sci/Norm", gap: "" },
 
-  { area: "CALC / SOLVE", name: "CALC", manual: "E-19", status: "partial", inCode: "Prompts every A–F/M/X/Y in the expression", gap: "Casio CALC UX, equalities, Linear input during prompt" },
-  { area: "CALC / SOLVE", name: "SOLVE", manual: "E-20 SHIFT CALC", status: "done", inCode: "Prompts other letters; solve for x; Newton; equation + x= + L-R=; Continue; Variable ERROR / Can’t Solve", gap: "Unshifted CALC UX is comp-calc" },
+  { area: "CALC / SOLVE", name: "CALC", manual: "E-19", status: "partial", inCode: "Prompts every [A-MYX] in the raw string, then evaluates", gap: "Scheduled p2-calc: memory letters, previous value, recalc, equalities. Not SETUP LineIO" },
+  { area: "CALC / SOLVE", name: "SOLVE", manual: "E-20 SHIFT CALC", status: "done", inCode: "Prompts other letters; solve for x; Newton; equation + x= + L-R=; Continue; Variable ERROR / Can’t Solve", gap: "Unshifted CALC is p2-calc" },
 
   { area: "STAT", name: "Eight calculation types", manual: "E-22", status: "done", inCode: "1-VAR through 1/X; linear transforms + quadratic Cramer's", gap: "Quadratic r vs Casio A B C m1 m2 n (backlog)" },
-  { area: "STAT", name: "Stat Editor", manual: "E-23", status: "partial", inCode: "Grid, caret, FREQ, = advances cell, row caps", gap: "Ins; Del-A; DEL should delete the line" },
+  { area: "STAT", name: "Stat Editor", manual: "E-23", status: "done", inCode: "Grid, caret, FREQ, = advances cell, row caps; DEL deletes the line; SHIFT 1 → Edit → Ins / Del-A", gap: "" },
   { area: "STAT", name: "FREQ column", manual: "E-23", status: "done", inCode: "SETUP STAT ON; 80/40/26 caps", gap: "" },
   { area: "STAT", name: "Sum / Var / MinMax", manual: "E-23", status: "done", inCode: "SHIFT 1 STAT menu; inserts symbols", gap: "On Casio you recall while STAT stays active" },
   { area: "STAT", name: "Reg + estimates", manual: "E-24", status: "done", inCode: "A B r C; __yhat __xhat __xhat1/2", gap: "Quadratic r not shown (Casio uses A B C m1 m2 n)" },
@@ -134,7 +134,7 @@ const FEATURES: Feature[] = [
   { area: "Platform", name: "PC keyboard", manual: "—", status: "partial", inCode: "Enter, arrows, Shift/Alt, comma (SHIFT )), S/C/T/L/R/Q/A, X/Y vars", gap: "Letter keys steal typing; Shift hold vs overlay toggle" },
   { area: "Platform", name: "History / LaTeX pane", manual: "—", status: "done", inCode: "50 items, Load, physical-key Show Keys; STO/MODE/SETUP actions", gap: "Not Casio behavior; keep as extra. Live Current keys strip is on top" },
   { area: "Platform", name: "Electron + Pages + PWA", manual: "—", status: "partial", inCode: "Scripts and workflow present", gap: "Verify portable exe, Pages deploy, and PWA install end-to-end" },
-  { area: "Platform", name: "Tests", manual: "E-16 examples", status: "partial", inCode: "Golden + parser + CalcValue (101 after debt-value)", gap: "Remaining numbered sample operations in the PDF" },
+  { area: "Platform", name: "Tests", manual: "E-16 examples", status: "partial", inCode: "Golden + parser + CalcValue + STAT Edit (p2-edit)", gap: "Remaining numbered sample operations in the PDF" },
 ];
 
 const AREAS: Array<Area | "All"> = [

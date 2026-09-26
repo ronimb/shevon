@@ -9,7 +9,9 @@ export type CalcMode =
   | 'STAT_MENU'
   | 'STAT_DATA'
   | 'STAT_RESULT'
-  | 'STAT_RESULT_SUB';
+  | 'STAT_RESULT_SUB'
+  | 'STAT_EDITOR_MENU'
+  | 'STAT_EDIT';
 
 export type DisplayMode = 'decimal' | 'fraction';
 export type AngleMode = 'DEG' | 'RAD' | 'GRA';

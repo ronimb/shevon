@@ -22,55 +22,33 @@ wrap-up, then move them to **Landed**).
 
 ## Now
 
-Priority (25 Sep 2026): **engine tech debt first**, then a sanity pass on
-what already ships, then the five remaining Phase 2 items, then packaging
-(pulled forward from Phase 4). Daily-driver bar is still COMP + STAT + EQN.
-Do not open Phase 3 until Phase 2 closes. Lying menus wait for the matching
-feature. Unbounded MthIO / LineIO is **not** tech debt (parked leftover).
+Priority (25 Sep 2026, after debt A–C): **sanity on landed COMP/STAT/EQN**,
+then the six remaining Phase 2 items, then packaging. Daily-driver bar is
+still COMP + STAT + EQN. Do not open Phase 3 until Phase 2 closes. Lying
+menus wait for the matching feature. Unbounded MthIO / LineIO is parked.
 
-Kickoff index: [`docs/prompts/tech-debt.md`](docs/prompts/tech-debt.md).
-Slices: [`debt-source-map.md`](docs/prompts/debt-source-map.md),
-[`debt-shell.md`](docs/prompts/debt-shell.md),
-[`debt-value.md`](docs/prompts/debt-value.md).
+Engine debt A–C is in **Landed**. Historical index:
+[`docs/prompts/tech-debt.md`](docs/prompts/tech-debt.md).
+Phase 2 leftovers:
+[`docs/prompts/phase-2.md`](docs/prompts/phase-2.md).
+Next slice: [`p2-calc.md`](docs/prompts/p2-calc.md).
 Sanity: [`sanity-landed.md`](docs/prompts/sanity-landed.md).
 
-### 1. Remaining engine tech debt (this program)
+### 1. Sanity check (landed functionality only)
 
-`p2-solve` already landed typed `CalcError` (gap 1). `debt-source-map`,
-`debt-shell`, and `debt-value` have landed. Remaining Now work is sanity,
-then Phase 2 leftovers, then packaging. Do not start CMPLX / BASE-N / MATRIX
-or `p4-exact` here.
-
-- [x] `debt-source-map` — Source-map the IR rewrite; fill `CalcError.offset`;
-      E-40 ◀▶ jump-to-token (`vis-errors` / `err-jump`). Move implicit
-      multiply into the parser. Type the helper bag. Do not replace the AST
-      walker or parse templates natively.
-- [x] `debt-shell` — Split `Calculator.tsx` along existing seams (LCD,
-      keyboard, mode router). One state store. First consumer: STAT recall
-      (`insertStatVar` in `modes/stat.tsx`) is extractable for `p2-stat-mode`.
-      Was backlog “Architecture”.
-- [x] `debt-value` — Evaluator returns `CalcValue` (`real` | `complex` |
-      `pair`), not a bare `number`. COMP decimals/fractions look the same.
-      EQN a+bi uses `complex` (no `imag?` side field). Pol/Rec returns
-      `pair` and paints a single line r=…, θ=… / x=…, y=…
-      (`pol-rec-line`). Helpers for
-      conjugate / arg / polar and reserved `integer` / `matrix` kinds sit
-      on the same type so CMPLX / BASE-N / MATRIX attach later. Surd/π
-      stay `p4-exact`.
-
-### 2. Sanity check (landed functionality only)
-
-After each debt slice, and once after all three: `npm test`, `npm run lint`,
-and a browser pass of COMP (trig, frac, SOLVE Variable / Can’t Solve / L−R),
-STAT editor + recall, EQN quadratic real + a+bi. File new defects in
+`npm test`, `npm run lint`, and a browser pass of COMP (trig, frac, SOLVE
+Variable / Can’t Solve / L−R, Syntax ERROR ◀▶ jump), STAT editor + recall,
+EQN quadratic real + a+bi, Pol/Rec pair line. File new defects in
 `issues.md`. Do not treat leftovers (LineIO, Dist, linear EQN) as failures.
 
-### 3. Remaining Phase 2
+### 2. Remaining Phase 2
 
-`p2-freq` and `p2-solve` have landed. Then: `p2-edit`, `p2-dist`,
-`p2-stat-mode`, `p2-eqn-linear`, `p2-eqn-cubic`. See **Phase 2**.
+`p2-freq`, `p2-solve`, and `p2-edit` have landed. Then: `p2-calc`, `p2-dist`,
+`p2-stat-mode`, `p2-eqn-linear`, `p2-eqn-cubic`. See **Phase 2**. `p2-calc`
+is unshifted CALC (E-19), pulled in from `comp-calc` so COMP CALC matches
+the hardware the way SOLVE already does.
 
-### 4. Packaging (pulled forward)
+### 3. Packaging (pulled forward)
 
 `p4-packaging` — GitHub Pages, PWA, electron-builder portable exe, real app
 icon. Still after the Phase 2 list; still before Phase 3 modes.
@@ -147,8 +125,13 @@ See **Landed**. Remaining COMP gaps that did not block Phase 1 are listed under
       `CalcError` so Variable ERROR / Can’t Solve are real kinds.
       Issue: `solve-errors`.
       Kickoff prompt: [`docs/prompts/p2-solve-errors.md`](docs/prompts/p2-solve-errors.md).
-- [ ] `p2-edit` — STAT Edit Ins and Del-A; DEL deletes a line in the editor
-      (today DEL edits the cell). Issue: `stat-del`.
+- [x] `p2-edit` — STAT Edit Ins and Del-A; DEL deletes a line in the editor
+      (SHIFT 1 → 3 Edit → Ins / Del-A; SHIFT DEL also inserts). Issue: `stat-del`.
+- [ ] `p2-calc` — Unshifted CALC (E-19): prompt only real memory letters,
+      previous-value / bottom-left entry, recalc after `=`, equalities as
+      the figure shows. Do not implement SETUP LineIO. Issue: `calc-ux`.
+      Kickoff: [`docs/prompts/p2-calc.md`](docs/prompts/p2-calc.md).
+      (Was COMP leftover `comp-calc`.)
 - [ ] `p2-dist` — 1-VAR Dist: P( Q( R( and normalized variate `'t`.
       Issue: `dist-empty`.
 - [ ] `p2-stat-mode` — Stay in STAT when recalling variables instead of
@@ -233,8 +216,8 @@ Coverage detail: [`docs/coverage.md`](docs/coverage.md).
 - [ ] `comp-drg` — SHIFT DRG `° r g` conversions (1G menu).
 - [ ] `comp-bytes` — 99-byte input limit and cursor-k warning at 10 bytes left.
 - [ ] `comp-sep` — SETUP Dot / Comma result decimal separator.
-- [ ] `comp-calc` — CALC UX: Casio prompt flow, equalities, Linear input during
-      prompt (SOLVE UX is `p2-solve`).
+- [x] `comp-calc` — Pulled into Phase 2 as `p2-calc`. Leave this line until
+      wrap-up. Do not implement SETUP LineIO here (`comp-lineio`).
 - [ ] `comp-range` — Per-function ranges from E-38–39; factorial max 69;
       Σ ±1e10 bounds; nested Pol/∫/d/dx/Σ ban.
 - [ ] `comp-keys` — PC keyboard: remaining letter keys steal typing; Shift is
@@ -265,7 +248,8 @@ LCD ▲/▼ history replay, Math/Syntax ERROR dismiss, SHIFT 9 CLR.
 
 **Phase 2 started** — STAT FREQ ON/OFF with 80/40/26 row caps; EQN quadratic
 editor a/b/c labels, cell caret, bottom-left entry; STAT editor caret;
-quadratic complex roots as a+bi.
+quadratic complex roots as a+bi. STAT Edit (E-23): DEL deletes the line,
+Ins / Del-A from the editor SHIFT 1 menu (`p2-edit`).
 
 **Visual** — COMP / EQN / STAT carets (`vis-cursor`); ENG/hyp/Abs/Ran# no
 longer dump raw ASCII. `vis-no-literal`: shared LCD/History template table so
@@ -277,7 +261,8 @@ X= result, L−R residual, Continue (`p2-solve`). LCD errors are one
 `lcdError` (`CalcError`), not Syntax/Math booleans.
 
 **Tests** — golden (manual samples + Phase 1/2 + vis-no-literal +
-history/keys + SOLVE + E-40 offset/jump) + parser (implicit multiply) > 86.
+history/keys + SOLVE + E-40 offset/jump + STAT Edit) + parser (implicit
+multiply) > 86.
 
 **debt-source-map** — IR rewrite carries original offsets onto AST nodes and
 `CalcError.offset`. Syntax / Math ERROR ◀▶ jumps to the fault token. Implicit
@@ -287,6 +272,11 @@ typed.
 **debt-shell** — `Calculator.tsx` composes `lcd.tsx`, `keyboard.ts`,
 `useCalculatorState`, and `modeRouter.ts`. One store for `vars` / `ans` /
 history. STAT recall lives in `modes/stat.tsx` (still jumps to COMP).
+
+**debt-value** — `evaluateExpression` returns `CalcValue` (`real` |
+`complex` | `pair`). EQN a+bi uses `complex`. Top-level Pol/Rec is a
+`pair` (`r=…, θ=…` / bottom-right `x=…, y=…`). Reserved `integer` /
+`matrix` kinds exist for later modes. Surd/π stay `p4-exact`.
 
 ---
 

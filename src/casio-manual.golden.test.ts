@@ -17,7 +17,20 @@ import {
   complexToRect,
   conjugate,
 } from './types.ts';
-import { appendStatRowIfRoom, calculateStatVars, getStatMaxRows, StatDataScreen } from './modes/stat.tsx';
+import {
+  appendStatRowIfRoom,
+  applyStatDelete,
+  applyStatDeleteAll,
+  applyStatInsert,
+  calculateStatVars,
+  getStatMaxRows,
+  initialStatData,
+  statEditorWindow,
+  statMenuAfterShift1,
+  StatDataScreen,
+  StatEditScreen,
+  StatEditorMenuScreen,
+} from './modes/stat.tsx';
 import { EqnQuadEntry, EqnQuadScreen, EqnResultValue, solveQuadratic } from './modes/eqn.tsx';
 import { formatMath, toLaTeX } from './display.tsx';
 import { formatForDisplay, formatEngineering, formatDMS, formatDMSText, roundToFormat, type DisplayFormat } from './format.ts';
@@ -423,6 +436,90 @@ describe('Phase 2 — STAT FREQ and EQN quadratic', () => {
     }));
     expect(html).toContain('FREQ');
     expect(html).toContain('cursor');
+  });
+});
+
+describe('Phase 2 — STAT Edit Ins / Del-A / DEL-deletes-line (E-23)', () => {
+  const rows = (xs: string[]) => xs.map(x => ({ x, y: '', freq: '1' }));
+
+  it('DEL removes the current data line, not a digit of the cell', () => {
+    const next = applyStatDelete(rows(['10', '20', '30']), 1);
+    expect(next.data.map(d => d.x)).toEqual(['10', '30', '']);
+    expect(next.row).toBe(1);
+  });
+
+  it('DEL on the last remaining line leaves the three-row blank window', () => {
+    const next = applyStatDelete(rows(['7']), 0);
+    expect(next.data).toHaveLength(3);
+    expect(next.data.every(d => d.x === '')).toBe(true);
+    expect(next.row).toBe(0);
+  });
+
+  it('Ins inserts a blank line at the caret', () => {
+    const next = applyStatInsert(rows(['1', '3']), 1, '1-VAR', false);
+    expect(next.data.map(d => d.x)).toEqual(['1', '', '3']);
+    expect(next.row).toBe(1);
+  });
+
+  it('Ins is a no-op at the FREQ row cap', () => {
+    const full = Array.from({ length: 40 }, () => ({ x: '1', y: '', freq: '1' }));
+    const next = applyStatInsert(full, 0, '1-VAR', true);
+    expect(next.data).toHaveLength(40);
+    expect(next.row).toBe(0);
+    expect(applyStatInsert(full, 0, '1-VAR', false).data).toHaveLength(41);
+  });
+
+  it('Del-A clears all sample data to three blank rows', () => {
+    const next = applyStatDeleteAll();
+    expect(next.data).toEqual(initialStatData());
+    expect(next.row).toBe(0);
+  });
+
+  it('STAT Edit menu is 1:Ins 2:Del-A; editor SHIFT 1 menu is 3:Edit', () => {
+    const edit = renderToStaticMarkup(React.createElement(StatEditScreen));
+    expect(edit).toContain('Ins');
+    expect(edit).toContain('Del-A');
+    expect(edit).toContain('1:');
+    expect(edit).toContain('2:');
+    const editorMenu = renderToStaticMarkup(React.createElement(StatEditorMenuScreen));
+    expect(editorMenu).toContain('Type');
+    expect(editorMenu).toContain('Data');
+    expect(editorMenu).toContain('Edit');
+    expect(editorMenu).toContain('3:');
+    expect(editorMenu).not.toContain('Sum');
+    expect(editorMenu).not.toContain('Del-A');
+  });
+
+  it('empty STAT editor is three blank rows with the caret on row 1', () => {
+    const data = initialStatData();
+    expect(data).toHaveLength(3);
+    const html = renderToStaticMarkup(React.createElement(StatDataScreen, {
+      statType: '1-VAR',
+      statFrequencyEnabled: false,
+      statData: data,
+      statCursor: { row: 0, col: 0 },
+    }));
+    expect(html).toContain('>1</div>');
+    expect(html).toContain('>2</div>');
+    expect(html).toContain('>3</div>');
+    const window = statEditorWindow(data, 0);
+    expect(window.map(r => r.index)).toEqual([0, 1, 2]);
+    const four = applyStatInsert(data, 0, '1-VAR', false).data;
+    expect(statEditorWindow(four, 1).map(r => r.index)).toEqual([0, 1, 2]);
+  });
+
+  it('Ins on a blank three-row table does not change the visible 0s', () => {
+    const next = applyStatInsert(initialStatData(), 0, '1-VAR', false);
+    expect(next.data).toHaveLength(4);
+    const window = statEditorWindow(next.data, next.row);
+    expect(window.every(r => r.entry.x === '')).toBe(true);
+    expect(window).toHaveLength(3);
+  });
+
+  it('SHIFT 1 from the editor opens Type/Data/Edit, not Sum', () => {
+    expect(statMenuAfterShift1('STAT_DATA', '1-VAR')).toBe('STAT_EDITOR_MENU');
+    expect(statMenuAfterShift1('COMP', '1-VAR')).toBe('STAT_RESULT');
+    expect(statMenuAfterShift1('COMP', null)).toBeNull();
   });
 });
 

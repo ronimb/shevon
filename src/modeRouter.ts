@@ -24,11 +24,14 @@ import {
   STAT_TYPES,
   appendStatRowIfRoom,
   applyStatDelete,
+  applyStatDeleteAll,
   applyStatDigit,
+  applyStatInsert,
   calculateStatVars,
   getStatMaxRows,
   getStatSubMenuInsert,
   insertStatVar,
+  statMenuAfterShift1,
 } from './modes/stat.tsx';
 import {
   applyEqnDelete,
@@ -99,10 +102,19 @@ export function useModeRouter(s: CalculatorStore) {
         });
         s.setStatType(statLabel);
         s.setCalcMode('STAT_DATA');
-        s.setStatData([{ x: '', y: '', freq: '1' }]);
+        const blank = applyStatDeleteAll();
+        s.setStatData(blank.data);
         s.setStatCursor({ row: 0, col: 0 });
       }
       return;
+    }
+    if (s.isShiftRef.current && val === '1') {
+      const nextMode = statMenuAfterShift1(s.calcModeRef.current, s.statTypeRef.current);
+      if (nextMode) {
+        s.setIsShift(false);
+        s.setCalcMode(nextMode);
+        return;
+      }
     }
     if (s.calcMode === 'STAT_DATA') {
       s.setStatData(prev => {
@@ -128,6 +140,26 @@ export function useModeRouter(s: CalculatorStore) {
         s.setLcdError(next.lcdError);
         s.setCurrentInput(next.currentInput);
         s.setShowingResult(next.showingResult);
+      }
+      return;
+    }
+    if (s.calcMode === 'STAT_EDITOR_MENU') {
+      if (val === '1') s.setCalcMode('STAT_MENU');
+      else if (val === '2') s.setCalcMode('STAT_DATA');
+      else if (val === '3') s.setCalcMode('STAT_EDIT');
+      return;
+    }
+    if (s.calcMode === 'STAT_EDIT') {
+      if (val === '1') {
+        const next = applyStatInsert(s.statData, s.statCursor.row, s.statType, s.statFrequencyEnabled);
+        s.setStatData(next.data);
+        s.setStatCursor(prev => ({ ...prev, row: next.row }));
+        s.setCalcMode('STAT_DATA');
+      } else if (val === '2') {
+        const next = applyStatDeleteAll();
+        s.setStatData(next.data);
+        s.setStatCursor({ row: next.row, col: 0 });
+        s.setCalcMode('STAT_DATA');
       }
       return;
     }
@@ -502,7 +534,16 @@ export function useModeRouter(s: CalculatorStore) {
     }
     s.setReplayIndex(-1);
     if (s.calcMode === 'STAT_DATA') {
-      s.setStatData(prev => applyStatDelete(prev, s.statCursor.row, s.statCursor.col, s.statType, s.statFrequencyEnabled));
+      if (s.isShift) {
+        s.setIsShift(false);
+        const next = applyStatInsert(s.statData, s.statCursor.row, s.statType, s.statFrequencyEnabled);
+        s.setStatData(next.data);
+        s.setStatCursor(prev => ({ ...prev, row: next.row }));
+        return;
+      }
+      const next = applyStatDelete(s.statData, s.statCursor.row);
+      s.setStatData(next.data);
+      s.setStatCursor(prev => ({ ...prev, row: next.row }));
       return;
     }
     if (s.calcMode === 'EQN_QUAD') {
@@ -522,7 +563,11 @@ export function useModeRouter(s: CalculatorStore) {
   }, [s]);
 
   const clearAll = useCallback(() => {
-    if (s.calcMode === 'STAT_DATA' || s.calcMode === 'STAT_MENU' || s.calcMode === 'STAT_RESULT' || s.calcMode === 'STAT_RESULT_SUB') {
+    if (
+      s.calcMode === 'STAT_DATA' || s.calcMode === 'STAT_MENU' ||
+      s.calcMode === 'STAT_RESULT' || s.calcMode === 'STAT_RESULT_SUB' ||
+      s.calcMode === 'STAT_EDITOR_MENU' || s.calcMode === 'STAT_EDIT'
+    ) {
       s.setCalcMode('COMP');
       return;
     }
@@ -977,9 +1022,12 @@ export function useModeRouter(s: CalculatorStore) {
   }, [s, handleInput]);
 
   const handleDigit1 = useCallback(() => {
-    if (s.isShift && s.statType !== null) {
-      s.setCalcMode('STAT_RESULT');
+    const nextMode = s.isShiftRef.current
+      ? statMenuAfterShift1(s.calcModeRef.current, s.statTypeRef.current)
+      : null;
+    if (nextMode) {
       s.setIsShift(false);
+      s.setCalcMode(nextMode);
     } else {
       handleInput('1');
     }

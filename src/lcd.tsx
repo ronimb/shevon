@@ -8,6 +8,8 @@ import { toFraction } from './evaluator.ts';
 import { moveCompCursorRight } from './modes/comp.ts';
 import {
   StatDataScreen,
+  StatEditScreen,
+  StatEditorMenuScreen,
   StatMenuScreen,
   StatResultScreen,
   StatSubMenuScreen,
@@ -34,7 +36,8 @@ export function isLcdMenu(opts: {
     solveScreen === 'confirm' || solveScreen === 'continue' ||
     calcMode === 'MENU' || calcMode === 'SETUP' || calcMode === 'CLR_MENU' ||
     calcMode === 'EQN_MENU' || calcMode === 'STAT_MENU' || calcMode === 'STAT_RESULT' ||
-    calcMode === 'STAT_RESULT_SUB' || calcMode === 'STAT_DATA'
+    calcMode === 'STAT_RESULT_SUB' || calcMode === 'STAT_DATA' ||
+    calcMode === 'STAT_EDITOR_MENU' || calcMode === 'STAT_EDIT'
   );
 }
 
@@ -191,6 +194,12 @@ export function LcdScreen(p: LcdProps) {
     }
     if (p.calcMode === 'STAT_RESULT_SUB') {
       return <StatSubMenuScreen statSubMenu={p.statSubMenu} statType={p.statType} />;
+    }
+    if (p.calcMode === 'STAT_EDITOR_MENU') {
+      return <StatEditorMenuScreen />;
+    }
+    if (p.calcMode === 'STAT_EDIT') {
+      return <StatEditScreen />;
     }
     if (p.calcMode === 'SETUP') {
       if (p.setupPrompt === 'freq') {

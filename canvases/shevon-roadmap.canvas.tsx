@@ -20,6 +20,10 @@ import {
 export default function ShevonRoadmap() {
   const dispatch = useCanvasAction();
 
+  const start = (prompt: string) => {
+    dispatch({ type: "newComposerChat", userPrompt: prompt });
+  };
+
   return (
     <Stack gap={28}>
       <Stack gap={8}>
@@ -74,8 +78,8 @@ export default function ShevonRoadmap() {
       <Row gap={24} align="end">
         <Stat value="Phase 2" label="Current phase" tone="warning" />
         <Stat value="5" label="Phase 2 items open" />
-        <Stat value="15" label="Open issues" tone="warning" />
-        <Stat value="37/76" label="Coverage done" />
+        <Stat value="13" label="Open issues" tone="warning" />
+        <Stat value="38/76" label="Coverage done" />
       </Row>
 
       <UsageBar
@@ -117,7 +121,7 @@ export default function ShevonRoadmap() {
           [
             "2 STAT / EQN",
             "In progress",
-            "Ins/Del-A, Dist, stay in STAT, linear/cubic EQN (SOLVE landed)",
+            "CALC E-19, Dist, stay in STAT, linear/cubic EQN",
           ],
           [
             "3 Remaining modes",
@@ -133,28 +137,48 @@ export default function ShevonRoadmap() {
         striped
       />
 
-      <Callout tone="info" title="Priority (25 Sep 2026)">
-        Engine tech debt first, then sanity on landed COMP/STAT/EQN/SOLVE,
-        then remaining Phase 2, then packaging. Phase 3 stays gated. Gap 1
-        (typed errors) already landed with SOLVE.
+      <Callout tone="info" title="Priority (25 Sep 2026, after debt)">
+        Sanity on landed COMP/STAT/EQN/SOLVE, then remaining Phase 2
+        (`p2-calc` next), then packaging. Engine debt A–C and `p2-edit`
+        are landed. Phase 3 stays gated.
       </Callout>
 
-      <H2>Now — tech debt</H2>
+      <H2>Now — remaining Phase 2</H2>
       <Card>
-        <CardHeader trailing={<Pill size="sm" active>this program</Pill>}>
-          Slices A–C landed
+        <CardHeader trailing={<Pill size="sm" active>start here</Pill>}>
+          After sanity: p2-calc
         </CardHeader>
         <CardBody>
           <Stack gap={10}>
             <Text>
-              A, B, and C landed: source-map / E-40 jump, the Calculator
-              shell split, and `CalcValue` (`real` | `complex` | `pair`).
-              Then remaining Phase 2, then `p4-packaging`. LineIO is not
-              debt.
+              Debt A–C and STAT Edit landed. Next leftover is unshifted
+              CALC (E-19). Then Dist, stay in STAT, linear/cubic EQN, then
+              packaging.
             </Text>
             <Row gap={8} wrap>
               <Button
+                variant="primary"
+                onClick={() =>
+                  start(
+                    "Follow docs/prompts/p2-calc.md exactly. Slice p2-calc only (unshifted CALC, E-19). Afterward run docs/prompts/sanity-landed.md. Do not start Dist, stay-in-STAT, EQN 1/2/4, LineIO, or packaging.",
+                  )
+                }
+              >
+                Start p2-calc
+              </Button>
+              <Button
                 variant="secondary"
+                onClick={() =>
+                  dispatch({
+                    type: "openFile",
+                    path: "docs/prompts/p2-calc.md",
+                  })
+                }
+              >
+                Open p2-calc prompt
+              </Button>
+              <Button
+                variant="ghost"
                 onClick={() =>
                   dispatch({
                     type: "openFile",
@@ -169,11 +193,11 @@ export default function ShevonRoadmap() {
                 onClick={() =>
                   dispatch({
                     type: "openFile",
-                    path: "docs/prompts/tech-debt.md",
+                    path: "docs/prompts/phase-2.md",
                   })
                 }
               >
-                Program index
+                Phase 2 index
               </Button>
             </Row>
           </Stack>
@@ -182,9 +206,9 @@ export default function ShevonRoadmap() {
 
       <H2>Phase 2 remaining</H2>
       <Text tone="secondary">
-        After A/B/C and sanity. Close these before opening Phase 3. Ids
-        match `roadmap.md`. Debt slices have landed; do not start these
-        from a debt chat.
+        After sanity. Close these before opening Phase 3. Ids match
+        `roadmap.md`. Start `p2-calc` from the card above, not from a
+        leftover id that has no prompt yet.
       </Text>
       <TodoListCard
         defaultExpanded
@@ -197,9 +221,15 @@ export default function ShevonRoadmap() {
           },
           {
             id: "p2-edit",
-            status: "pending",
+            status: "completed",
             content:
               "p2-edit — STAT Edit Ins and Del-A; DEL deletes a line (issue stat-del)",
+          },
+          {
+            id: "p2-calc",
+            status: "pending",
+            content:
+              "p2-calc — Unshifted CALC E-19: memory-letter prompts, previous value, recalc, equalities (issue calc-ux)",
           },
           {
             id: "p2-dist",
@@ -226,10 +256,24 @@ export default function ShevonRoadmap() {
           },
         ]}
         onTodoClick={(todo) => {
+          if (todo.id === "p2-edit") {
+            dispatch({
+              type: "openFile",
+              path: "docs/prompts/p2-edit.md",
+            });
+            return;
+          }
+          if (todo.id === "p2-calc") {
+            dispatch({
+              type: "openFile",
+              path: "docs/prompts/p2-calc.md",
+            });
+            return;
+          }
           if (todo.status === "completed") return;
           dispatch({
             type: "openFile",
-            path: "docs/prompts/tech-debt.md",
+            path: "docs/prompts/phase-2.md",
           });
         }}
       />
@@ -267,7 +311,7 @@ export default function ShevonRoadmap() {
           ["comp-drg", "SHIFT DRG ° r g conversions"],
           ["comp-bytes", "99-byte input limit + cursor-k"],
           ["comp-sep", "SETUP Dot / Comma separator"],
-          ["comp-calc", "CALC UX vs Casio prompt flow"],
+          ["comp-calc", "Pulled into Phase 2 as p2-calc (E-19 CALC)"],
           ["comp-range", "Per-function ranges; factorial 69; Σ bounds"],
           ["comp-keys", "Letter keys steal typing; Shift hold vs toggle"],
         ]}

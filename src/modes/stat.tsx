@@ -14,13 +14,57 @@ export function getStatMaxRows(statType: StatType | null, freqEnabled: boolean):
   return 40;
 }
 
+/** Blank STAT editor row. Casio always keeps at least one after Del / Del-A. */
+export function emptyStatRow(): StatEntry {
+  return { x: '', y: '', freq: '1' };
+}
+
+/** LCD window is three data rows (E-23 figure). Caret starts on row 1. */
+export const STAT_EDITOR_WINDOW = 3;
+
+export function initialStatData(): StatEntry[] {
+  return Array.from({ length: STAT_EDITOR_WINDOW }, emptyStatRow);
+}
+
+export function ensureMinStatRows(data: StatEntry[], min = STAT_EDITOR_WINDOW): StatEntry[] {
+  if (data.length >= min) return data;
+  return [...data, ...Array.from({ length: min - data.length }, emptyStatRow)];
+}
+
+/** Which SHIFT 1 menu to open. Editor context is Type/Data/Edit (E-23). */
+export function statMenuAfterShift1(
+  calcMode: CalcMode,
+  statType: StatType | null,
+): CalcMode | null {
+  const inEditor =
+    calcMode === 'STAT_DATA' || calcMode === 'STAT_EDITOR_MENU' || calcMode === 'STAT_EDIT';
+  if (inEditor) return 'STAT_EDITOR_MENU';
+  if (statType !== null) return 'STAT_RESULT';
+  return null;
+}
+
+export function statEditorWindow(
+  data: StatEntry[],
+  cursorRow: number,
+  windowSize = STAT_EDITOR_WINDOW,
+): { index: number; entry: StatEntry }[] {
+  const len = Math.max(data.length, cursorRow + 1, windowSize);
+  const start = cursorRow < windowSize
+    ? 0
+    : Math.min(cursorRow - (windowSize - 1), Math.max(0, len - windowSize));
+  return Array.from({ length: windowSize }, (_, i) => {
+    const index = start + i;
+    return { index, entry: data[index] ?? emptyStatRow() };
+  });
+}
+
 export function appendStatRowIfRoom(
   data: StatEntry[],
   statType: StatType | null,
   freqEnabled: boolean,
 ): StatEntry[] {
   if (data.length >= getStatMaxRows(statType, freqEnabled)) return data;
-  return [...data, { x: '', y: '', freq: '1' }];
+  return [...data, emptyStatRow()];
 }
 
 export const calculateStatVars = (
@@ -214,6 +258,15 @@ export const STAT_RESULT_TOP_OPTIONS: Record<string, string> = {
   '1': 'Type', '2': 'Data', '3': 'Sum', '4': 'Var', '5': 'Dist', '6': 'MinMax', '7': 'Reg'
 };
 
+/** SHIFT 1 from the Stat Editor (E-23): 3 is Edit, not Sum. */
+export const STAT_EDITOR_MENU_OPTIONS: Record<string, string> = {
+  '1': 'Type', '2': 'Data', '3': 'Edit',
+};
+
+export const STAT_EDIT_OPTIONS: Record<string, string> = {
+  '1': 'Ins', '2': 'Del-A',
+};
+
 export function getStatField(statType: StatType | null, statFrequencyEnabled: boolean, col: number): keyof StatEntry {
   const isTwoVar = statType !== '1-VAR';
   let field: keyof StatEntry = 'x';
@@ -247,22 +300,45 @@ export function applyStatDigit(
   return next;
 }
 
-export function applyStatDelete(
+export type StatEditResult = { data: StatEntry[]; row: number };
+
+/**
+ * E-23: DEL deletes the current data line, not a digit of the cell.
+ * Pads back to the three-row LCD window so the editor does not vanish.
+ */
+export function applyStatDelete(data: StatEntry[], row: number): StatEditResult {
+  if (data.length === 0) return { data: initialStatData(), row: 0 };
+  if (row < 0 || row >= data.length) {
+    return { data: ensureMinStatRows(data), row: Math.max(0, Math.min(row, data.length - 1)) };
+  }
+  const next = data.filter((_, i) => i !== row);
+  if (next.length === 0) return { data: initialStatData(), row: 0 };
+  return { data: ensureMinStatRows(next), row: Math.min(row, Math.max(next.length - 1, 0)) };
+}
+
+/**
+ * E-23: Ins inserts a blank line at the caret.
+ * No-op at the FREQ row cap (80 / 40 / 26).
+ */
+export function applyStatInsert(
   data: StatEntry[],
   row: number,
-  col: number,
   statType: StatType | null,
-  statFrequencyEnabled: boolean,
-): StatEntry[] {
-  const next = [...data];
-  const entry = { ...next[row] };
-  const field = getStatField(statType, statFrequencyEnabled, col);
-  let str = String(entry[field]);
-  if (str.length > 0) {
-    entry[field] = str.slice(0, -1) || "0";
+  freqEnabled: boolean,
+): StatEditResult {
+  if (data.length >= getStatMaxRows(statType, freqEnabled)) {
+    return { data, row: Math.max(0, Math.min(row, Math.max(0, data.length - 1))) };
   }
-  next[row] = entry;
-  return next;
+  const insertAt = Math.max(0, Math.min(row, data.length));
+  return {
+    data: [...data.slice(0, insertAt), emptyStatRow(), ...data.slice(insertAt)],
+    row: insertAt,
+  };
+}
+
+/** E-23: Edit → Del-A clears all sample data. Editor returns to three blank rows. */
+export function applyStatDeleteAll(): StatEditResult {
+  return { data: initialStatData(), row: 0 };
 }
 
 export function getStatSubMenuInsert(statSubMenu: string | null, statType: StatType | null, val: string): string | null {
@@ -354,30 +430,31 @@ export function StatDataScreen({
   const gridCols = isTwoVar
     ? `40px 1fr 1fr ${statFrequencyEnabled ? '1fr' : ''}`
     : `40px 80px ${statFrequencyEnabled ? '1fr' : ''}`;
+  const windowRows = statEditorWindow(statData, statCursor.row);
 
   return (
-    <div className="stat-data w-full h-[140px] overflow-hidden flex flex-col font-mono text-[0.9rem] bg-black/5 rounded">
+    <div className="stat-data w-full overflow-hidden flex flex-col font-mono text-[0.9rem] bg-black/5 rounded">
       <div className="grid border-b border-black/20 font-bold bg-black/10" style={{ gridTemplateColumns: gridCols }}>
         <div className="px-1 border-r border-black/10 text-center"></div>
         <div className="px-1 border-r border-black/10 text-center">X</div>
         {isTwoVar && <div className="px-1 border-r border-black/10 text-center">Y</div>}
         {statFrequencyEnabled && <div className="px-1 text-center">FREQ</div>}
       </div>
-      <div className="flex-1 overflow-y-auto">
-        {statData.map((entry, idx) => (
-          <div key={idx} className="grid border-b border-black/5" style={{ gridTemplateColumns: gridCols }}>
-            <div className="px-1 border-r border-black/10 text-center bg-black/5">{idx + 1}</div>
-            <div className={`px-1 border-r border-black/10 text-right ${statCursor.row === idx && statCursor.col === 0 ? 'bg-black/20 outline outline-1 outline-black/30' : ''}`}>
-              <EditorCaret value={entry.x === '' ? '0' : entry.x} active={statCursor.row === idx && statCursor.col === 0} />
+      <div>
+        {windowRows.map(({ index, entry }) => (
+          <div key={index} className="grid border-b border-black/5" style={{ gridTemplateColumns: gridCols }}>
+            <div className="px-1 border-r border-black/10 text-center bg-black/5">{index + 1}</div>
+            <div className={`px-1 border-r border-black/10 text-right ${statCursor.row === index && statCursor.col === 0 ? 'bg-black/20 outline outline-1 outline-black/30' : ''}`}>
+              <EditorCaret value={entry.x === '' ? '0' : entry.x} active={statCursor.row === index && statCursor.col === 0} />
             </div>
             {isTwoVar && (
-              <div className={`px-1 border-r border-black/10 text-right ${statCursor.row === idx && statCursor.col === 1 ? 'bg-black/20 outline outline-1 outline-black/30' : ''}`}>
-                <EditorCaret value={entry.y === '' ? '0' : entry.y} active={statCursor.row === idx && statCursor.col === 1} />
+              <div className={`px-1 border-r border-black/10 text-right ${statCursor.row === index && statCursor.col === 1 ? 'bg-black/20 outline outline-1 outline-black/30' : ''}`}>
+                <EditorCaret value={entry.y === '' ? '0' : entry.y} active={statCursor.row === index && statCursor.col === 1} />
               </div>
             )}
             {statFrequencyEnabled && (
-              <div className={`px-1 text-right ${statCursor.row === idx && (isTwoVar ? statCursor.col === 2 : statCursor.col === 1) ? 'bg-black/20 outline outline-1 outline-black/30' : ''}`}>
-                <EditorCaret value={entry.freq} active={statCursor.row === idx && (isTwoVar ? statCursor.col === 2 : statCursor.col === 1)} />
+              <div className={`px-1 text-right ${statCursor.row === index && (isTwoVar ? statCursor.col === 2 : statCursor.col === 1) ? 'bg-black/20 outline outline-1 outline-black/30' : ''}`}>
+                <EditorCaret value={entry.freq} active={statCursor.row === index && (isTwoVar ? statCursor.col === 2 : statCursor.col === 1)} />
               </div>
             )}
           </div>
@@ -414,6 +491,27 @@ export function StatSubMenuScreen({
       {options.map((opt, i) => (
         <div key={i} className="mode-item"><span className="mode-num mr-1 opacity-50">{i + 1}:</span>{renderMathSymbol(opt)}</div>
       ))}
+    </div>
+  );
+}
+
+/** SHIFT 1 while the Stat Editor is on screen (E-23). */
+export function StatEditorMenuScreen() {
+  return (
+    <div className="stat-result-menu grid grid-cols-2 gap-x-4 gap-y-2 text-[0.95rem] flex-1">
+      <div className="mode-item"><span className="mode-num mr-1 opacity-50">1:</span>Type</div>
+      <div className="mode-item"><span className="mode-num mr-1 opacity-50">2:</span>Data</div>
+      <div className="mode-item"><span className="mode-num mr-1 opacity-50">3:</span>Edit</div>
+    </div>
+  );
+}
+
+/** Edit submenu: 1:Ins  2:Del-A */
+export function StatEditScreen() {
+  return (
+    <div className="stat-submenu grid grid-cols-2 gap-x-4 gap-y-2 text-[0.85rem] flex-1">
+      <div className="mode-item"><span className="mode-num mr-1 opacity-50">1:</span>Ins</div>
+      <div className="mode-item"><span className="mode-num mr-1 opacity-50">2:</span>Del-A</div>
     </div>
   );
 }

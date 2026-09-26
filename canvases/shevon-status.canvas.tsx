@@ -34,17 +34,17 @@ export default function ShevonStatus() {
       </Stack>
 
       <Grid columns={4} gap={16}>
-        <Stat value="37/76" label="Coverage done" tone="warning" />
+        <Stat value="38/76" label="Coverage done" tone="warning" />
         <Stat value="3 / 8" label="Modes with real logic" />
         <Stat value="AST" label="Engine (no new Function)" tone="success" />
-        <Stat value="101" label="Tests (after debt-value)" tone="success" />
+        <Stat value="108" label="Tests (after p2-edit)" tone="success" />
       </Grid>
 
       <Callout tone="success" title="Phase 1 landed · Phase 2 in progress">
-        COMP/SETUP and SOLVE (CalcError, Variable ERROR / Can’t Solve, L−R)
-        are in the tree. STAT FREQ and EQN quadratic (real + a+bi) landed.
-        Now: engine tech debt (A + B + C landed),
-        then the five remaining Phase 2 items, then packaging.
+        COMP/SETUP and SOLVE are in the tree. STAT FREQ and EQN quadratic
+        (real + a+bi) landed. Engine debt A–C landed (source-map, shell
+        split, CalcValue). STAT Edit landed. Now: sanity, then p2-calc
+        (E-19 CALC), and the other Phase 2 leftovers, then packaging.
         Phase 3 stays gated.
       </Callout>
 
@@ -93,13 +93,18 @@ export default function ShevonStatus() {
           ],
           [
             "src/Calculator.tsx",
-            "UI shell",
-            "COMP/STAT/EQN handlers, LCD, keys, history pane, keyboard — remaining monolith (~1878 lines)",
+            "UI compose",
+            "Overlay, history pane, Current-keys strip. Handlers live in modeRouter (~490 lines).",
+          ],
+          [
+            "src/lcd.tsx, keyboard.ts, useCalculatorState.ts, modeRouter.ts",
+            "Shell (debt-shell)",
+            "LCD + annunciators; PC keys; one store; COMP/STAT/EQN/SETUP/CLR",
           ],
           [
             "src/parser.ts + src/evaluator.ts",
             "Expression engine",
-            "Tokenizer + recursive-descent AST; evaluator rewrites template IR then walks the AST",
+            "Typed AST; IR rewrite is source-mapped; result is CalcValue (real | complex | pair)",
           ],
           [
             "src/display.tsx, format.ts, keys.ts, types.ts, modes/",
@@ -143,7 +148,7 @@ export default function ShevonStatus() {
               <Text tone="secondary">
                 Ans, A–F / X / Y, independent M, STO/RCL, S⇔D (exact p/q
                 only), DEG/RAD/GRA, Fix/Sci/Norm, ENG, DMS, Rnd, Ran#/RanInt#,
-                CALC prompts, SOLVE (initial X, L−R, Continue, Variable ERROR /
+                CALC (partial — `p2-calc`), SOLVE (initial X, L−R, Continue, Variable ERROR /
                 Can’t Solve), percent, nPr/nCr,
                 Pol/Rec, π and e, SHIFT 9 CLR.
               </Text>
@@ -188,8 +193,8 @@ export default function ShevonStatus() {
             "vis-menus · Phase 3",
           ],
           [
-            "stat-jump-comp / stat-del / dist-empty",
-            "Recall jumps to COMP; DEL edits a cell; Dist submenu is empty",
+            "calc-ux / dist-empty / stat-jump-comp",
+            "CALC ≠ E-19; Dist empty; recall → COMP",
             "Phase 2",
           ],
           [
@@ -207,19 +212,19 @@ export default function ShevonStatus() {
         columnAlign={["left", "left", "left"]}
         rows={[
           [
-            "Sanity + remaining Phase 2",
-            "Debt A–C landed; do not start Phase 2 from a debt chat",
-            "roadmap.md → Now §2–3",
-          ],
-          [
             "Sanity on landed COMP/STAT/EQN/SOLVE",
-            "After each slice: npm test, lint, browser smoke",
+            "npm test, lint, browser smoke (jump, Pol/Rec pair, SOLVE)",
             "docs/prompts/sanity-landed.md",
           ],
           [
-            "Remaining Phase 2",
-            "p2-edit, Dist, stay in STAT, linear/cubic EQN",
-            "Phase 2",
+            "p2-calc",
+            "Unshifted CALC vs E-19 (memory letters, previous value, recalc)",
+            "docs/prompts/p2-calc.md",
+          ],
+          [
+            "Then Dist, stay in STAT, linear/cubic EQN",
+            "p2-dist → p2-stat-mode → p2-eqn-linear → p2-eqn-cubic",
+            "docs/prompts/phase-2.md",
           ],
           [
             "Packaging (pulled forward)",
@@ -309,11 +314,11 @@ export default function ShevonStatus() {
           onClick={() =>
             dispatch({
               type: "openFile",
-              path: "docs/prompts/debt-source-map.md",
+              path: "docs/prompts/p2-calc.md",
             })
           }
         >
-          Slice A prompt
+          p2-calc prompt
         </Pill>
         <Pill
           onClick={() =>

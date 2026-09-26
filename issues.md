@@ -33,10 +33,22 @@ Status: `[ ]` open · `[x]` fixed (move to **Closed** at the next wrap-up).
 
 ---
 
+## COMP
+
+- [ ] `calc-ux` — Unshifted CALC prompts every `[A-MYX]` in the raw string
+      and then evaluates. Hardware (E-19) prompts memory letters only,
+      shows the previous value, lets you recalc, and handles equalities
+      as the figure shows. Linear-during-prompt is the current I/O for
+      the value, not SETUP LineIO.
+      **Associated:** `p2-calc` (was `comp-calc`).
+      Kickoff: [`docs/prompts/p2-calc.md`](docs/prompts/p2-calc.md).
+
+---
+
 ## STAT / EQN
 
-- [ ] `stat-del` — In the STAT editor, DEL edits the cell; on the hardware it
-      deletes the line. Ins / Del-A are missing.
+- [x] `stat-del` — In the STAT editor, DEL deletes the data line (E-23). Ins
+      and Del-A are on the STAT Edit menu (SHIFT 1 from the editor → 3 Edit).
       **Associated:** `p2-edit`.
 - [ ] `stat-jump-comp` — Recalling a STAT variable (`insertStatVar` in
       `src/modes/stat.tsx`) forces COMP. The unit stays in STAT.

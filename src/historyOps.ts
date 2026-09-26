@@ -44,6 +44,10 @@ export function liveOperationSequence(s: LiveOpState): string[] {
       return ['MODE', '5'];
     case 'STAT_MENU':
       return ['MODE', '3'];
+    case 'STAT_EDITOR_MENU':
+      return ['SHIFT', '1'];
+    case 'STAT_EDIT':
+      return ['SHIFT', '1', '3'];
     default:
       break;
   }

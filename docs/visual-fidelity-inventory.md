@@ -8,8 +8,9 @@ split.
 [`principles.md`](principles.md). Scheduled `vis-*` work:
 [`roadmap.md`](../roadmap.md). Defects: [`issues.md`](../issues.md).
 
-Refreshed 24 Sep 2026 from the roadmap, tests (84), and a codebase pass. If
-this file disagrees with `roadmap.md` on what is scheduled, follow the roadmap.
+Refreshed 25 Sep 2026 after `p2-edit` (STAT Ins / Del-A / DEL-deletes-line).
+If this file disagrees with `roadmap.md` on what is scheduled, follow the
+roadmap.
 
 ## Key source files
 
@@ -50,19 +51,21 @@ rebuild.
 | EQN / STAT editor carets | `eqn.tsx`, `stat.tsx` | Active cell shows a caret, not only a shaded box |
 | MODE / SETUP / CLR menus | `lcd.tsx`, `modeRouter.ts` | Both SETUP pages render; Deg/Rad/Gra/Fix/Sci/Norm/ab/c/d/c/FREQ work |
 | STAT type menu | `stat.tsx` | All 8 types selectable |
+| STAT Edit menu | `stat.tsx` | From editor: SHIFT 1 → 1:Type 2:Data 3:Edit; Edit is 1:Ins 2:Del-A |
 | hyp menu | `lcd.tsx` | Overlays COMP input line; does not dump “hyp” text |
 | EQN quadratic editor | `eqn.tsx` | a/b/c labels, cell caret, bottom-left entry |
 | Result forms: fractions, mixed fractions | `display.tsx`, SETUP ab/c vs d/c | d/c and ab/c when applicable |
 | Sci ×10ⁿ, ENG, S⇔D toggle | `display.tsx`, `format.ts` | Engineering notation and decimal ↔ fraction |
 | Fix/Sci/Norm decimals | `format.ts` | Via `formatForDisplay` / `formatResultNumber` |
 | DMS °′″ | `format.ts` | Distinct degree / minute / second glyphs |
-| Syntax + Math ERROR | `lcd.tsx`, `modeRouter.ts` | ◄/► dismisses error and returns to expression |
+| Syntax + Math ERROR | `lcd.tsx`, `modeRouter.ts` | ◀▶ jumps caret to `CalcError.offset` (E-40); AC clears error + expression |
 | Variable ERROR / Can’t Solve | `lcd.tsx`, `modeRouter.ts` | SOLVE no-X / Newton miss; same ◀▶ / AC dismiss |
 | SOLVE solve for x / x= / L-R= | `lcd.tsx`, `modeRouter.ts` | Confirm screen, then equation + x= + L-R= together |
 | Keypad overlay | `Calculator.tsx`, `keys.ts` | Transparent buttons over faceplate PNG |
 | ENG / hyp / Abs / Ran# / RanInt# | `modeRouter.ts`, `display.tsx` | No literal ENG/hyp dump; abs is `| |`; Ran# templates |
 | Trig / hyp / `ln` / unclosed templates | `display.tsx` | Shared `paintTemplates` table; IR stems never reach the LCD (`vis-no-literal`) |
 | ◀▶ + COMP ▲▼ | `lcd.tsx` | Light from caret navigability and COMP history replay |
+| Pol/Rec pair result | `evaluator.ts`, `lcd.tsx`, `display.tsx` | Top-level `=` paints `r=…, θ=…` or bottom-right `x=…, y=…` (`debt-value`) |
 
 ---
 
@@ -79,8 +82,7 @@ Ids match [`issues.md`](../issues.md) and [`roadmap.md`](../roadmap.md).
 | `dist-empty` / `vis-menus` | Distribution submenu | Menu label exists but opens empty submenu | `stat.tsx` |
 | `lying-menus` / `vis-menus` | MODE 2/4/6/7/8 | Listed in MODE menu but silently fall back to COMP | `lcd.tsx`, `modeRouter.ts` |
 | `surd-pi-form` / `vis-result` | Surd `n√m` result | Input template exists; no surd result form | `display.tsx` |
-| `pol-rec-line` / `vis-result` | Pol/Rec single-line r,θ / x,y | `Pol(` / `Rec(` (comma typed); result `r=…, θ=…` or bottom-right `x=…, y=…` | `evaluator.ts`, `lcd.tsx`, `display.tsx` |
-| `err-jump` / `vis-errors` | Error ◀▶ | Syntax / Math jump to `CalcError.offset` (E-40). Stack / Argument screens still missing | `lcd.tsx`, `modeRouter.ts` |
+| `vis-errors` | Stack / Argument ERROR | Syntax / Math jump landed; these screens still missing | `lcd.tsx` |
 | `lineio-display` / `comp-lineio` | MthIO / LineIO | SETUP shows options; not functional | `lcd.tsx`, `modeRouter.ts` |
 
 ---
@@ -92,7 +94,6 @@ Ids match [`issues.md`](../issues.md) and [`roadmap.md`](../roadmap.md).
 | LCD history lines | No scrollable prior-calculation lines on LCD; ▲/▼ replaces single input line only. Side pane is an emulator extra. Live Current keys sit in a top strip. |
 | Complex `a+bi` in COMP / CMPLX | EQN quadratic paints a+bi; CMPLX mode and COMP complex I/O are not implemented |
 | Stack / Argument ERROR | Syntax / Math / Variable / Can’t Solve exist; Stack / Argument / Time Out do not |
-| Error jump-to-token | ◄/► clears error state only |
 | CMPLX / BASE-N / MATRIX / VECTOR / TABLE modes | Listed in MODE menu only; all fall back to COMP |
 | Distribution menu body | No distribution UI beyond empty STAT submenu |
 | LineIO editing | SETUP page 1 shows options; not functional |
@@ -149,8 +150,12 @@ Status bar CSS: `index.css`.
 
 ### 5. STAT mode
 
-- Data editor: row index, X, optional Y, optional FREQ columns, caret.
+- Data editor: three-row LCD window, row index, X, optional Y, optional FREQ
+  columns, caret on row 1 at entry.
 - FREQ column gated on `statFrequencyEnabled` (SETUP page 2).
+- DEL deletes the current data line; SHIFT DEL (INS) inserts a blank line
+  (on a blank window Ins stays three 0s).
+- SHIFT 1 from the editor shows 1:Type 2:Data 3:Edit; Edit is 1:Ins 2:Del-A.
 - Result and submenus work except Dist (empty). Recalling STAT vars jumps to
   COMP.
 
@@ -209,10 +214,10 @@ overlay size** as the faceplate keycap (`keys.ts`):
 ## Summary
 
 Most remaining visual-fidelity work is on elements that already exist —
-STAT ▲▼ lighting, hardcoded-dim CMPLX/MAT/VCT/Disp, making listed menu
-options honest or real, and jump-to-token errors. `vis-no-literal` has
-landed (shared LCD/History template table). The pure “add missing” list is
-shorter and mostly Phase 3 modes plus Dist / LineIO.
+STAT ▲▼ lighting, hardcoded-dim CMPLX/MAT/VCT/Disp, and making listed menu
+options honest or real. `vis-no-literal` and E-40 jump-to-token have
+landed. The pure “add missing” list is shorter and mostly Phase 3 modes
+plus Dist / LineIO.
 
 Natural result forms (`n√m`, p/q·π) and the full PDF regression suite land in
 Phase 4. Pixel-perfect LCD font is out of scope until Phase 3 is done.

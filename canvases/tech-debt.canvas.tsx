@@ -18,26 +18,30 @@ import {
 export default function TechDebtFramework() {
   const dispatch = useCanvasAction();
 
+  const start = (prompt: string) => {
+    dispatch({ type: "newComposerChat", userPrompt: prompt });
+  };
+
   return (
     <Stack gap={28}>
       <Stack gap={8}>
         <H1>Tech-debt framework</H1>
         <Text tone="secondary">
-          View of `roadmap.md` Now §1 (25 Sep 2026). One slice per new
-          chat. Chat links often do nothing — use the buttons or Ctrl+P.
+          Historical view of `roadmap.md` Now §1. A–C landed 25 Sep 2026.
+          Chat links often do nothing — use the buttons or Ctrl+P.
         </Text>
       </Stack>
 
       <Row gap={24} align="end">
         <Stat value="4 / 4" label="Gaps done (CalcError + A + B + C)" tone="success" />
-        <Stat value="—" label="Debt slices left" tone="success" />
-        <Stat value="101" label="Tests after slice C" />
+        <Stat value="p2-calc" label="Next leftover" tone="warning" />
+        <Stat value="p2-edit" label="STAT Edit landed" tone="success" />
       </Row>
 
-      <Callout tone="info" title="Order is fixed">
-        A, B, and C landed. Run sanity on landed COMP/STAT/EQN, then
-        remaining Phase 2, then packaging. LineIO is not debt.
-        Phase 3 stays gated.
+      <Callout tone="success" title="Debt program closed">
+        A source-map, B shell split, and C CalcValue are in the tree.
+        Remaining Now work is sanity, then Phase 2 leftovers, then
+        packaging. LineIO is not debt. Phase 3 stays gated.
       </Callout>
 
       <H2>Slices</H2>
@@ -67,57 +71,71 @@ export default function TechDebtFramework() {
           [
             "C",
             "debt-value",
-            "docs/prompts/debt-value.md",
-            "CalcValue real|complex|pair; COMP looks the same",
+            "(landed)",
+            "CalcValue real|complex|pair; Pol/Rec pair line",
           ],
         ]}
         striped
       />
 
       <Card>
-        <CardHeader trailing={<Pill size="sm" tone="success">landed</Pill>}>
-          Slice C
+        <CardHeader trailing={<Pill size="sm" active>next</Pill>}>
+          Remaining Phase 2
         </CardHeader>
         <CardBody>
-          <Text>
-            Evaluator returns CalcValue (real | complex | pair). EQN a+bi
-            uses complex. Top-level Pol/Rec paints a single line
-            (r=…, θ=… / bottom-right x=…, y=…).
-            Conjugate / arg / polar helpers and reserved integer / matrix
-            kinds are on the same type. COMP decimals and fractions are
-            unchanged. Next: remaining Phase 2 — not from this chat.
-          </Text>
+          <Stack gap={10}>
+            <Text>
+              `p2-edit` landed (DEL deletes a STAT line; Edit → Ins / Del-A).
+              Next leftover is unshifted CALC (E-19).
+            </Text>
+            <Row gap={8} wrap>
+              <Button
+                variant="primary"
+                onClick={() =>
+                  start(
+                    "Follow docs/prompts/p2-calc.md exactly. Slice p2-calc only (unshifted CALC, E-19). Afterward run docs/prompts/sanity-landed.md. Do not start Dist, stay-in-STAT, EQN 1/2/4, LineIO, or packaging.",
+                  )
+                }
+              >
+                Start p2-calc
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() =>
+                  dispatch({
+                    type: "openFile",
+                    path: "docs/prompts/p2-calc.md",
+                  })
+                }
+              >
+                Open p2-calc prompt
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() =>
+                  dispatch({
+                    type: "openFile",
+                    path: "docs/prompts/sanity-landed.md",
+                  })
+                }
+              >
+                Sanity checklist
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() =>
+                  dispatch({
+                    type: "openFile",
+                    path: "docs/prompts/phase-2.md",
+                  })
+                }
+              >
+                Phase 2 index
+              </Button>
+            </Row>
+          </Stack>
         </CardBody>
       </Card>
-
-      <H2>Later work (do not start yet)</H2>
-      <Row gap={8} wrap>
-        <Button
-          variant="ghost"
-          onClick={() =>
-            dispatch({
-              type: "openFile",
-              path: "docs/prompts/debt-value.md",
-            })
-          }
-        >
-          Open C prompt
-        </Button>
-        <Button
-          variant="ghost"
-          onClick={() =>
-            dispatch({ type: "openFile", path: "docs/prompts/tech-debt.md" })
-          }
-        >
-          Program index
-        </Button>
-        <Button
-          variant="ghost"
-          onClick={() => dispatch({ type: "openFile", path: "roadmap.md" })}
-        >
-          Roadmap
-        </Button>
-      </Row>
     </Stack>
   );
 }
