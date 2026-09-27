@@ -15,8 +15,8 @@ Status is about **behavior**, not whether a menu label exists.
 Scheduled work: [`roadmap.md`](../roadmap.md). Honesty leftovers:
 [`issues.md`](../issues.md). Landed-correctness review:
 [`docs/tech-issues.md`](tech-issues.md).
-Refreshed 27 Sep 2026. Test count: 171. Queue: `roadmap.md` **Now**.
-Percent is Done (`R17` / `r17-percent`). `p2-eqn-cubic` is in.
+Refreshed 27 Sep 2026. Test count: 171. Queue: `roadmap.md` **Now**
+(`p4-packaging`). Percent is Done (`R17`). Phase 2 slices are landed.
 
 ---
 
@@ -160,9 +160,9 @@ MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
 | Feature | Manual | Status | In the emulator | Gap |
 |---------|--------|--------|-----------------|-----|
 | Photo overlay + hitboxes | — | Done | Absolute keys; triple-click calibration; `calculator_new.png` | — |
-| PC keyboard | — | Partial | Enter, arrows, Shift/Alt, comma (SHIFT )), S/C/T/L/R/Q/A, X/Y vars | Letter keys steal typing; Shift hold vs overlay toggle |
-| History / LaTeX pane | — | Done | 50 items, Load, physical-key Show Keys; STO / MODE / SETUP actions | Not hardware behavior; keep as extra. Live Current keys strip is on top |
-| Electron + Pages + PWA | — | Partial | Scripts and workflow present | Verify portable exe, Pages deploy, and PWA install end-to-end |
+| PC keyboard | — | Partial | Enter, arrows, Shift/Alt, comma (SHIFT )), S/C/T/L/R/Q/D/A, ` = S⇔D, X/Y vars | Letter keys steal typing; Shift hold vs overlay toggle |
+| History / LaTeX pane | — | Done | More pane: 50 items, Load, physical-key Show Keys; STO / MODE / SETUP actions | Not hardware behavior; keep as extra. Live Current keys strip is on top |
+| Electron + Pages + PWA | — | Partial | Lettermark wired; PWA install skipped; one frameless `Shevon.exe` (~100 MB Chromium); Pin icon; Keyboard show/hide shortcut | Ron must launch the exe; `p4-tauri` later for a small WebView2 wrapper; Pages only if a live desktop URL is wanted |
 | Tests | E-16 examples | Partial | Golden + parser + CalcValue + STAT Edit + E-19 CALC + E-25 Dist + stay-in-STAT + E-28 linear + E-28 cubic (171) | Remaining numbered sample operations in the PDF |
 
 ---

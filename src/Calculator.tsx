@@ -10,6 +10,32 @@ import { useKeyFlash, usePcKeyboard } from './keyboard.ts';
 import { useCalculatorState } from './useCalculatorState.ts';
 import { useModeRouter } from './modeRouter.ts';
 
+const BRING_FRONT_KEY = 'calc_bring_front_accel';
+const BRING_FRONT_DEFAULT = 'CommandOrControl+Shift+Space';
+
+function isElectronApp(): boolean {
+  return typeof navigator !== 'undefined' && /Electron/i.test(navigator.userAgent);
+}
+
+function eventToAccelerator(e: KeyboardEvent | React.KeyboardEvent): string | null {
+  if (['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) return null;
+  const parts: string[] = [];
+  if (e.ctrlKey || e.metaKey) parts.push('CommandOrControl');
+  if (e.altKey) parts.push('Alt');
+  if (e.shiftKey) parts.push('Shift');
+  const named: Record<string, string> = {
+    ' ': 'Space',
+    Escape: 'Esc',
+    ArrowUp: 'Up',
+    ArrowDown: 'Down',
+    ArrowLeft: 'Left',
+    ArrowRight: 'Right',
+  };
+  const key = named[e.key] ?? (e.key.length === 1 ? e.key.toUpperCase() : e.key);
+  parts.push(key);
+  return parts.length > 1 ? parts.join('+') : null;
+}
+
 const Calculator: React.FC = () => {
   const [keyStyles] = useState<Record<string, KeyStyle>>(() => {
     try {
@@ -24,30 +50,63 @@ const Calculator: React.FC = () => {
 
   const [scale, setScale] = useState(1);
   const [showPane, setShowPane] = useState<boolean>(false);
+  const [pinned, setPinned] = useState(false);
   const [showCurrentKeys, setShowCurrentKeys] = useState<boolean>(() => localStorage.getItem('calc_show_current_keys_on') === '1');
   const [paneView, setPaneView] = useState<'history' | 'help'>('history');
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
+  const [bringAccel, setBringAccel] = useState(() => localStorage.getItem(BRING_FRONT_KEY) || BRING_FRONT_DEFAULT);
+  const [captureBring, setCaptureBring] = useState(false);
 
   const store = useCalculatorState();
   const actions = useModeRouter(store);
+  const isElectron = isElectronApp();
 
   useEffect(() => {
     const handleResize = () => {
+      const chromeH = document.querySelector('.app-chrome')?.getBoundingClientRect().height ?? 40;
       const stripH = showCurrentKeys ? 110 : 0;
-      const paneW = showPane && window.innerWidth >= 768 ? 398 : 0;
-      const availH = Math.max(320, window.innerHeight - stripH - 40);
-      const availW = Math.max(280, window.innerWidth - paneW - 40);
+      const paneW = showPane && (isElectron || window.innerWidth >= 768) ? 382 : 0;
+      const availH = Math.max(280, window.innerHeight - chromeH - stripH);
+      const availW = Math.max(240, window.innerWidth - paneW);
       setScale(Math.min(1, availH / 1000, availW / 504));
     };
 
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [showCurrentKeys, showPane]);
+  }, [showCurrentKeys, showPane, isElectron]);
 
   useEffect(() => {
     localStorage.setItem('calc_show_current_keys_on', showCurrentKeys ? '1' : '0');
   }, [showCurrentKeys]);
+
+  useEffect(() => {
+    void window.shevonDesktop?.setHistoryOpen(showPane);
+  }, [showPane]);
+
+  useEffect(() => {
+    if (!isElectron) return;
+    localStorage.setItem(BRING_FRONT_KEY, bringAccel);
+    void window.shevonDesktop?.setBringToFrontAccelerator(bringAccel);
+  }, [isElectron, bringAccel]);
+
+  useEffect(() => {
+    if (!captureBring) return;
+    const onKey = (e: KeyboardEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (e.key === 'Escape') {
+        setCaptureBring(false);
+        return;
+      }
+      const accel = eventToAccelerator(e);
+      if (!accel) return;
+      setBringAccel(accel);
+      setCaptureBring(false);
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [captureBring]);
 
   usePcKeyboard({
     setShiftMomentary: actions.setShiftMomentary,
@@ -74,6 +133,7 @@ const Calculator: React.FC = () => {
     handleSquareRootKey: actions.handleSquareRootKey,
     handleSquareKey: actions.handleSquareKey,
     handlePowerKey: actions.handlePowerKey,
+    handleFracKey: actions.handleFracKey,
     handleAlphaVar: actions.handleAlphaVar,
     flashKey,
     unflashKey,
@@ -163,16 +223,53 @@ const Calculator: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col bg-[#121212] min-h-screen m-0 overflow-x-hidden font-sans">
-      <button
-        type="button"
-        onClick={() => setShowCurrentKeys(v => !v)}
-        className="fixed top-4 left-4 z-50 px-3 py-2 bg-[#1c1c1c] text-[10px] font-black tracking-widest uppercase text-blue-400/80 rounded-full shadow-lg border border-white/10 hover:bg-[#2a2a2a]"
-      >
-        {showCurrentKeys ? 'Hide keys' : 'Show keys'}
-      </button>
+    <div className="app-shell flex flex-col bg-[#121212] m-0 overflow-hidden font-sans">
+      <div className="app-chrome flex items-center gap-2 px-3 py-2 shrink-0">
+        <button
+          type="button"
+          onClick={() => setShowCurrentKeys(v => !v)}
+          className="app-no-drag px-3 py-1.5 bg-[#1c1c1c] text-[10px] font-black tracking-widest uppercase text-blue-400/80 rounded-full border border-white/10 hover:bg-[#2a2a2a]"
+        >
+          {showCurrentKeys ? 'Hide keys' : 'Show keys'}
+        </button>
+        <div className="flex-1 min-h-[28px]" />
+        <button
+          type="button"
+          onClick={() => setShowPane(!showPane)}
+          className="app-no-drag px-3 py-1.5 bg-[#1c1c1c] text-[10px] font-black tracking-widest uppercase text-white/70 rounded-full border border-white/10 hover:bg-[#2a2a2a]"
+        >
+          More
+        </button>
+        {isElectron ? (
+          <button
+            type="button"
+            title={pinned ? 'Unpin' : 'Pin on top'}
+            aria-label={pinned ? 'Unpin' : 'Pin on top'}
+            onClick={() => {
+              const next = !pinned;
+              setPinned(next);
+              void window.shevonDesktop?.setAlwaysOnTop(next);
+            }}
+            className={`app-no-drag p-1.5 rounded-full border hover:bg-[#2a2a2a] ${pinned ? 'bg-blue-500/20 text-blue-300 border-blue-400/40' : 'bg-[#1c1c1c] text-white/50 border-white/10'}`}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill={pinned ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 17v5" />
+              <path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16h14v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z" />
+            </svg>
+          </button>
+        ) : null}
+        {isElectron ? (
+          <button
+            type="button"
+            onClick={() => window.close()}
+            className="app-no-drag px-3 py-1.5 bg-[#1c1c1c] text-[10px] font-black tracking-widest uppercase text-white/50 rounded-full border border-white/10 hover:bg-[#2a2a2a]"
+          >
+            Close
+          </button>
+        ) : null}
+      </div>
       {showCurrentKeys && (
-        <div className="current-keys-strip w-full border-b border-white/10 pl-32 pr-16 py-3">
+        <div className="app-no-drag current-keys-strip w-full border-b border-white/10 px-4 py-3">
           <span className="block text-[10px] font-black tracking-widest uppercase text-white/25 mb-1.5">Current keys</span>
           {liveKeys.length === 0 ? (
             <div className="text-[11px] text-white/20 italic">No current operation</div>
@@ -181,24 +278,18 @@ const Calculator: React.FC = () => {
           )}
         </div>
       )}
-    <div className="flex flex-col md:flex-row justify-center items-start p-5 gap-8 flex-1">
-      <button
-        onClick={() => setShowPane(!showPane)}
-        className="fixed top-4 right-4 z-50 p-3 bg-[#1c1c1c] text-white/80 rounded-full shadow-lg border border-white/10 hover:bg-[#2a2a2a] transition-colors"
-        title="Toggle History & Help"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-      </button>
+    <div className={`flex justify-center items-stretch flex-1 min-h-0 overflow-hidden gap-8 ${showPane ? 'flex-row' : 'flex-col md:flex-row'}`}>
 
+      <div className="flex-1 min-h-0 min-w-0 flex items-center justify-center">
       <div
-        className="flex-shrink-0 flex items-start justify-center transition-all duration-300 relative"
+        className="flex-shrink-0 flex items-center justify-center transition-all duration-300 relative"
         style={{
           height: `${1000 * scale}px`,
           width: `${504 * scale}px`,
         }}
       >
         <div
-          className="absolute origin-top transform"
+          className="absolute top-0 left-0 origin-top-left transform"
           style={{
             transform: `scale(${scale})`,
             width: '504px',
@@ -207,7 +298,7 @@ const Calculator: React.FC = () => {
         >
           <div
             ref={keysRootRef}
-            className="calc-container relative w-[504px] h-[1000px] rounded-[60px] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.7)] overflow-hidden"
+            className="app-no-drag calc-container relative w-[504px] h-[1000px] rounded-[60px] shadow-[0_50px_100px_-20px_rgba(0,0,0,0.7)] overflow-hidden"
             style={{
               backgroundImage: `url(${calculatorImg})`,
               backgroundSize: '100% 100%',
@@ -322,9 +413,10 @@ const Calculator: React.FC = () => {
         </div>
       </div>
     </div>
+      </div>
 
       {showPane && (
-        <div className="relative z-[40] w-full md:w-[350px] flex-shrink-0 bg-[#1a1a1a] rounded-3xl border border-white/5 shadow-2xl flex flex-col overflow-hidden h-fit max-h-[min(900px,calc(100vh-6rem))]">
+        <div className={`app-no-drag relative z-[40] flex-shrink-0 bg-[#1a1a1a] rounded-3xl border border-white/5 shadow-2xl flex flex-col overflow-hidden ${isElectron ? 'w-[350px] h-full max-h-none' : 'w-full md:w-[350px] h-fit max-h-[min(900px,calc(100vh-6rem))]'}`}>
           <div className="flex border-b border-white/5 relative pr-10">
             <button
               onClick={() => setPaneView('history')}
@@ -422,29 +514,22 @@ const Calculator: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-6 text-sm">
+                {isElectron ? (
                 <section>
-                  <h4 className="text-blue-400 font-bold mb-2 flex items-center gap-2">
-                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                     Portable / Standalone
-                  </h4>
-                  <p className="text-white/60 text-[11px] leading-relaxed mb-3">
-                    Share this app with colleagues for offline use:
+                  <h4 className="text-blue-400 font-bold mb-2 uppercase text-[10px] tracking-widest">Show / hide</h4>
+                  <p className="text-white/50 text-[11px] leading-relaxed mb-3">
+                    Same shortcut raises Shevon or sends it away.
                   </p>
-                  <ul className="space-y-2">
-                    <li className="flex items-start gap-2 text-[11px] text-white/50">
-                      <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1 flex-shrink-0"></span>
-                      <span><strong className="text-white/80">Desktop:</strong> Look for the <strong>Install</strong> icon in your browser's address bar.</span>
-                    </li>
-                    <li className="flex items-start gap-2 text-[11px] text-white/50">
-                      <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1 flex-shrink-0"></span>
-                      <span><strong className="text-white/80">Mobile:</strong> Open phone browser share menu and select <strong>"Add to Home Screen"</strong>.</span>
-                    </li>
-                    <li className="flex items-start gap-2 text-[11px] text-white/50">
-                      <span className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-1 flex-shrink-0"></span>
-                      <span><strong className="text-white/80">Offline:</strong> Once installed, it works like a native app without internet!</span>
-                    </li>
-                  </ul>
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => setCaptureBring((v) => !v)}
+                    className={`w-full text-left px-3 py-2 rounded-xl border text-[12px] font-bold tracking-wide ${captureBring ? 'border-blue-400/50 bg-blue-500/10 text-blue-200' : 'border-white/10 bg-white/[0.03] text-white/70 hover:bg-white/[0.06]'}`}
+                  >
+                    {captureBring ? 'Press a shortcut…' : bringAccel.replace('CommandOrControl', 'Ctrl')}
+                  </button>
                 </section>
+                ) : null}
 
                 <section>
                   <h4 className="text-blue-400 font-bold mb-2 uppercase text-[10px] tracking-widest">General</h4>
@@ -461,12 +546,14 @@ const Calculator: React.FC = () => {
                 <section>
                   <h4 className="text-blue-400 font-bold mb-2 uppercase text-[10px] tracking-widest">Math</h4>
                   <div className="space-y-2">
-                    <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">S</kbd> <span>S⇔D (decimal ↔ fraction)</span></div>
+                    <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">S</kbd> <span>Sin</span></div>
+                    <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">`</kbd> <span>S⇔D (decimal ↔ fraction)</span></div>
                     <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">C</kbd> <span>Cos</span></div>
                     <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">T</kbd> <span>Tan</span></div>
                     <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">L</kbd> <span>Log</span></div>
                     <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">R</kbd> <span>Square Root</span></div>
                     <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">Q</kbd> <span>Square (x²)</span></div>
+                    <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">D</kbd> <span>Fraction</span></div>
                     <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">^</kbd> <span>Power (xⁿ)</span></div>
                     <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">,</kbd> <span>Comma (SHIFT ))</span></div>
                     <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">A</kbd> <span>Answer (Ans)</span></div>

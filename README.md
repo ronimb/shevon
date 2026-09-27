@@ -33,7 +33,7 @@ required. (`.env.example` documents the only optional dev toggle, `DISABLE_HMR`.
 
 ```bash
 npm run electron:dev          # dev: Vite + Electron together
-npm run build:exe             # build a portable Windows .exe into dist-desktop/
+npm run build:exe             # portable Windows .exe → dist-desktop/Shevon.exe
 ```
 
 ## Other scripts
@@ -72,10 +72,14 @@ name the hardware vendor or original model (`docs/principles.md` **Naming**).
 
 ## Status
 
-COMP mode is usable for everyday scientific work. STAT (FREQ, Edit) and EQN
-(quadratic, real + a+bi) plus SOLVE are in the tree. CMPLX, BASE-N, MATRIX,
-VECTOR, TABLE, CONST, and CONV are menu chrome only.
+Daily driver is COMP + STAT + EQN (FREQ, Dist, stay-in-STAT, SOLVE,
+EQN types 1–4). CMPLX, BASE-N, MATRIX, VECTOR, TABLE, CONST, and CONV
+are menu chrome only.
 
-Current phase: **Phase 2 — finish STAT and EQN**. Next id is in
-[`roadmap.md`](roadmap.md) **Now**. Coverage:
-[`docs/coverage.md`](docs/coverage.md).
+Phase 2 is landed. Next id is [`roadmap.md`](roadmap.md) **Now**
+(`p4-packaging`). Tab icon is in. PWA install is skipped. Portable
+exe is `dist-desktop/Shevon.exe` (~100 MB; Ron still needs to
+launch it). A small Tauri wrapper is scheduled as `p4-tauri`
+after this slice — not Now. Pages only if a live desktop URL
+is wanted.
+Coverage: [`docs/coverage.md`](docs/coverage.md).

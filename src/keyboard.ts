@@ -63,6 +63,7 @@ export type PcKeyboardActions = {
   handleSquareRootKey: () => void;
   handleSquareKey: () => void;
   handlePowerKey: (arg?: unknown) => void;
+  handleFracKey: () => void;
   handleAlphaVar: (v: string) => void;
   flashKey: (id: string, persist?: boolean) => void;
   unflashKey: (id: string) => void;
@@ -167,12 +168,14 @@ export function usePcKeyboard(a: PcKeyboardActions) {
 
       else if (e.key.toLowerCase() === 'x') { e.preventDefault(); pressVar('X', 'paren-close'); }
       else if (e.key.toLowerCase() === 'y') { e.preventDefault(); pressVar('Y', 'sd'); }
-      else if (e.key.toLowerCase() === 's') { e.preventDefault(); press('sd', () => cur.handleAlphaVar('Y'), 'S⇔D'); }
+      else if (e.key === '`') { e.preventDefault(); press('sd', () => cur.handleAlphaVar('Y'), 'S⇔D'); }
+      else if (e.key.toLowerCase() === 's') { e.preventDefault(); press('sin', () => cur.handleTrig('sin', 'D'), 'sin'); }
       else if (e.key.toLowerCase() === 'c') { e.preventDefault(); press('cos', () => cur.handleTrig('cos', 'E'), 'cos'); }
       else if (e.key.toLowerCase() === 't') { e.preventDefault(); press('tan', () => cur.handleTrig('tan', 'F'), 'tan'); }
       else if (e.key.toLowerCase() === 'l') { e.preventDefault(); press('log10', cur.handleLog10Key, 'log'); }
       else if (e.key.toLowerCase() === 'r') { e.preventDefault(); press('sqrt', cur.handleSquareRootKey, '√'); }
       else if (e.key.toLowerCase() === 'q') { e.preventDefault(); press('sqr', cur.handleSquareKey, 'x²'); }
+      else if (e.key.toLowerCase() === 'd') { e.preventDefault(); press('frac', cur.handleFracKey, 'frac'); }
       else if (e.key.toLowerCase() === 'a') { e.preventDefault(); press('ans', () => cur.handleInput('Ans'), 'Ans'); }
     };
     const handleKeyUp = (e: KeyboardEvent) => {

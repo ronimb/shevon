@@ -13,6 +13,7 @@ Detailed plan for Shevon. This file is the
 | Feature-by-feature hardware map                   | `[docs/coverage.md](docs/coverage.md)`                                   |
 | LCD element audit                                 | `[docs/visual-fidelity-inventory.md](docs/visual-fidelity-inventory.md)` |
 | Triage / oversight (no implementation)            | `[docs/prompts/triage.md](docs/prompts/triage.md)`                       |
+| Packaging slice (view)                            | `[canvases/packaging.canvas.tsx](canvases/packaging.canvas.tsx)`         |
 
 
 Canvases (`canvases/*.canvas.tsx`) are **views**. If a canvas disagrees with
@@ -28,9 +29,10 @@ wrap-up, then move them to **Landed**).
 
 ## Now
 
-Daily-driver bar: COMP + STAT + EQN. One slice per chat. Do not open
-Phase 3 until Phase 2 closes. Lying menus wait for the matching
-feature. LineIO / 99-byte / `:` / `hist-letters` stay parked.
+Daily-driver bar: COMP + STAT + EQN. One slice per chat. Phase 2
+slices are closed. Do not open Phase 3 until `p4-packaging` is in.
+Lying MODE rows wait for the matching feature. LineIO / 99-byte /
+`:` / `hist-letters` stay parked.
 
 Catalog of landed-correctness ids: `[docs/tech-issues.md](docs/tech-issues.md)`.
 Honesty leftovers: `[issues.md](issues.md)`. After every slice: `[sanity-landed.md](docs/prompts/sanity-landed.md)`.
@@ -42,7 +44,7 @@ Triage (no code): `[triage.md](docs/prompts/triage.md)`.
 
 | Order | Id              | What                                                | Kickoff                                 |
 | ----- | --------------- | --------------------------------------------------- | --------------------------------------- |
-| 1     | `p4-packaging`  | Pages / PWA / portable exe / icon                   | write when opening                      |
+| 1     | `p4-packaging`  | Pages / PWA / portable exe / icon                   | [`p4-packaging.md`](docs/prompts/p4-packaging.md) |
 
 
 `ti-stat` … `ti-edges`, `R17` (`r17-percent`), `R28` (`r28-exp`), and
@@ -129,7 +131,9 @@ See **Landed**. Remaining COMP gaps that did not block Phase 1 are listed under
 
 ## Phase 2 — Finish STAT and EQN
 
-**Status: in progress.** Close these before opening new modes.
+**Status: landed.** Ron’s 27 Sep 2026 walk was clear except
+`setup-page2` (already on `issues.md` / `vis-menus`). Do not open
+Phase 3 until `p4-packaging` is in.
 
 - [x] `p2-freq` — SETUP STAT FREQ ON/OFF; editor row limits 80 / 40 / 26.
 - [x] `p2-solve` — SOLVE: prompt remaining variables, “solve for x”, then
@@ -209,7 +213,10 @@ policy). Do not add a separate not-implemented pass.
 
 ## Phase 4 — Fidelity and packaging
 
-**Status: not started.** After the modes exist.
+**Status: packaging in progress** (`p4-packaging` is **Now**).
+`p4-tauri` waits until that slice is in. `p4-exact` / `p4-samples`
+wait. Phase 3 waits until `p4-packaging` is in — `p4-tauri` does
+not block Phase 3.
 
 - [ ] `p4-exact` — Natural result forms: n√m, p/q π, mixed fractions — not just
   ```
@@ -223,7 +230,27 @@ policy). Do not add a separate not-implemented pass.
 - [ ] `p4-packaging` — Verify GitHub Pages, PWA, and electron-builder portable
   ```
   exe; real app icon. **Pulled forward:** run after remaining Phase 2
-  (see **Now** §3), before Phase 3.
+  (see **Now** §3), before Phase 3. Tab / manifest / `win.icon` use a
+  full-bleed Shevon lettermark (`scripts/make-icons.ps1`), not a photo
+  crop. PWA install is **skipped** (Ron: no mobile / no Add to
+  Home Screen). Manifest still says Shevon. Portable exe is
+  `dist-desktop/Shevon.exe` (one file). Frameless; drag/close on
+  the strip above the unit; window sized to the face. Waiting on
+  Ron to launch again. More widens the window (History +
+  Keyboard). Pin is an icon (always-on-top). Show keys
+  centers the scaled unit. Bring-to-front shortcut lives
+  under Keyboard (default Ctrl+Shift+Space; toggles hide). `sin(30)` still
+  0.5. Pages only if a live desktop URL is wanted. The ~100 MB
+  exe is Electron+Chromium; shrinking it is `p4-tauri`, not
+  this slice. Not Done.
+  ```
+- [ ] `p4-tauri` — Replace the Electron portable wrapper with Tauri
+  ```
+  (WebView2) so the Windows exe is tens of MB, not ~100 MB.
+  After `p4-packaging`. Keep the same Vite `dist/` and the
+  existing desktop APIs (History widen, always-on-top,
+  bring-to-front). Do not change COMP / STAT / EQN. Kickoff:
+  [`p4-tauri.md`](docs/prompts/p4-tauri.md).
   ```
 
 ---

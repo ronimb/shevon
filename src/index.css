@@ -9,10 +9,27 @@
     --calc-bg: #1c1c1c;
 }
 
+html, body, #root {
+    height: 100%;
+    overflow: hidden;
+}
+
 body { 
     background: #121212; 
     margin: 0; 
     font-family: var(--font-sans);
+}
+
+.app-shell {
+    height: 100%;
+}
+
+.app-chrome {
+    -webkit-app-region: drag;
+}
+
+.app-no-drag {
+    -webkit-app-region: no-drag;
 }
 
 .calc-container {

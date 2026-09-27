@@ -100,7 +100,7 @@ Status: `[ ]` open · `[x]` fixed (move to **Closed** at the next wrap-up).
 
 - [ ] `comp-keys` — Unmapped letter keys steal typing into the overlay; Shift
       on the PC keyboard is hold, while the overlay SHIFT is a toggle.
-      Letter shortcuts (L/R/Q/C/T/S/A/X/Y) and keys that do not need Shift
+      Letter shortcuts (L/R/Q/C/T/S/D/A/X/Y; S is sine, ` is S⇔D, D is frac) and keys that do not need Shift
       to type (`.`, `-`, `/`, `0`, `1`, `9`) now call the same handlers as
       the faceplate. `+` `*` `(` `)` `^` still insert the unshifted symbol
       because those characters are typed with a held Shift (otherwise

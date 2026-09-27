@@ -3,7 +3,7 @@
 Copy everything below the line into a **new agent chat**. This chat does
 not implement leftovers. Implementation chats still copy the slice file
 named in `roadmap.md` **Now** (today: `p4-packaging`;
-write the kickoff when opening).
+[`p4-packaging.md`](p4-packaging.md)).
 
 ---
 
@@ -39,7 +39,7 @@ catalog**: `docs/tech-issues.md`. Do not recreate
 Each session, do only this:
 
 1. **State of play** — what `roadmap.md` **Now** says is next, what just
-   landed, what is gated. Cite action ids (`p2-dist`, `R29`, …). Do
+   landed, what is gated. Cite action ids (`p4-packaging`, …). Do
    not invent a second list.
 2. **Route** — new report → already-scheduled Now row / Phase 2 action,
    new `docs/tech-issues.md` row (landed correctness), new `issues.md`
@@ -50,11 +50,11 @@ Each session, do only this:
    [`sanity-landed.md`](sanity-landed.md) browser pass, and the matching
    `.md` updates. Menu chrome that cannot run must not silently fall through
    to COMP, except where `issues.md` already records a deliberate “leave the
-   lie until the feature ships” policy (`lying-menus`, `eqn-menu-fallthrough`).
+   lie until the feature ships” policy (`lying-menus`, `setup-page2`).
 4. **Kickoff** — when Ron is ready to start the next slice, write or refresh
    a `docs/prompts/<id>.md` in the existing style (copy below the line into
    a **new** chat; one slice; explicit Do-not list). Do not start that slice
-   here. `p4-packaging` has no kickoff yet — write one when opening.
+   here. `p4-packaging` kickoff is [`p4-packaging.md`](p4-packaging.md).
 5. **Drift** — if `roadmap.md`, `docs/tech-issues.md`, `issues.md`,
    `docs/coverage.md`, or a canvas disagree, say so and offer the smallest
    markdown (then canvas) fix. Do not “fix” coverage by changing code.
@@ -67,10 +67,13 @@ that file, the roadmap wins.
 Snapshot 27 Sep 2026 (after `p2-eqn-cubic`):
 
 - Next implementation is **`p4-packaging`**. Then Phase 3 (`p3-*`).
-  Queue: `roadmap.md` **Now**.
+  Queue: `roadmap.md` **Now**. PWA install is skipped (Ron will
+  not use it). `p4-tauri` is scheduled (small WebView2 exe) but
+  is **not** Now and does not block Phase 3.
 - `p2-eqn-cubic` is landed (EQN type 4). `p2-eqn-linear` is landed (EQN 2-unk / 3-unk). `p2-stat-mode` is landed (recall stays in STAT). `p2-dist` (E-25) is landed. `p2-calc` (E-19) is landed. `R17`, `R28`, and `R29` are landed.
   `ti-stat` … `ti-edges` are landed. `R27` closed (PC `3` works).
-- Do not open Phase 3 until Phase 2 wrap-up / packaging.
+- Phase 2 slices are landed. Do not open Phase 3 until `p4-packaging`
+  is in.
 - Do not pull LineIO, 99-byte, colon/Disp, or `hist-letters` into Phase 2.
 - Daily-driver bar is still COMP + STAT + EQN. EQN types 1–4 run.
   Dist and linear EQN are filled. Do not re-file `R*` into
@@ -87,7 +90,7 @@ Snapshot 27 Sep 2026 (after `p2-eqn-cubic`):
   `roadmap.md` / `docs/tech-issues.md` / `issues.md`.
 - Mark a phase or id done from chat memory. Re-read the files.
 - Disable lying MODE/EQN rows as a standalone pass (`vis-menus` policy).
-- Start packaging or Phase 3 because they look more fun.
+- Start Phase 3 because it looks more fun.
 
 ## Reply shape
 
@@ -96,7 +99,7 @@ Then: file drift, if any. Then: the one question Ron must answer, if any.
 No status theatre.
 
 If Ron asks “what should I paste next?”, give only the kickoff file for
-the current **Now** slice (write [`p4-packaging.md`](p4-packaging.md) when opening).
+the current **Now** slice ([`p4-packaging.md`](p4-packaging.md)).
 
 Start with one briefing from the files as they are now. Do not propose a
 new program.

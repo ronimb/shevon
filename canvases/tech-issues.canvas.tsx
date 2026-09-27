@@ -42,7 +42,7 @@ export default function TechIssues() {
 
       <Row gap={24} align="end">
         <Stat value="0" label="Open R-ids" />
-        <Stat value="p2-eqn-linear" label="Next" />
+        <Stat value="p4-packaging" label="Next" />
       </Row>
 
       <Callout tone="info" title="Not this file">
