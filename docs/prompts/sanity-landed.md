@@ -1,8 +1,8 @@
 # Sanity — landed functionality only
 
 Run after debt A–C, and after **every** remaining Phase 2 slice. Leftovers
-(LineIO, Dist empty, EQN types 1/2/4, letter-key steal) are **not**
-failures. File new **honesty / leftover** defects in `issues.md` with an
+(LineIO, letter-key steal)
+are **not** failures. File new **honesty / leftover** defects in `issues.md` with an
 associated id. File new **landed-correctness** defects in
 [`docs/tech-issues.md`](../tech-issues.md) (`R*` / `ti-*`), not both.
 
@@ -27,19 +27,30 @@ COMP
 - SHIFT CALC on `2+2` → Variable ERROR.
 - SHIFT CALC on `abs(X)+1=0` → Can’t Solve.
 - `Y=X+10`, Y=12, SOLVE → x=2 and L−R ≈ 0; Continue? still works.
+- `3A+B` CALC → A? then B? with previous values; A=5 B=10 → 25;
+  CALC again re-prompts. `cos(30)` CALC is not a C? prompt.
 - Pol/Rec at top level paints `r=…, θ=…` or bottom-right `x=…, y=…`.
 
 STAT
 
 - MODE 3 → a type → editor opens; FREQ ON still caps rows.
+- 1-VAR data in, SHIFT 1 → Var → n (or Dist → `'t`) inserts on the
+  STAT calc line; STAT stays on; `=` uses the current STAT data.
+  Dist still shows P( Q( R( `'t`; E-25 sample `3't` / `P(t)` Fix 3 is
+  −0.762 / 0.223. CALC from that screen does not open a COMP prompt.
 
 EQN
 
 - MODE 5 → 3 → a=1, b=0, c=−1 → real roots; a=1, b=0, c=1 → a+bi.
+- MODE 5 → 1 → 1, 2, 3 / 2, 3, 4 → X=−1, Y=2. A singular system is
+  Math ERROR. MODE 5 → 2 → E-28 sample → X=1, Y=2, Z=3.
+- MODE 5 → 4 → a=1, b=−2, c=−1, d=2 → X1=−1, X2=2, X3=1;
+  a=0 is Math ERROR.
 
 ## Do not
 
-- Treat empty Dist, EQN 1/2/4 fallthrough, or unshifted CALC ≠ E-19
-  as a new bug (those wait on their Phase 2 slices).
+- Treat EQN type 4 no-op as a regression (`p2-eqn-cubic` is in).
+  STAT recall jumping to COMP is a regression. Linear 1/2 no-op is a
+  regression.
 - Start the next leftover slice in the same chat if this pass fails —
   fix the regression first.

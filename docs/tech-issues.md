@@ -16,7 +16,7 @@ Status: `[ ]` open · `[x]` done.
 
 ## Open
 
-None. Next scheduled work is `p2-calc`.
+None. Next scheduled work is `p4-packaging`.
 
 ---
 
@@ -84,6 +84,6 @@ closed as ÷100 (`r17-percent`). Kickoffs stay under
 ## Not this file
 
 `lying-menus`, `eqn-menu-fallthrough`, `dist-empty`, `lineio-display`,
-`setup-page2`, `calc-ux`, `stat-jump-comp`, `fact-max`, `sigma-bounds`,
+`setup-page2`, `stat-jump-comp`, `fact-max`, `sigma-bounds`,
 `ind-hardcoded`, `ind-arrows`, `surd-pi-form`, `prompt-prev-size`,
 `comp-keys`, `hist-letters`, `shift-ac-mem`.

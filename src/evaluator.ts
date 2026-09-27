@@ -208,7 +208,8 @@ export const findPrecedingOperand = (text: string): string => {
             'sinh', 'cosh', 'tanh', 'asin', 'acos', 'atan',
             'sqrt', 'abs', 'Rnd', 'frac', 'pwr', 'root', 'sqr', 'cube', 
             'int', 'diff', 'Σ', 'mix', 'nCr', 'nPr', 'RanInt', 
-            'log_b', 'log10', 'ln', 'e^', '10^', '__pow', '__factorial', '__yhat', '__xhat', '__xhat1', '__xhat2'
+            'log_b', 'log10', 'ln', 'e^', '10^', '__pow', '__factorial', '__yhat', '__xhat', '__xhat1', '__xhat2',
+            '__pnorm', '__qnorm', '__rnorm', '__normt', 'P', 'Q', 'R',
         ];
         const sortedStems = [...stems].sort((a,b) => b.length - a.length);
         for (const stem of sortedStems) {
@@ -332,6 +333,38 @@ function yhatEstimate(statVars: Vars, x: number): number {
   return NaN;
 }
 
+/**
+ * Complementary error function via the Numerical Recipes τ expansion.
+ * Enough digits for the 10-digit LCD (E-25 Fix 3 sample included).
+ */
+function erfc(x: number): number {
+  const z = Math.abs(x);
+  const t = 1 / (1 + 0.5 * z);
+  const tau = t * Math.exp(
+    -z * z - 1.26551223 + t * (1.00002368 + t * (0.37409196 + t * (0.09678418
+      + t * (-0.18628806 + t * (0.27886807 + t * (-1.13520398
+        + t * (1.48851587 + t * (-0.82215223 + t * 0.17087277))))))))
+  );
+  return x >= 0 ? tau : 2 - tau;
+}
+
+/** Standard normal Φ(t) = P(t) on the hardware figure. */
+function stdNormCdf(t: number): number {
+  if (t === 0) return 0.5;
+  if (t < 0) return 1 - stdNormCdf(-t);
+  return 0.5 * erfc(-t / Math.SQRT2);
+}
+
+/** E-25: t = (X − x̄) / σx. Missing data or σx = 0 is Math ERROR. */
+function normalizedVariate(x: number, statVars: Vars): number {
+  const mean = finiteStat(statVars.stat_xbar);
+  const sd = finiteStat(statVars.stat_sigmax);
+  if (!Number.isFinite(x) || !Number.isFinite(mean) || !Number.isFinite(sd) || sd === 0) {
+    return NaN;
+  }
+  return (x - mean) / sd;
+}
+
 export const evaluateExpression = (
   expr: string,
   scope: Vars,
@@ -416,6 +449,11 @@ export const evaluateExpression = (
     __xhat1: (y: number) => xhatEstimate(statVars, y, 1),
     __xhat2: (y: number) => xhatEstimate(statVars, y, 2),
     __yhat: (x: number) => yhatEstimate(statVars, x),
+    // E-25 Dist: P = Φ(t), Q = Φ(t)−½ (0 to t), R = 1−Φ(t).
+    __pnorm: (t: number) => stdNormCdf(t),
+    __qnorm: (t: number) => stdNormCdf(t) - 0.5,
+    __rnorm: (t: number) => 1 - stdNormCdf(t),
+    __normt: (x: number) => normalizedVariate(x, statVars),
     // Adaptive Gauss–Kronrod (G7–K15), the same family the hardware uses,
     // so ∫ matches the hardware to displayed precision instead of the old
     // fixed-step trapezoid.
@@ -739,6 +777,9 @@ export const evaluateExpression = (
     { name: 'abs', replace: (args: string[]) => `__abs(${args[0]})` },
     { name: 'Rnd', replace: (args: string[]) => `__rnd(${args[0]})` },
     { name: 'sqrt', replace: (args: string[]) => `__sqrt(${args[0]})` },
+    { name: 'P', replace: (args: string[]) => `__pnorm(${args[0]})` },
+    { name: 'Q', replace: (args: string[]) => `__qnorm(${args[0]})` },
+    { name: 'R', replace: (args: string[]) => `__rnorm(${args[0]})` },
   ];
 
   const processTemplatesForJS = (s: Mapped): Mapped => {
@@ -808,6 +849,38 @@ export const evaluateExpression = (
       mapped = concatMapped([before, mappedLit(`__factorial(${operand})`, bangOrig), after]);
     } else {
       mapped = concatMapped([before, mappedLit('__factorial(NaN)', bangOrig), after]);
+    }
+  }
+
+  // Dist `'t` is postfix like x̂: 3't → (3 − x̄)/σx. Hardware glyph is →t.
+  let tIdx: number;
+  while ((tIdx = mapped.text.indexOf("'t")) !== -1) {
+    const tOrig = mapped.map[tIdx] ?? 0;
+    let before = sliceMapped(mapped, 0, tIdx);
+    const after = sliceMapped(mapped, tIdx + 2);
+    let operand = '';
+    if (before.text.endsWith(')')) {
+      let parenCount = 0;
+      for (let i = before.text.length - 1; i >= 0; i--) {
+        if (before.text[i] === ')') parenCount++;
+        else if (before.text[i] === '(') parenCount--;
+        if (parenCount === 0) {
+          operand = before.text.substring(i);
+          before = sliceMapped(before, 0, i);
+          break;
+        }
+      }
+    } else {
+      const match = before.text.match(/(\d+\.?\d*|Ans|[A-Zπe]|stat_[a-z0-9_]+)$/);
+      if (match) {
+        operand = match[0];
+        before = sliceMapped(before, 0, before.text.length - operand.length);
+      }
+    }
+    if (operand) {
+      mapped = concatMapped([before, mappedLit(`__normt(${operand})`, tOrig), after]);
+    } else {
+      mapped = concatMapped([before, mappedLit('__normt(NaN)', tOrig), after]);
     }
   }
 

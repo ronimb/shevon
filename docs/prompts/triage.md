@@ -2,8 +2,8 @@
 
 Copy everything below the line into a **new agent chat**. This chat does
 not implement leftovers. Implementation chats still copy the slice file
-named in `roadmap.md` **Now** (today: `p2-calc`;
-[`p2-calc.md`](p2-calc.md)).
+named in `roadmap.md` **Now** (today: `p4-packaging`;
+write the kickoff when opening).
 
 ---
 
@@ -39,7 +39,7 @@ catalog**: `docs/tech-issues.md`. Do not recreate
 Each session, do only this:
 
 1. **State of play** — what `roadmap.md` **Now** says is next, what just
-   landed, what is gated. Cite action ids (`R28`, `p2-calc`, …). Do
+   landed, what is gated. Cite action ids (`p2-dist`, `R29`, …). Do
    not invent a second list.
 2. **Route** — new report → already-scheduled Now row / Phase 2 action,
    new `docs/tech-issues.md` row (landed correctness), new `issues.md`
@@ -54,7 +54,7 @@ Each session, do only this:
 4. **Kickoff** — when Ron is ready to start the next slice, write or refresh
    a `docs/prompts/<id>.md` in the existing style (copy below the line into
    a **new** chat; one slice; explicit Do-not list). Do not start that slice
-   here. `p2-calc` kickoff is [`p2-calc.md`](p2-calc.md).
+   here. `p4-packaging` has no kickoff yet — write one when opening.
 5. **Drift** — if `roadmap.md`, `docs/tech-issues.md`, `issues.md`,
    `docs/coverage.md`, or a canvas disagree, say so and offer the smallest
    markdown (then canvas) fix. Do not “fix” coverage by changing code.
@@ -64,18 +64,17 @@ Each session, do only this:
 Re-read `roadmap.md` **Now** each session. If this snapshot disagrees with
 that file, the roadmap wins.
 
-Snapshot 26 Sep 2026 (after `r29-int`):
+Snapshot 27 Sep 2026 (after `p2-eqn-cubic`):
 
-- Next implementation is **`p2-calc`** (unshifted CALC E-19). Then
-  `p2-dist` → `p2-stat-mode` → `p2-eqn-linear` → `p2-eqn-cubic` →
-  `p4-packaging`. Queue: `roadmap.md` **Now**.
-- `R17`, `R28`, and `R29` are landed. `ti-stat` … `ti-edges` are
-  landed. `R27` closed (PC `3` works).
-- Do not open Phase 3 until Phase 2 closes.
+- Next implementation is **`p4-packaging`**. Then Phase 3 (`p3-*`).
+  Queue: `roadmap.md` **Now**.
+- `p2-eqn-cubic` is landed (EQN type 4). `p2-eqn-linear` is landed (EQN 2-unk / 3-unk). `p2-stat-mode` is landed (recall stays in STAT). `p2-dist` (E-25) is landed. `p2-calc` (E-19) is landed. `R17`, `R28`, and `R29` are landed.
+  `ti-stat` … `ti-edges` are landed. `R27` closed (PC `3` works).
+- Do not open Phase 3 until Phase 2 wrap-up / packaging.
 - Do not pull LineIO, 99-byte, colon/Disp, or `hist-letters` into Phase 2.
-- Daily-driver bar is still COMP + STAT + EQN. Do not treat empty Dist,
-  EQN 1/2/4 fallthrough, or CALC ≠ E-19 as new bugs. Do not re-file
-  `R*` into `issues.md`.
+- Daily-driver bar is still COMP + STAT + EQN. EQN types 1–4 run.
+  Dist and linear EQN are filled. Do not re-file `R*` into
+  `issues.md`.
 - Engine debt A–C is landed. Do not re-open `debt-shell` / `debt-value` /
   `debt-source-map` unless a regression shows up.
 - STAT / EQN pairing (no code): [`sanity-stat.md`](sanity-stat.md).
@@ -97,7 +96,7 @@ Then: file drift, if any. Then: the one question Ron must answer, if any.
 No status theatre.
 
 If Ron asks “what should I paste next?”, give only the kickoff file for
-the current **Now** slice ([`p2-calc.md`](p2-calc.md)).
+the current **Now** slice (write [`p4-packaging.md`](p4-packaging.md) when opening).
 
 Start with one briefing from the files as they are now. Do not propose a
 new program.

@@ -1,7 +1,8 @@
 import { evaluateExpression, findPrecedingOperand, type PolRecWrite } from '../evaluator.ts';
 import { DEFAULT_FORMAT } from '../format.ts';
 import { CURSOR_PATS, DELETE_STEMS, PATS } from '../keys.ts';
-import { CalcError, calcPrimary, type AngleMode, type CalcMode, type CalcValue, type Vars } from '../types.ts';
+import { CalcError, calcPrimary, type AngleMode, type CalcMode, type CalcValue, type EqnKind, type Vars } from '../types.ts';
+import { eqnEditorMode } from './eqn.tsx';
 
 /** CALC/SOLVE prompt commit. Typed 0 is 0 — do not treat parseFloat("0") as empty (R7). */
 export function commitPromptValue(typed: string, previous: string): number {
@@ -48,10 +49,11 @@ const SOLVE_IR_STEMS = Array.from(new Set([
   'minX', 'maxX', 'minY', 'maxY',
 ])).sort((a, b) => b.length - a.length);
 
+const MEMORY_PROMPT_LETTERS = 'ABCDEFMXY';
 const SOLVE_PROMPT_LETTERS = 'ABCDEFMY';
 
-/** Non-X letters SOLVE prompts before the initial-X guess (A–F, M, Y). */
-export function collectSolvePromptVars(expr: string): string[] {
+/** Memory letters (A–F, M, X, Y) that are variables, not IR / function stems. */
+function collectPromptLetters(expr: string, letters: string): string[] {
   const raw = expr.replace(/[‸⬚]/g, '');
   const seen = new Set<string>();
   const order: string[] = [];
@@ -68,13 +70,46 @@ export function collectSolvePromptVars(expr: string): string[] {
       continue;
     }
     const ch = raw[i];
-    if (SOLVE_PROMPT_LETTERS.includes(ch) && !seen.has(ch)) {
+    if (letters.includes(ch) && !seen.has(ch)) {
       seen.add(ch);
       order.push(ch);
     }
     i++;
   }
   return order;
+}
+
+/** Non-X letters SOLVE prompts before the initial-X guess (A–F, M, Y). */
+export function collectSolvePromptVars(expr: string): string[] {
+  return collectPromptLetters(expr, SOLVE_PROMPT_LETTERS);
+}
+
+/**
+ * E-19 CALC assignment: one memory letter on the left, expression on the
+ * right (`A=B+C`, `Y=X²+X+3`). Not SOLVE — do not treat as Newton.
+ */
+export function parseCalcAssignment(expr: string): { target: string; rhs: string } | null {
+  const raw = expr.replace(/[‸⬚]/g, '');
+  if (raw.length < 3 || raw[1] !== '=') return null;
+  if (!MEMORY_PROMPT_LETTERS.includes(raw[0])) return null;
+  if (raw.indexOf('=', 2) !== -1) return null;
+  const rhs = raw.slice(2);
+  return rhs.length > 0 ? { target: raw[0], rhs } : null;
+}
+
+/** Letters CALC prompts (includes X). Assignment form prompts the right side only. */
+export function collectCalcPromptVars(expr: string): string[] {
+  const raw = expr.replace(/[‸⬚]/g, '');
+  const assign = parseCalcAssignment(raw);
+  return collectPromptLetters(assign ? assign.rhs : raw, MEMORY_PROMPT_LETTERS);
+}
+
+/** What CALC evaluates after prompts. Assignment evaluates the RHS and stores the left letter. */
+export function calcExpressionToEval(expr: string): { evalExpr: string; storeTarget: string | null } {
+  const raw = expr.replace(/[‸⬚]/g, '');
+  const assign = parseCalcAssignment(raw);
+  if (assign) return { evalExpr: assign.rhs, storeTarget: assign.target };
+  return { evalExpr: raw, storeTarget: null };
 }
 
 export interface NewtonSolveOk {
@@ -129,8 +164,8 @@ export function allowsCompLineEdit(calcMode: CalcMode): boolean {
 }
 
 /**
- * CALC / SOLVE / hyp overlays. COMP, or a STAT calc line that already
- * jumped to COMP (`insertStatVar` / `stat-jump-comp`). Not STAT/EQN screens (R12).
+ * CALC / SOLVE / hyp overlays. COMP only. Not STAT (including the STAT
+ * calc line after recall) or EQN screens (R12).
  */
 export function allowsCalcSolveHyp(calcMode: CalcMode): boolean {
   return calcMode === 'COMP';
@@ -140,12 +175,17 @@ export function isStatSessionMode(calcMode: CalcMode): boolean {
   return (
     calcMode === 'STAT_DATA' || calcMode === 'STAT_MENU' ||
     calcMode === 'STAT_RESULT' || calcMode === 'STAT_RESULT_SUB' ||
+    calcMode === 'STAT_CALC' ||
     calcMode === 'STAT_EDITOR_MENU' || calcMode === 'STAT_EDIT'
   );
 }
 
 export function isEqnEditorMode(calcMode: CalcMode): boolean {
-  return calcMode === 'EQN_QUAD' || calcMode === 'EQN_RESULT';
+  return (
+    calcMode === 'EQN_QUAD' || calcMode === 'EQN_CUBIC' ||
+    calcMode === 'EQN_2UNK' || calcMode === 'EQN_3UNK' ||
+    calcMode === 'EQN_RESULT'
+  );
 }
 
 export type OverlayClear = {
@@ -175,11 +215,11 @@ export type AllClearPatch = OverlayClear & {
 };
 
 /** AC: leave STAT with the indicator off; EQN stays in the editor; always drop overlays (R13). */
-export function applyAllClear(calcMode: CalcMode): AllClearPatch {
+export function applyAllClear(calcMode: CalcMode, eqnKind: EqnKind = 'quad'): AllClearPatch {
   const overlays = clearedOverlays();
   if (isEqnEditorMode(calcMode)) {
     return {
-      calcMode: 'EQN_QUAD',
+      calcMode: eqnEditorMode(eqnKind),
       clearStatType: false,
       resetEqn: true,
       resetCompLine: false,
@@ -699,6 +739,10 @@ const IR_TO_PHYSICAL: Record<string, string[]> = {
   'nPr(': ['SHIFT', '×'],
   'pol(': ['SHIFT', '+'],
   'rec(': ['SHIFT', '-'],
+  'P(': ['SHIFT', '1', '5', '1'],
+  'Q(': ['SHIFT', '1', '5', '2'],
+  'R(': ['SHIFT', '1', '5', '3'],
+  "'t": ['SHIFT', '1', '5', '4'],
   '!': ['SHIFT', 'x-1'],
   '%': ['SHIFT', '('],
   ',': ['SHIFT', ')'],

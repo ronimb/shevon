@@ -258,9 +258,21 @@ export const STAT_TYPES: Record<string, StatType> = {
   '5': 'e^X', '6': 'A*B^X', '7': 'A*X^B', '8': '1/X'
 };
 
+/** 1-VAR SHIFT 1 menu: Dist is 5, MinMax is 6. No Reg. */
 export const STAT_RESULT_TOP_OPTIONS: Record<string, string> = {
-  '1': 'Type', '2': 'Data', '3': 'Sum', '4': 'Var', '5': 'Dist', '6': 'MinMax', '7': 'Reg'
+  '1': 'Type', '2': 'Data', '3': 'Sum', '4': 'Var', '5': 'Dist', '6': 'MinMax',
 };
+
+/**
+ * Hardware STAT menu depends on type (E-22 / E-25). Dist is 1-VAR only;
+ * paired-variable types show MinMax as 5 and Reg as 6 instead.
+ */
+export function statResultTopOptions(statType: StatType | null): Record<string, string> {
+  if (statType && statType !== '1-VAR') {
+    return { '1': 'Type', '2': 'Data', '3': 'Sum', '4': 'Var', '5': 'MinMax', '6': 'Reg' };
+  }
+  return { ...STAT_RESULT_TOP_OPTIONS };
+}
 
 /** SHIFT 1 from the Stat Editor (E-23): 3 is Edit, not Sum. */
 export const STAT_EDITOR_MENU_OPTIONS: Record<string, string> = {
@@ -379,10 +391,15 @@ export function getStatSubMenuInsert(statSubMenu: string | null, statType: StatT
       : { '1': 'A', '2': 'B', '3': 'r', '4': 'x̂', '5': 'ŷ' };
     return options[val] || null;
   }
+  // Dist is 1-VAR only (E-25). P( Q( R( take t; 't is postfix (X−x̄)/σx.
+  if (statSubMenu === 'Dist' && !isTwoVar) {
+    const options: Record<string, string> = { '1': 'P(', '2': 'Q(', '3': 'R(', '4': "'t" };
+    return options[val] || null;
+  }
   return null;
 }
 
-/** Recall a STAT var onto the COMP line. Still jumps to COMP (`stat-jump-comp` / `p2-stat-mode`). */
+/** Recall a STAT var onto the STAT calc line. Stays in STAT (`p2-stat-mode`). */
 export function insertStatVar(
   name: string,
   currentInput: string,
@@ -392,13 +409,13 @@ export function insertStatVar(
     const isOperator = /[+×÷\-]/.test(name) || name === 'sqr(‸)' || name === 'cube(‸)' || name.startsWith('pwr(') || name.startsWith('root(') || name.startsWith('frac(');
     let nextInput = isOperator ? "Ans" + name : name;
     if (!nextInput.includes('‸')) nextInput += '‸';
-    return { calcMode: 'COMP', currentInput: nextInput, showingResult: false, lcdError: null };
+    return { calcMode: 'STAT_CALC', currentInput: nextInput, showingResult: false, lcdError: null };
   }
   const target = name.includes('‸') ? name : name + '‸';
   const nextInput = currentInput.includes('‸')
     ? currentInput.replace('‸', target)
     : currentInput + target;
-  return { calcMode: 'COMP', currentInput: nextInput, showingResult, lcdError: null };
+  return { calcMode: 'STAT_CALC', currentInput: nextInput, showingResult, lcdError: null };
 }
 
 export function getStatSubMenuOptions(statSubMenu: string | null, statType: StatType | null): string[] {
@@ -409,6 +426,7 @@ export function getStatSubMenuOptions(statSubMenu: string | null, statType: Stat
   if (statSubMenu === 'Reg') {
     return statType === '_+CX2' ? ['A', 'B', 'C', 'x̂1', 'x̂2', 'ŷ'] : ['A', 'B', 'r', 'x̂', 'ŷ'];
   }
+  if (statSubMenu === 'Dist' && !isTwoVar) return ['P(', 'Q(', 'R(', "'t"];
   return [];
 }
 
@@ -477,15 +495,12 @@ export function StatDataScreen({
 }
 
 export function StatResultScreen({ statType }: { statType: StatType | null }) {
+  const options = statResultTopOptions(statType);
   return (
     <div className="stat-result-menu grid grid-cols-2 gap-x-4 gap-y-2 text-[0.95rem] flex-1">
-        <div className="mode-item"><span className="mode-num mr-1 opacity-50">1:</span>Type</div>
-        <div className="mode-item"><span className="mode-num mr-1 opacity-50">2:</span>Data</div>
-        <div className="mode-item"><span className="mode-num mr-1 opacity-50">3:</span>Sum</div>
-        <div className="mode-item"><span className="mode-num mr-1 opacity-50">4:</span>Var</div>
-        <div className="mode-item"><span className="mode-num mr-1 opacity-50">5:</span>Dist</div>
-        <div className="mode-item"><span className="mode-num mr-1 opacity-50">6:</span>MinMax</div>
-        {statType !== '1-VAR' && <div className="mode-item"><span className="mode-num mr-1 opacity-50">7:</span>Reg</div>}
+      {Object.entries(options).map(([num, label]) => (
+        <div key={num} className="mode-item"><span className="mode-num mr-1 opacity-50">{num}:</span>{label}</div>
+      ))}
     </div>
   );
 }

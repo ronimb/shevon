@@ -15,8 +15,8 @@ Status is about **behavior**, not whether a menu label exists.
 Scheduled work: [`roadmap.md`](../roadmap.md). Honesty leftovers:
 [`issues.md`](../issues.md). Landed-correctness review:
 [`docs/tech-issues.md`](tech-issues.md).
-Refreshed 26 Sep 2026. Test count: 138. Queue: `roadmap.md` **Now**.
-Percent is Done (`R17` / `r17-percent`).
+Refreshed 27 Sep 2026. Test count: 171. Queue: `roadmap.md` **Now**.
+Percent is Done (`R17` / `r17-percent`). `p2-eqn-cubic` is in.
 
 ---
 
@@ -24,9 +24,9 @@ Percent is Done (`R17` / `r17-percent`).
 
 | Status | Count |
 |--------|------:|
-| Done | 38 |
-| Partial | 14 |
-| Missing | 24 |
+| Done | 45 |
+| Partial | 11 |
+| Missing | 20 |
 | **Total** | **76** |
 
 COMP, STAT, and EQN carry almost all of the working product. CMPLX, BASE-N,
@@ -40,9 +40,9 @@ MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
 |---------|--------|--------|-----------------|-----|
 | COMP | E-5 N1 | Done | Default `calcMode`; full expression path | Several COMP leftovers still open |
 | CMPLX | E-5 N2 | Missing | Menu row only; CMPLX indicator always dim | No i, ∠, arg, Conjg, or polar/rect format |
-| STAT | E-5 N3, E-22 | Partial | Type menu, editor, Sum/Var/MinMax/Reg, FREQ, Edit Ins/Del-A | Dist, STAT stays active on recall |
+| STAT | E-5 N3, E-22 | Done | Type menu, editor, Sum/Var/MinMax/Reg, Dist P( Q( R( `'t`, FREQ, Edit Ins/Del-A; recall stays in STAT | — |
 | BASE-N | E-5 N4, E-26 | Missing | Menu row; selecting 4 returns to COMP | DEC/HEX/BIN/OCT, and/or/xor/xnor, Not, Neg |
-| EQN | E-5 N5, E-28 | Partial | Menu shown; quadratic editor + real and complex roots | 2-unk, 3-unk, cubic |
+| EQN | E-5 N5, E-28 | Done | Menu shown; 2-unk / 3-unk / quadratic / cubic Coefficient Editors | Exact √ of complex quadratic is `p4-exact` |
 | MATRIX | E-5 N6, E-29 | Missing | Menu row only | MatA/B/C, Dim, det, Trn, inverse, MatAns |
 | TABLE | E-5 N7, E-32 | Missing | Menu row only | f(x), Start/End/Step, 30-row cap, Insufficient MEM |
 | VECTOR | E-5 N8, E-33 | Missing | Menu row only | VctA/B/C, dot, cross, Abs, VctAns |
@@ -109,8 +109,8 @@ MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
 
 | Feature | Manual | Status | In the emulator | Gap |
 |---------|--------|--------|-----------------|-----|
-| CALC | E-19 | Partial | Prompts every `[A-MYX]` in the raw string, then evaluates; typed `0` stores 0 | Scheduled as `p2-calc` / `calc-ux`: memory letters only, previous-value figure, recalc, equalities. Not SETUP LineIO |
-| SOLVE | E-20 SHIFT CALC | Done | Prompts other letters (not letters inside `Ans` / `nCr` / stems); “solve for x”; Newton 40 steps; equation + x= + L-R=; Continue; Variable ERROR / Can’t Solve | Unshifted CALC is `p2-calc` |
+| CALC | E-19 | Done | Memory letters only (not stems); `A?` + previous value; CALC after `=` re-prompts; `Y=X²+X+3` stores Y | Not SETUP LineIO; colon / Disp is `comp-colon` |
+| SOLVE | E-20 SHIFT CALC | Done | Prompts other letters (not letters inside `Ans` / `nCr` / stems); “solve for x”; Newton 40 steps; equation + x= + L-R=; Continue; Variable ERROR / Can’t Solve | Shared letter scan with CALC |
 
 ## STAT
 
@@ -119,18 +119,18 @@ MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
 | Eight calculation types | E-22 | Done | 1-VAR through 1/X; linear transforms + quadratic Cramer's | Quadratic r vs hardware A B C m1 m2 n (backlog) |
 | Stat Editor | E-23 | Done | Grid, caret, FREQ, = advances cell, row caps; first keystroke replaces the cell; DEL deletes the line; SHIFT 1 → Edit → Ins / Del-A | — |
 | FREQ column | E-23 | Done | SETUP STAT ON; 80/40/26 caps; first digit replaces default 1 | — |
-| Sum / Var / MinMax | E-23 | Done | SHIFT 1 STAT menu; inserts symbols | On the hardware you recall while STAT stays active |
-| Reg + estimates | E-24 | Done | A B r C; __yhat __xhat __xhat1/2 | Quadratic r not shown (hardware uses A B C m1 m2 n) |
-| Normal Dist P Q R 't | E-25 | Missing | Dist appears on STAT_RESULT; submenu empty | Standard normal probabilities |
+| Sum / Var / MinMax | E-23 | Done | SHIFT 1 STAT menu; inserts symbols on the STAT calc line | — |
+| Reg + estimates | E-24 | Done | A B r C; __yhat __xhat __xhat1/2; stays in STAT | Quadratic r not shown (hardware uses A B C m1 m2 n) |
+| Normal Dist P Q R 't | E-25 | Done | 1-VAR Dist P( Q( R( `'t`; E-25 Fix 3 sample; hidden on A+BX etc.; stays in STAT | — |
 
 ## EQN
 
 | Feature | Manual | Status | In the emulator | Gap |
 |---------|--------|--------|-----------------|-----|
-| 2-unknown linear | E-28 1 | Missing | Menu text only | Coefficient editor + X,Y solutions |
-| 3-unknown linear | E-28 2 | Missing | Menu text only | X,Y,Z |
+| 2-unknown linear | E-28 1 | Done | Coefficient Editor an/bn/cn; bottom-left entry; X,Y; singular is Math ERROR | — |
+| 3-unknown linear | E-28 2 | Done | Coefficient Editor an/bn/cn/dn; X,Y,Z; singular is Math ERROR | — |
 | Quadratic | E-28 3 | Done | a,b,c labels; caret; bottom-left entry; real and a+bi roots; ▲▼ | Exact √ form of complex roots is `p4-exact` |
-| Cubic | E-28 4 | Missing | Menu text only | Up to three real/complex roots |
+| Cubic | E-28 4 | Done | a,b,c,d labels; caret; bottom-left entry; X1/X2/X3; a=0 Math ERROR | Exact surd form is `p4-exact` |
 
 ## CMPLX / BASE-N / MATRIX / TABLE / VECTOR / Constants
 
@@ -163,7 +163,7 @@ MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
 | PC keyboard | — | Partial | Enter, arrows, Shift/Alt, comma (SHIFT )), S/C/T/L/R/Q/A, X/Y vars | Letter keys steal typing; Shift hold vs overlay toggle |
 | History / LaTeX pane | — | Done | 50 items, Load, physical-key Show Keys; STO / MODE / SETUP actions | Not hardware behavior; keep as extra. Live Current keys strip is on top |
 | Electron + Pages + PWA | — | Partial | Scripts and workflow present | Verify portable exe, Pages deploy, and PWA install end-to-end |
-| Tests | E-16 examples | Partial | Golden + parser + CalcValue + STAT Edit (111) | Remaining numbered sample operations in the PDF |
+| Tests | E-16 examples | Partial | Golden + parser + CalcValue + STAT Edit + E-19 CALC + E-25 Dist + stay-in-STAT + E-28 linear + E-28 cubic (171) | Remaining numbered sample operations in the PDF |
 
 ---
 

@@ -15,11 +15,13 @@ import {
   StatSubMenuScreen,
 } from './modes/stat.tsx';
 import {
+  EqnLinearScreen,
   EqnMenuScreen,
   EqnQuadEntry,
   EqnQuadScreen,
   EqnResultLabel,
   EqnResultValue,
+  isEqnCoeffEditor,
 } from './modes/eqn.tsx';
 
 export type SolveScreen = null | 'confirm' | 'result' | 'continue';
@@ -62,10 +64,11 @@ export function lcdIndicators(opts: {
     currentInput, history, replayIndex, eqnResultIdx, eqnResults,
   } = opts;
   const menu = opts.isLcdMenu;
+  const onCalcLine = calcMode === 'COMP' || calcMode === 'STAT_CALC';
   const compEditing =
-    calcMode === 'COMP' && !showingResult && !lcdError && !solveScreen && !promptVar && !menu;
+    onCalcLine && !showingResult && !lcdError && !solveScreen && !promptVar && !menu;
   const caretIdx = currentInput.indexOf('‸');
-  const errorArrows = calcMode === 'COMP' && !!lcdError;
+  const errorArrows = onCalcLine && !!lcdError;
   const canCaretLeft = errorArrows || (compEditing && caretIdx > 0);
   const canCaretRight = errorArrows || (compEditing && moveCompCursorRight(currentInput) !== currentInput);
   const canReplayUp =
@@ -265,6 +268,15 @@ export function LcdScreen(p: LcdProps) {
     if (p.calcMode === 'EQN_QUAD') {
       return <EqnQuadScreen coeffs={p.eqnCoeffs} index={p.eqnIndex} />;
     }
+    if (p.calcMode === 'EQN_CUBIC') {
+      return <EqnQuadScreen coeffs={p.eqnCoeffs} index={p.eqnIndex} labels={['a', 'b', 'c', 'd']} />;
+    }
+    if (p.calcMode === 'EQN_2UNK') {
+      return <EqnLinearScreen kind="2unk" coeffs={p.eqnCoeffs} index={p.eqnIndex} />;
+    }
+    if (p.calcMode === 'EQN_3UNK') {
+      return <EqnLinearScreen kind="3unk" coeffs={p.eqnCoeffs} index={p.eqnIndex} />;
+    }
     if (p.calcMode === 'EQN_RESULT') {
       return <EqnResultLabel results={p.eqnResults} resultIdx={p.eqnResultIdx} />;
     }
@@ -306,7 +318,7 @@ export function LcdScreen(p: LcdProps) {
       );
     }
 
-    if (p.calcMode === 'EQN_QUAD') {
+    if (isEqnCoeffEditor(p.calcMode)) {
       return <EqnQuadEntry value={p.eqnCoeffs[p.eqnIndex]} />;
     }
 
@@ -381,7 +393,7 @@ export function LcdScreen(p: LcdProps) {
         <div className={`status-item ${p.vars.M !== 0 ? 'active' : 'opacity-10'}`}>M</div>
         <div className={`status-item ${p.isSto ? 'active' : 'opacity-10'}`}>STO</div>
         <div className={`status-item ${p.isRcl ? 'active' : 'opacity-10'}`}>RCL</div>
-        <div className={`status-item ${p.statType !== null ? 'active' : 'opacity-10'}`}>STAT</div>
+        <div className={`status-item ${p.statType !== null || p.calcMode === 'STAT_CALC' ? 'active' : 'opacity-10'}`}>STAT</div>
         <div className={`status-item opacity-10`}>CMPLX</div>
         <div className={`status-item opacity-10`}>MAT</div>
         <div className={`status-item opacity-10`}>VCT</div>
@@ -404,7 +416,7 @@ export function LcdScreen(p: LcdProps) {
         {renderInput()}
       </div>
 
-      <div id="result-text" className={`flex items-end grow text-[#1a1a1a] pb-1 pointer-events-none ${p.calcMode === 'EQN_QUAD' || p.solveScreen === 'result' || (p.showingResult && p.result.kind === 'pair' && p.result.pair === 'pol') ? 'justify-start' : 'justify-end'} ${menu ? 'hidden' : ''}`}>
+      <div id="result-text" className={`flex items-end grow text-[#1a1a1a] pb-1 pointer-events-none ${isEqnCoeffEditor(p.calcMode) || p.solveScreen === 'result' || (p.showingResult && p.result.kind === 'pair' && p.result.pair === 'pol') ? 'justify-start' : 'justify-end'} ${menu ? 'hidden' : ''}`}>
         {renderResult()}
       </div>
     </div>

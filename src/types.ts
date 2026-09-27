@@ -4,14 +4,21 @@ export type CalcMode =
   | 'SETUP'
   | 'CLR_MENU'
   | 'EQN_MENU'
+  | 'EQN_2UNK'
+  | 'EQN_3UNK'
   | 'EQN_QUAD'
+  | 'EQN_CUBIC'
   | 'EQN_RESULT'
   | 'STAT_MENU'
   | 'STAT_DATA'
   | 'STAT_RESULT'
   | 'STAT_RESULT_SUB'
+  | 'STAT_CALC'
   | 'STAT_EDITOR_MENU'
   | 'STAT_EDIT';
+
+/** EQN coefficient-editor kind. */
+export type EqnKind = '2unk' | '3unk' | 'quad' | 'cubic';
 
 export type DisplayMode = 'decimal' | 'fraction';
 export type AngleMode = 'DEG' | 'RAD' | 'GRA';

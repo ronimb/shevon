@@ -42,12 +42,7 @@ Triage (no code): `[triage.md](docs/prompts/triage.md)`.
 
 | Order | Id              | What                                                | Kickoff                                 |
 | ----- | --------------- | --------------------------------------------------- | --------------------------------------- |
-| 1     | `p2-calc`       | Unshifted CALC E-19                                 | `[p2-calc.md](docs/prompts/p2-calc.md)` |
-| 2     | `p2-dist`       | 1-VAR Dist P( Q( R( `'t`                            | write when opening                      |
-| 3     | `p2-stat-mode`  | Stay in STAT on recall                              | write when opening                      |
-| 4     | `p2-eqn-linear` | EQN 2-unk / 3-unk                                   | write when opening                      |
-| 5     | `p2-eqn-cubic`  | EQN cubic                                           | write when opening                      |
-| 6     | `p4-packaging`  | Pages / PWA / portable exe / icon                   | write when opening                      |
+| 1     | `p4-packaging`  | Pages / PWA / portable exe / icon                   | write when opening                      |
 
 
 `ti-stat` … `ti-edges`, `R17` (`r17-percent`), `R28` (`r28-exp`), and
@@ -77,8 +72,8 @@ Applies to **every** phase. Principles:
   ```
 - [ ] `vis-menus` — Fix with the matching feature, not as a standalone pass.
   ```
-  MODE 2/4/6/7/8 → Phase 3; EQN 1/2/4 → `p2-eqn-linear` / `p2-eqn-cubic`;
-  Dist → `p2-dist`. Until then the lie stands.
+  MODE 2/4/6/7/8 → Phase 3. EQN 1–4 landed (`p2-eqn-linear`,
+  `p2-eqn-cubic`). Dist P( Q( R( `'t` landed (`p2-dist`).
   ```
 - [ ] `vis-result` — Same result forms as the unit: S⇔D fraction/surd/π,
   ```
@@ -148,24 +143,46 @@ See **Landed**. Remaining COMP gaps that did not block Phase 1 are listed under
   ```
   (SHIFT 1 → 3 Edit → Ins / Del-A; SHIFT DEL also inserts). Issue: `stat-del`.
   ```
-- [ ] `p2-calc` — Unshifted CALC (E-19): prompt only real memory letters,
+- [x] `p2-calc` — Unshifted CALC (E-19): prompt only real memory letters,
   ```
   previous-value / bottom-left entry, recalc after `=`, equalities as
-  the figure shows. Do not implement SETUP LineIO. Issue: `calc-ux`.
+  the figure shows (`Y=X²+X+3` stores Y; not Newton). Do not implement
+  SETUP LineIO. Issue: `calc-ux`.
   Kickoff: `[docs/prompts/p2-calc.md](docs/prompts/p2-calc.md)`.
   (Was COMP leftover `comp-calc`.)
   ```
-- [ ] `p2-dist` — 1-VAR Dist: P( Q( R( and normalized variate `'t`.
+- [x] `p2-dist` — 1-VAR Dist: P( Q( R( and normalized variate `'t`
   ```
+  (E-25). Hidden on paired-variable types. Recall stays in STAT
+  (`p2-stat-mode`).
   Issue: `dist-empty`.
+  Kickoff: `[docs/prompts/p2-dist.md](docs/prompts/p2-dist.md)`.
   ```
-- [ ] `p2-stat-mode` — Stay in STAT when recalling variables instead of
+- [x] `p2-stat-mode` — Stay in STAT when recalling variables instead of
   ```
-  silently jumping to COMP (`insertStatVar` currently forces COMP).
+  silently jumping to COMP. SHIFT 1 Sum / Var / MinMax / Reg / Dist
+  land on the STAT calc line (`STAT_CALC`); STAT stays lit; `=` uses
+  the current STAT data. CALC / SOLVE / hyp still do not overlay
+  (`R12`). AC from STAT still turns STAT off (`R13`).
   Issue: `stat-jump-comp`.
+  Kickoff: `[docs/prompts/p2-stat-mode.md](docs/prompts/p2-stat-mode.md)`.
   ```
-- [ ] `p2-eqn-linear` — EQN 2-unknown and 3-unknown linear systems.
-- [ ] `p2-eqn-cubic` — EQN cubic. **Quadratic complex roots** (a+bi) landed.
+- [x] `p2-eqn-linear` — EQN 2-unknown and 3-unknown linear systems.
+  ```
+  MODE 5 → 1 / 2 open Coefficient Editors (an/bn/cn[/dn], row
+  numbers, bottom-left entry). E-28 samples: X=−1 Y=2 and
+  X=1 Y=2 Z=3. Singular / no unique solution is Math ERROR
+  (same class as quadratic a=0, R19).
+  Kickoff: `[docs/prompts/p2-eqn-linear.md](docs/prompts/p2-eqn-linear.md)`.
+  ```
+- [x] `p2-eqn-cubic` — EQN cubic. MODE 5 → 4 opens a/b/c/d
+  ```
+  Coefficient Editor; E-28 Ex.5 x³−2x²−x+2=0 → X1=−1,
+  X2=2, X3=1 via ▲/▼; a=0 is Math ERROR (R19). Complex
+  a+bi uses the same paint as quadratic. Exact surd form
+  stays `p4-exact`.
+  Kickoff: `[docs/prompts/p2-eqn-cubic.md](docs/prompts/p2-eqn-cubic.md)`.
+  ```
 
 ---
 
@@ -306,7 +323,9 @@ LCD ▲/▼ history replay, Math/Syntax ERROR dismiss, SHIFT 9 CLR.
 **Phase 2 started** — STAT FREQ ON/OFF with 80/40/26 row caps; EQN quadratic
 editor a/b/c labels, cell caret, bottom-left entry; STAT editor caret;
 quadratic complex roots as a+bi. STAT Edit (E-23): DEL deletes the line,
-Ins / Del-A from the editor SHIFT 1 menu (`p2-edit`).
+Ins / Del-A from the editor SHIFT 1 menu (`p2-edit`). EQN 2-unk / 3-unk
+Coefficient Editors + E-28 samples (`p2-eqn-linear`); cubic a/b/c/d
++ E-28 Ex.5 (`p2-eqn-cubic`).
 
 **Visual** — COMP / EQN / STAT carets (`vis-cursor`); ENG/hyp/Abs/Ran# no
 longer dump raw ASCII. `vis-no-literal`: shared LCD/History template table so
@@ -319,11 +338,25 @@ symbol (`R29`).
 X= result, L−R residual, Continue (`p2-solve`). LCD errors are one
 `lcdError` (`CalcError`), not Syntax/Math booleans.
 
+**CALC** — E-19 unshifted CALC (`p2-calc`): memory letters only (not
+stems / IR); `A?` + previous value; CALC after `=` re-prompts; assignment
+`Y=X²+X+3` evaluates the right side and stores Y. Not SOLVE / Newton.
+Not SETUP LineIO.
+
+**STAT Dist** — E-25 1-VAR P( Q( R( `'t` (`p2-dist`). SHIFT 1 → 5 Dist
+inserts the hardware rows; `'t` is (X−x̄)/σx; P/Q/R are the standard-normal
+areas on the figure. Hidden on paired-variable types.
+
+**STAT recall** — SHIFT 1 Sum / Var / MinMax / Reg / Dist stay in STAT
+(`p2-stat-mode`). The symbol lands on the STAT calc line; STAT stays
+lit; `=` uses the current STAT data. CALC / SOLVE / hyp do not overlay
+(`R12`). AC from STAT still turns STAT off (`R13`).
+
 **Tests** — golden (manual samples + Phase 1/2 + vis-no-literal +
-history/keys + SOLVE + E-40 offset/jump + STAT Edit + `ti-stat` +
+history/keys + SOLVE + E-19 CALC + E-40 offset/jump + STAT Edit + E-25 Dist + stay-in-STAT + `ti-stat` +
 `ti-numerics` + `ti-store` + `ti-parse` + `ti-keys` + `ti-escape` +
-`ti-edges` + `r17-percent` + `r28-exp` + `r29-int`) + parser (implicit
-multiply) = 146 (26 Sep 2026).
+`ti-edges` + `r17-percent` + `r28-exp` + `r29-int` + E-28 linear + E-28 cubic) + parser (implicit
+multiply) = 171 (27 Sep 2026).
 
 **ti-stat** — STAT editor first keystroke replaces the cell (FREQ `1` → `5`);
 `evaluateExpression` does not overlay A/B/C/R/N on user memory; invalid
@@ -340,14 +373,14 @@ CALC/SOLVE `commitPromptValue` stores typed `0`; empty keeps previous.
 
 **ti-parse** — Adjacent memory letters multiply (`XY` is X×Y, `AB` is
 A×B). SOLVE does not prompt letters inside `Ans` / `nCr` / function
-stems. Unshifted CALC E-19 stays `p2-calc`.
+stems. Unshifted CALC E-19 is `p2-calc`.
 
 **ti-keys** — After `=`, x^n is `Ans^(‸)` (SHIFT: `root(Ans,‸)`);
 x² / cube always clear SHIFT. Caret jumps `pol(` `rec(` `^(`.
 frac / nPr / nCr / x^n / x² write the COMP line only in COMP.
 
 **ti-escape** — CALC / SOLVE / hyp run only on a COMP calc line (STAT
-recall already jumps to COMP). AC from STAT enters COMP with STAT off
+recall stays in STAT). AC from STAT enters COMP with STAT off
 and overlays cleared; EQN AC stays in the editor and still clears hyp /
 prompt / SOLVE / `lcdError`. History Load enters COMP and drops overlays.
 
@@ -372,7 +405,7 @@ typed.
 
 **debt-shell** — `Calculator.tsx` composes `lcd.tsx`, `keyboard.ts`,
 `useCalculatorState`, and `modeRouter.ts`. One store for `vars` / `ans` /
-history. STAT recall lives in `modes/stat.tsx` (still jumps to COMP).
+history. STAT recall lives in `modes/stat.tsx` and stays in STAT.
 
 **debt-value** — `evaluateExpression` returns `CalcValue` (`real` |
 `complex` | `pair`). EQN a+bi uses `complex`. Top-level Pol/Rec is a

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { allowsCalcSolveHyp, allowsCompLineEdit, applyAllClear, applyHistoryLoad, applyPowerKey, applySquareKey, attemptStoreOperand, collectSolvePromptVars, commitPromptValue, expressionHasSolveUnknown, moveCompCursorDown, moveCompCursorLeft, moveCompCursorRight, moveCompCursorUp, newtonSolveX, placeCaretAtOffset, reconstructSequence, wrapPrecedingBinary } from './modes/comp.ts';
+import { allowsCalcSolveHyp, allowsCompLineEdit, applyAllClear, applyHistoryLoad, applyPowerKey, applySquareKey, attemptStoreOperand, calcExpressionToEval, collectCalcPromptVars, collectSolvePromptVars, commitPromptValue, expressionHasSolveUnknown, isStatSessionMode, moveCompCursorDown, moveCompCursorLeft, moveCompCursorRight, moveCompCursorUp, newtonSolveX, parseCalcAssignment, placeCaretAtOffset, reconstructSequence, wrapPrecedingBinary } from './modes/comp.ts';
 import { CURSOR_PATS } from './keys.ts';
 import { chipFamily, renderMiniButton } from './historyKeys.tsx';
 import { liveOperationSequence, setupCommitSequence } from './historyOps.ts';
@@ -28,14 +28,20 @@ import {
   applyStatInsert,
   calculateStatVars,
   getStatMaxRows,
+  getStatSubMenuInsert,
+  getStatSubMenuOptions,
   initialStatData,
+  insertStatVar,
   statEditorWindow,
   statMenuAfterShift1,
+  statResultTopOptions,
   StatDataScreen,
   StatEditScreen,
   StatEditorMenuScreen,
+  StatResultScreen,
+  StatSubMenuScreen,
 } from './modes/stat.tsx';
-import { EqnQuadEntry, EqnQuadScreen, EqnResultValue, solveQuadratic } from './modes/eqn.tsx';
+import { EqnLinearScreen, EqnQuadEntry, EqnQuadScreen, EqnResultValue, eqnMenuSelect, moveEqnIndex, solveCubic, solveEqn, solveLinear2, solveLinear3, solveQuadratic, zeroEqnCoeffs } from './modes/eqn.tsx';
 import { formatMath, toLaTeX } from './display.tsx';
 import { formatForDisplay, formatEngineering, formatDMS, formatDMSText, roundToFormat, type DisplayFormat } from './format.ts';
 import type { AngleMode, Vars } from './types.ts';
@@ -575,6 +581,148 @@ describe('Phase 2 — STAT FREQ and EQN quadratic', () => {
   });
 });
 
+describe('Phase 2 — EQN linear (E-28 types 1 and 2)', () => {
+  it('EQN menu opens types 1–4', () => {
+    expect(eqnMenuSelect('1')).toEqual({ kind: '2unk', label: 'EQN 2-unknown' });
+    expect(eqnMenuSelect('2')).toEqual({ kind: '3unk', label: 'EQN 3-unknown' });
+    expect(eqnMenuSelect('3')).toEqual({ kind: 'quad', label: 'EQN quadratic' });
+    expect(eqnMenuSelect('4')).toEqual({ kind: 'cubic', label: 'EQN cubic' });
+    expect(eqnMenuSelect('5')).toBeNull();
+  });
+
+  it('E-28 type 1: x + 2y = 3, 2x + 3y = 4 → X=−1, Y=2', () => {
+    const roots = solveLinear2(1, 2, 3, 2, 3, 4);
+    expect(roots).toHaveLength(2);
+    expect(roots[0].label).toBe('X =');
+    expect(roots[1].label).toBe('Y =');
+    expect(calcPrimary(roots[0].value)).toBeCloseTo(-1, 10);
+    expect(calcPrimary(roots[1].value)).toBeCloseTo(2, 10);
+    expect(solveEqn('2unk', ['1', '2', '3', '2', '3', '4'])).toHaveLength(2);
+  });
+
+  it('E-28 type 2: x−y+z=2, x+y−z=0, −x+y+z=4 → X=1, Y=2, Z=3', () => {
+    const roots = solveLinear3(1, -1, 1, 2, 1, 1, -1, 0, -1, 1, 1, 4);
+    expect(roots).toHaveLength(3);
+    expect(roots[0].label).toBe('X =');
+    expect(roots[1].label).toBe('Y =');
+    expect(roots[2].label).toBe('Z =');
+    expect(calcPrimary(roots[0].value)).toBeCloseTo(1, 10);
+    expect(calcPrimary(roots[1].value)).toBeCloseTo(2, 10);
+    expect(calcPrimary(roots[2].value)).toBeCloseTo(3, 10);
+  });
+
+  it('singular 2-unk / 3-unk is Math ERROR (same class as R19)', () => {
+    expect(() => solveLinear2(1, 1, 1, 2, 2, 2)).toThrow(CalcError);
+    expect(() => solveLinear2(1, 1, 1, 2, 2, 3)).toThrow(CalcError);
+    expect(() => solveLinear2(0, 0, 0, 0, 0, 0)).toThrow(CalcError);
+    expect(() => solveLinear3(1, 0, 0, 1, 2, 0, 0, 2, 3, 0, 0, 3)).toThrow(CalcError);
+    try {
+      solveLinear2(1, 2, 3, 2, 4, 6);
+      throw new Error('expected Math ERROR');
+    } catch (e) {
+      expect(e).toBeInstanceOf(CalcError);
+      expect((e as CalcError).kind).toBe('math');
+    }
+  });
+
+  it('2-unk / 3-unk editors have an/bn/cn labels, row numbers, caret, bottom-left entry', () => {
+    const two = renderToStaticMarkup(React.createElement(EqnLinearScreen, {
+      kind: '2unk', coeffs: ['1', '2', '3', '2', '3', '4'], index: 0,
+    }));
+    expect(two).toContain('>an</th>');
+    expect(two).toContain('>bn</th>');
+    expect(two).toContain('>cn</th>');
+    expect(two).not.toContain('>dn</th>');
+    expect(two).toContain('>1</td>');
+    expect(two).toContain('>2</td>');
+    expect(two).toContain('cursor');
+    expect(two).toContain('active-cell');
+    const three = renderToStaticMarkup(React.createElement(EqnLinearScreen, {
+      kind: '3unk', coeffs: zeroEqnCoeffs('3unk'), index: 4,
+    }));
+    expect(three).toContain('>an</th>');
+    expect(three).toContain('>dn</th>');
+    expect(three).toContain('>3</td>');
+    expect(three).toContain('active-cell');
+    const entry = renderToStaticMarkup(React.createElement(EqnQuadEntry, { value: '-1' }));
+    expect(entry).toContain('text-left');
+    expect(entry).toContain('cursor');
+  });
+
+  it('▲/▼ in the 2-unk editor walk rows; ◀ wraps the six cells', () => {
+    expect(moveEqnIndex('2unk', 0, 'down')).toBe(3);
+    expect(moveEqnIndex('2unk', 3, 'up')).toBe(0);
+    expect(moveEqnIndex('2unk', 0, 'up')).toBe(0);
+    expect(moveEqnIndex('2unk', 5, 'right')).toBe(0);
+    expect(moveEqnIndex('3unk', 3, 'down')).toBe(7);
+    expect(moveEqnIndex('quad', 2, 'right')).toBe(0);
+  });
+});
+
+describe('Phase 2 — EQN cubic (E-28 type 4)', () => {
+  it('E-28 type 4: x³ − 2x² − x + 2 = 0 → X1=−1, X2=2, X3=1', () => {
+    const roots = solveCubic(1, -2, -1, 2);
+    expect(roots).toHaveLength(3);
+    expect(roots[0].label).toBe('X1 =');
+    expect(roots[1].label).toBe('X2 =');
+    expect(roots[2].label).toBe('X3 =');
+    expect(roots[0].value.kind).toBe('real');
+    expect(calcPrimary(roots[0].value)).toBeCloseTo(-1, 10);
+    expect(calcPrimary(roots[1].value)).toBeCloseTo(2, 10);
+    expect(calcPrimary(roots[2].value)).toBeCloseTo(1, 10);
+    expect(solveEqn('cubic', ['1', '-2', '-1', '2'])).toHaveLength(3);
+  });
+
+  it('cubic a=0 is Math ERROR (same class as R19)', () => {
+    expect(() => solveCubic(0, 1, -2, 1)).toThrow(CalcError);
+    expect(() => solveCubic(0, 0, 0, 0)).toThrow(CalcError);
+    try {
+      solveCubic(0, 1, 1, 1);
+      throw new Error('expected Math ERROR');
+    } catch (e) {
+      expect(e).toBeInstanceOf(CalcError);
+      expect((e as CalcError).kind).toBe('math');
+    }
+  });
+
+  it('cubic one-real two-complex paints a+bi / a−bi', () => {
+    const roots = solveCubic(1, 0, 0, 1);
+    expect(roots).toHaveLength(3);
+    expect(calcPrimary(roots[0].value)).toBeCloseTo(-1, 10);
+    expect(roots[1].value.kind).toBe('complex');
+    expect(roots[2].value.kind).toBe('complex');
+    if (roots[1].value.kind !== 'complex' || roots[2].value.kind !== 'complex') return;
+    expect(roots[1].value.re).toBeCloseTo(0.5, 10);
+    expect(roots[1].value.im).toBeCloseTo(Math.sqrt(3) / 2, 10);
+    expect(roots[2].value.re).toBeCloseTo(0.5, 10);
+    expect(roots[2].value.im).toBeCloseTo(-Math.sqrt(3) / 2, 10);
+    const html = renderToStaticMarkup(React.createElement(EqnResultValue, { results: roots, resultIdx: 1 }));
+    expect(html).toMatch(/0\.5\+.*i/);
+  });
+
+  it('cubic editor has a/b/c/d labels, cell caret, and bottom-left entry', () => {
+    const grid = renderToStaticMarkup(React.createElement(EqnQuadScreen, {
+      coeffs: ['1', '-2', '-1', '2'], index: 0, labels: ['a', 'b', 'c', 'd'],
+    }));
+    expect(grid).toContain('>a</th>');
+    expect(grid).toContain('>b</th>');
+    expect(grid).toContain('>c</th>');
+    expect(grid).toContain('>d</th>');
+    expect(grid).toContain('cursor');
+    expect(grid).toContain('active-cell');
+    const entry = renderToStaticMarkup(React.createElement(EqnQuadEntry, { value: '-2' }));
+    expect(entry).toContain('text-left');
+    expect(entry).toContain('cursor');
+  });
+
+  it('◀ wraps the four cubic cells; ▲/▼ stay on the row', () => {
+    expect(moveEqnIndex('cubic', 3, 'right')).toBe(0);
+    expect(moveEqnIndex('cubic', 0, 'left')).toBe(3);
+    expect(moveEqnIndex('cubic', 0, 'up')).toBe(0);
+    expect(moveEqnIndex('cubic', 2, 'down')).toBe(2);
+  });
+});
+
 describe('Phase 2 — STAT Edit Ins / Del-A / DEL-deletes-line (E-23)', () => {
   const rows = (xs: string[]) => xs.map(x => ({ x, y: '', freq: '1' }));
 
@@ -656,6 +804,130 @@ describe('Phase 2 — STAT Edit Ins / Del-A / DEL-deletes-line (E-23)', () => {
     expect(statMenuAfterShift1('STAT_DATA', '1-VAR')).toBe('STAT_EDITOR_MENU');
     expect(statMenuAfterShift1('COMP', '1-VAR')).toBe('STAT_RESULT');
     expect(statMenuAfterShift1('COMP', null)).toBeNull();
+  });
+});
+
+describe('Phase 2 — STAT Dist P( Q( R( \'t (E-25)', () => {
+  const e25Data = [
+    { x: '0', freq: '1' }, { x: '1', freq: '2' }, { x: '2', freq: '1' },
+    { x: '3', freq: '2' }, { x: '4', freq: '2' }, { x: '5', freq: '2' },
+    { x: '6', freq: '3' }, { x: '7', freq: '4' }, { x: '9', freq: '2' },
+    { x: '10', freq: '1' },
+  ];
+  const e25Stats = calculateStatVars('1-VAR', e25Data);
+  const fix3: DisplayFormat = { kind: 'fix', digits: 3 };
+
+  const evalDist = (expr: string, stats = e25Stats, fmt?: DisplayFormat) =>
+    calcPrimary(evaluateExpression(expr, { ...EMPTY_VARS }, 0, 'DEG', stats, fmt));
+
+  it('SHIFT 1 → 5 Dist shows P( Q( R( \'t on 1-VAR and inserts them', () => {
+    expect(statResultTopOptions('1-VAR')['5']).toBe('Dist');
+    expect(getStatSubMenuOptions('Dist', '1-VAR')).toEqual(['P(', 'Q(', 'R(', "'t"]);
+    expect(getStatSubMenuInsert('Dist', '1-VAR', '1')).toBe('P(');
+    expect(getStatSubMenuInsert('Dist', '1-VAR', '2')).toBe('Q(');
+    expect(getStatSubMenuInsert('Dist', '1-VAR', '3')).toBe('R(');
+    expect(getStatSubMenuInsert('Dist', '1-VAR', '4')).toBe("'t");
+    expect(insertStatVar('P(', '‸', false).currentInput).toBe('P(‸');
+    expect(insertStatVar("'t", '3‸', false).currentInput).toBe("3't‸");
+    expect(insertStatVar('P(', '‸', false).calcMode).toBe('STAT_CALC');
+    expect(insertStatVar("'t", '3‸', false).calcMode).toBe('STAT_CALC');
+    const menu = renderToStaticMarkup(React.createElement(StatSubMenuScreen, {
+      statSubMenu: 'Dist',
+      statType: '1-VAR',
+    }));
+    expect(menu).toContain('P(');
+    expect(menu).toContain('Q(');
+    expect(menu).toContain('R(');
+    expect(menu).toContain('→t');
+    expect(menu).not.toContain("'t");
+    const top = renderToStaticMarkup(React.createElement(StatResultScreen, { statType: '1-VAR' }));
+    expect(top).toContain('Dist');
+    expect(top).toContain('5:');
+  });
+
+  it('Dist is 1-VAR only — paired types hide Dist and do not insert', () => {
+    expect(statResultTopOptions('A+BX')['5']).toBe('MinMax');
+    expect(statResultTopOptions('A+BX')['6']).toBe('Reg');
+    expect(statResultTopOptions('A+BX')['7']).toBeUndefined();
+    expect(getStatSubMenuOptions('Dist', 'A+BX')).toEqual([]);
+    expect(getStatSubMenuInsert('Dist', 'A+BX', '1')).toBeNull();
+    const top = renderToStaticMarkup(React.createElement(StatResultScreen, { statType: 'A+BX' }));
+    expect(top).not.toContain('Dist');
+    expect(top).toContain('Reg');
+  });
+
+  it('E-25 example 5: 3\'t = −0.762 and P(t) = 0.223 (Fix 3)', () => {
+    expect(e25Stats.N).toBe(20);
+    expect(e25Stats.stat_xbar).toBeCloseTo(5.1, 10);
+    const t = evalDist("3't");
+    expect(formatForDisplay(t, fix3)).toEqual({ type: 'plain', text: '-0.762' });
+    const p = evalDist("P(3't)");
+    expect(formatForDisplay(p, fix3)).toEqual({ type: 'plain', text: '0.223' });
+  });
+
+  it('P( Q( R( are the standard-normal areas on the E-25 figure', () => {
+    expect(evalDist('P(0)', {})).toBeCloseTo(0.5, 10);
+    expect(evalDist('Q(0)', {})).toBeCloseTo(0, 10);
+    expect(evalDist('R(0)', {})).toBeCloseTo(0.5, 10);
+    const t = evalDist("3't");
+    expect(evalDist("P(3't)")).toBeCloseTo(evalDist(`P(${t})`), 10);
+    expect(evalDist(`Q(${t})`)).toBeCloseTo(evalDist(`P(${t})`) - 0.5, 10);
+    expect(evalDist(`R(${t})`)).toBeCloseTo(1 - evalDist(`P(${t})`), 10);
+    expectMathError("'t");
+    expectMathError("3't");
+  });
+
+  it('P( and \'t paint as hardware glyphs, not IR dumps', () => {
+    const p = formatMath('P(0.5)');
+    expect(p).toContain('trig-fun');
+    expect(p).toContain('>P<');
+    expect(formatMath("3't")).toContain('→t');
+    expect(formatMath("3't")).not.toContain("'t");
+    expect(toLaTeX("3't")).toContain('rightarrow');
+  });
+});
+
+describe('Phase 2 — STAT recall stays in STAT (p2-stat-mode)', () => {
+  const e25Data = [
+    { x: '0', freq: '1' }, { x: '1', freq: '2' }, { x: '2', freq: '1' },
+    { x: '3', freq: '2' }, { x: '4', freq: '2' }, { x: '5', freq: '2' },
+    { x: '6', freq: '3' }, { x: '7', freq: '4' }, { x: '9', freq: '2' },
+    { x: '10', freq: '1' },
+  ];
+
+  it('Var recall n stays in STAT and = uses the STAT count', () => {
+    const next = insertStatVar('n', '‸', false);
+    expect(next.calcMode).toBe('STAT_CALC');
+    expect(next.currentInput).toBe('n‸');
+    expect(isStatSessionMode(next.calcMode)).toBe(true);
+    expect(allowsCalcSolveHyp(next.calcMode)).toBe(false);
+    expect(isLcdMenu({ showHypMenu: false, solveScreen: null, calcMode: 'STAT_CALC' })).toBe(false);
+    const stats = calculateStatVars('1-VAR', e25Data);
+    expect(calcPrimary(evaluateExpression('n', { ...EMPTY_VARS }, 0, 'DEG', stats))).toBe(20);
+  });
+
+  it('Dist recall \'t stays in STAT and = uses the STAT data', () => {
+    const next = insertStatVar("'t", '3‸', false);
+    expect(next.calcMode).toBe('STAT_CALC');
+    expect(next.currentInput).toBe("3't‸");
+    expect(isStatSessionMode(next.calcMode)).toBe(true);
+    expect(allowsCalcSolveHyp(next.calcMode)).toBe(false);
+    const stats = calculateStatVars('1-VAR', e25Data);
+    const t = calcPrimary(evaluateExpression("3't", { ...EMPTY_VARS }, 0, 'DEG', stats));
+    expect(t).toBeCloseTo(-0.762, 3);
+  });
+
+  it('AC from STAT still enters COMP and clears STAT (R13); COMP AC does not', () => {
+    const fromStat = applyAllClear('STAT_CALC');
+    expect(fromStat.calcMode).toBe('COMP');
+    expect(fromStat.clearStatType).toBe(true);
+    expect(fromStat.resetCompLine).toBe(true);
+    const fromEditor = applyAllClear('STAT_DATA');
+    expect(fromEditor.calcMode).toBe('COMP');
+    expect(fromEditor.clearStatType).toBe(true);
+    const fromComp = applyAllClear('COMP');
+    expect(fromComp.calcMode).toBe('COMP');
+    expect(fromComp.clearStatType).toBe(false);
   });
 });
 
@@ -878,6 +1150,9 @@ describe('ti-keys — x^n / x² / caret stems / mode-gated frac (R9 / R10 / R11 
     expect(allowsCompLineEdit('STAT_DATA')).toBe(false);
     expect(allowsCompLineEdit('STAT_RESULT')).toBe(false);
     expect(allowsCompLineEdit('EQN_QUAD')).toBe(false);
+    expect(allowsCompLineEdit('EQN_CUBIC')).toBe(false);
+    expect(allowsCompLineEdit('EQN_2UNK')).toBe(false);
+    expect(allowsCompLineEdit('EQN_3UNK')).toBe(false);
     expect(allowsCompLineEdit('EQN_RESULT')).toBe(false);
     expect(allowsCompLineEdit('MENU')).toBe(false);
   });
@@ -888,11 +1163,16 @@ describe('ti-escape — overlays, AC, History Load (R12 / R13 / R26)', () => {
     expect(allowsCalcSolveHyp('COMP')).toBe(true);
     expect(allowsCalcSolveHyp('STAT_DATA')).toBe(false);
     expect(allowsCalcSolveHyp('STAT_RESULT')).toBe(false);
+    expect(allowsCalcSolveHyp('STAT_CALC')).toBe(false);
     expect(allowsCalcSolveHyp('EQN_QUAD')).toBe(false);
+    expect(allowsCalcSolveHyp('EQN_CUBIC')).toBe(false);
+    expect(allowsCalcSolveHyp('EQN_2UNK')).toBe(false);
+    expect(allowsCalcSolveHyp('EQN_3UNK')).toBe(false);
     expect(allowsCalcSolveHyp('EQN_RESULT')).toBe(false);
     expect(allowsCalcSolveHyp('MENU')).toBe(false);
     expect(isLcdMenu({ showHypMenu: true, solveScreen: null, calcMode: 'COMP' })).toBe(true);
     expect(isLcdMenu({ showHypMenu: true, solveScreen: null, calcMode: 'EQN_QUAD' })).toBe(false);
+    expect(isLcdMenu({ showHypMenu: true, solveScreen: null, calcMode: 'EQN_2UNK' })).toBe(false);
     expect(isLcdMenu({ showHypMenu: false, solveScreen: 'confirm', calcMode: 'EQN_QUAD' })).toBe(false);
     expect(isLcdMenu({ showHypMenu: false, solveScreen: 'confirm', calcMode: 'STAT_DATA' })).toBe(true);
   });
@@ -901,6 +1181,9 @@ describe('ti-escape — overlays, AC, History Load (R12 / R13 / R26)', () => {
     const fromStat = applyAllClear('STAT_DATA');
     expect(fromStat.calcMode).toBe('COMP');
     expect(fromStat.clearStatType).toBe(true);
+    const fromStatCalc = applyAllClear('STAT_CALC');
+    expect(fromStatCalc.calcMode).toBe('COMP');
+    expect(fromStatCalc.clearStatType).toBe(true);
     expect(fromStat.showHypMenu).toBe(false);
     expect(fromStat.promptVar).toBeNull();
     expect(fromStat.solveScreen).toBeNull();
@@ -910,6 +1193,10 @@ describe('ti-escape — overlays, AC, History Load (R12 / R13 / R26)', () => {
     const fromEqn = applyAllClear('EQN_RESULT');
     expect(fromEqn.calcMode).toBe('EQN_QUAD');
     expect(fromEqn.resetEqn).toBe(true);
+    const fromLin = applyAllClear('EQN_RESULT', '2unk');
+    expect(fromLin.calcMode).toBe('EQN_2UNK');
+    expect(applyAllClear('EQN_3UNK', '3unk').calcMode).toBe('EQN_3UNK');
+    expect(applyAllClear('EQN_RESULT', 'cubic').calcMode).toBe('EQN_CUBIC');
     expect(fromEqn.clearStatType).toBe(false);
     expect(fromEqn.showHypMenu).toBe(false);
     expect(fromEqn.promptVar).toBeNull();
@@ -1097,6 +1384,66 @@ describe('Phase 2 — SOLVE errors and L−R (E-20, E-21, E-41)', () => {
       expect(e).toBeInstanceOf(CalcError);
       expect((e as CalcError).kind).toBe('syntax');
     }
+  });
+});
+
+describe('Phase 2 — unshifted CALC (E-19)', () => {
+  it('prompts memory letters in appearance order, not stem letters', () => {
+    expect(collectCalcPromptVars('3A+B')).toEqual(['A', 'B']);
+    expect(collectCalcPromptVars('2X+3Y')).toEqual(['X', 'Y']);
+    expect(collectCalcPromptVars('2AX+3BX+C')).toEqual(['A', 'X', 'B', 'C']);
+    expect(collectCalcPromptVars('sin(A)+B')).toEqual(['A', 'B']);
+    expect(collectCalcPromptVars('cos(A)')).toEqual(['A']);
+    expect(collectCalcPromptVars('tan(B)')).toEqual(['B']);
+    expect(collectCalcPromptVars('Ans+A')).toEqual(['A']);
+    expect(collectCalcPromptVars('nCr(A,X)')).toEqual(['A', 'X']);
+    expect(collectCalcPromptVars('abs(X)+1')).toEqual(['X']);
+    expect(collectCalcPromptVars('frac(A,B)+X')).toEqual(['A', 'B', 'X']);
+    expect(collectCalcPromptVars('2+2')).toEqual([]);
+  });
+
+  it('does not treat a function-stem letter as a CALC prompt', () => {
+    // Raw /[A-MYX]/ would see C in cos, A in tan / Ans / abs.
+    expect(collectCalcPromptVars('cos(30)')).toEqual([]);
+    expect(collectCalcPromptVars('tan(30)')).toEqual([]);
+    expect(collectCalcPromptVars('Ans')).toEqual([]);
+    expect(collectCalcPromptVars('abs(2)')).toEqual([]);
+    expect(collectSolvePromptVars('cos(X)')).toEqual([]);
+    expect(collectCalcPromptVars('cos(X)')).toEqual(['X']);
+  });
+
+  it('E-19 example 1: 3A+B with (5,10) then recalc (7,20)', () => {
+    expect(collectCalcPromptVars('3A+B')).toEqual(['A', 'B']);
+    const first = { ...EMPTY_VARS, A: 5, B: 10 };
+    expect(calcPrimary(evaluateExpression('3A+B', first, 0, 'DEG', {}))).toBe(25);
+    expect(String(first.A)).toBe('5');
+    expect(String(first.B)).toBe('10');
+    const again = { ...EMPTY_VARS, A: 7, B: 20 };
+    expect(calcPrimary(evaluateExpression('3A+B', again, 0, 'DEG', {}))).toBe(41);
+    expect(collectCalcPromptVars('3A+B')).toEqual(['A', 'B']);
+    expect(String(again.A)).toBe('7');
+    expect(String(again.B)).toBe('20');
+  });
+
+  it('E-19 assignment Y=X²+X+3 evaluates the right side and stores Y', () => {
+    expect(parseCalcAssignment('Y=X²+X+3')).toEqual({ target: 'Y', rhs: 'X²+X+3' });
+    expect(collectCalcPromptVars('Y=X²+X+3')).toEqual(['X']);
+    expect(collectCalcPromptVars('A=B+C')).toEqual(['B', 'C']);
+    expect(collectSolvePromptVars('Y=X²+X+3')).toEqual(['Y']);
+    const plan = calcExpressionToEval('Y=X²+X+3');
+    expect(plan).toEqual({ evalExpr: 'X²+X+3', storeTarget: 'Y' });
+    const y = calcPrimary(evaluateExpression(plan.evalExpr, { ...EMPTY_VARS, X: 2 }, 0, 'DEG', {}));
+    expect(y).toBe(9);
+    const a = calcPrimary(evaluateExpression('B+C', { ...EMPTY_VARS, B: 1, C: 2 }, 0, 'DEG', {}));
+    expect(a).toBe(3);
+    // Full equation stays L−R for SOLVE — CALC must not use that path.
+    expect(calcPrimary(evaluateExpression('Y=X²+X+3', { ...EMPTY_VARS, X: 2, Y: 9 }, 0, 'DEG', {}))).toBe(0);
+  });
+
+  it('empty prompt keeps the previous letter; typed 0 stores 0', () => {
+    expect(commitPromptValue('', '5')).toBe(5);
+    expect(commitPromptValue('0', '5')).toBe(0);
+    expect(commitPromptValue('7', '5')).toBe(7);
   });
 });
 

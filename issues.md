@@ -25,11 +25,11 @@ Status: `[ ]` open · `[x]` fixed (move to **Closed** at the next wrap-up).
       **Associated:** `vis-menus`; implementations are Phase 3 (`p3-*`).
       **Policy:** leave the lie until the matching feature ships — no
       standalone disable pass.
-- [ ] `eqn-menu-fallthrough` — EQN menu shows types 1/2/4; only type 3
-      (quadratic) runs.
-      **Associated:** `vis-menus`, `p2-eqn-linear`, `p2-eqn-cubic`.
-      **Policy:** same as `lying-menus` — fix when those EQN types ship.
-- [ ] `dist-empty` — STAT Dist submenu label exists; the submenu is empty.
+- [x] `eqn-menu-fallthrough` — EQN types 1–4 run (linear, quadratic,
+      cubic a/b/c/d + E-28 Ex.5). MODE 2/4/6/7/8 still wait Phase 3.
+      **Associated:** `vis-menus`, `p2-eqn-cubic`.
+- [x] `dist-empty` — STAT Dist submenu is P( Q( R( `'t` on 1-VAR (E-25);
+      hidden on paired-variable types. Recall stays in STAT.
       **Associated:** `p2-dist`.
 - [ ] `lineio-display` — SETUP lists MthIO / LineIO; choosing them returns to
       COMP with no input-mode change.
@@ -44,23 +44,22 @@ Status: `[ ]` open · `[x]` fixed (move to **Closed** at the next wrap-up).
 
 ## COMP
 
-- [ ] `calc-ux` — Unshifted CALC prompts every `[A-MYX]` in the raw string
-      and then evaluates. Hardware (E-19) prompts memory letters only,
-      shows the previous value, lets you recalc, and handles equalities
-      as the figure shows. Linear-during-prompt is the current I/O for
-      the value, not SETUP LineIO.
+- [x] `calc-ux` — Unshifted CALC prompts memory letters only (not stems /
+      IR), shows the previous value, re-prompts after `=`, and treats
+      `Var=expr` as assignment (not Newton). Linear-during-prompt stays
+      the current I/O, not SETUP LineIO.
       **Associated:** `p2-calc` (was `comp-calc`).
-      Kickoff: [`docs/prompts/p2-calc.md`](docs/prompts/p2-calc.md).
-      **Now** row 1. Shared prompt helper already landed (`ti-store` /
-      `ti-parse`).
 
 ---
 
 ## STAT / EQN
 
-- [ ] `stat-jump-comp` — Recalling a STAT variable (`insertStatVar` in
-      `src/modes/stat.tsx`) forces COMP. The unit stays in STAT.
+- [x] `stat-jump-comp` — Recalling a STAT variable stays in STAT
+      (`STAT_CALC`). STAT stays lit; `=` uses the current STAT data.
+      CALC / SOLVE / hyp still do not overlay (`R12`). AC from STAT
+      still turns STAT off (`R13`).
       **Associated:** `p2-stat-mode`.
+      Kickoff: [`docs/prompts/p2-stat-mode.md`](docs/prompts/p2-stat-mode.md).
 
 ---
 

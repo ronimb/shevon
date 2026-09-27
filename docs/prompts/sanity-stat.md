@@ -12,7 +12,9 @@ Follow `docs/principles.md`. Sources: [`docs/tech-issues.md`](../tech-issues.md)
 Ron stopped the solo pass at STAT. Walk these with him on
 http://localhost:3000. Log fails to `docs/tech-issues.md` (landed
 correctness) or `issues.md` (honesty leftover) — never both. Do not
-treat empty Dist, EQN 1/2/4 fallthrough, or CALC ≠ E-19 as new bugs.
+treat LineIO or MODE 2/4/6/7/8 fallthrough as a new bug. EQN types
+1–4 no-op is a regression. Dist empty or STAT recall jumping to COMP
+is a regression.
 
 ## Must do
 
@@ -43,7 +45,7 @@ FREQ OFF (SETUP page 2 → STAT → `2`) hides the column; each row counts 1.
 2. MODE `3` `2` (A+BX). Enter two points, e.g. (1,2) and (2,4).
 3. MODE `1`. RCL A → **7**, not the fit intercept (0).
 
-STAT recall jumping to COMP is `stat-jump-comp` / `p2-stat-mode` — known.
+STAT recall stays in STAT (`p2-stat-mode`). Jumping to COMP is a regression.
 
 ### Invalid x̂ / ŷ (`R18`)
 
@@ -63,7 +65,7 @@ Hat symbols come from SHIFT `1` → Reg while a type is selected.
 ### EQN (`R19`, `R12`, `R13`)
 
 1. MODE `5`, then PC or overlay `3` — quadratic editor (`R27` closed).
-   1/2/4 fallthrough is `eqn-menu-fallthrough`.
+   Types 1/2 open linear editors. Type 4 opens cubic a/b/c/d.
 2. a=0, b=2, c=−4, `=` → Math ERROR (`R19`). Same for 0,0,0.
 3. In the editor: CALC / hyp / SHIFT CALC do not overlay (`R12`).
 4. AC from EQN clears hyp / prompt / solve / lcdError (`R13`).
@@ -75,8 +77,8 @@ cleared.
 
 ## Do not
 
-- Implement Dist, stay-in-STAT, CALC E-19, LineIO, packaging, or `R17`.
-- Disable lying MODE/EQN rows.
+- Implement leftovers (LineIO, packaging, Phase 3). Pairing only.
+- Disable lying MODE rows.
 - Mark `R14` / `R3` / `R18` done from memory — only after this walk
   and the matching `.md` checkboxes.
 

@@ -117,6 +117,10 @@ const TEMPLATE_SPECS: TemplateSpec[] = [
     html: a => `<span class="comb-perm">${infixSlot(a[0])}<span class="comb-perm-sym">P</span>${infixSlot(a[1] || '')}</span>`,
     latex: a => `{}^{${lx(a[0])}}P_{${lx(a[1])}}`,
   },
+  // STAT Dist (E-25): hardware paints P( Q( R( as function names, not IR stems.
+  { stem: 'P', html: namedFn('P'), latex: a => `P(${lx(a[0])})` },
+  { stem: 'Q', html: namedFn('Q'), latex: a => `Q(${lx(a[0])})` },
+  { stem: 'R', html: namedFn('R'), latex: a => `R(${lx(a[0])})` },
   {
     stem: 'pol',
     html: (a, closed) => `<span class="trig-fun">Pol</span>${parenBody(commaArgs(a), closed)}`,
@@ -265,6 +269,7 @@ export const toLaTeX = (expr: string): string => {
   s = s.replace(/×/g, '\\times ')
        .replace(/÷/g, '\\div ')
        .replace(/π/g, '\\pi ')
+       .replace(/'t/g, '\\rightarrow t')
        .replace(/×10\^/g, '\\times 10^');
 
   return s;
@@ -282,6 +287,8 @@ export const formatMath = (input: string): string => {
   h = paintTemplates(h, (spec, args, closed) => spec.html(args, closed));
 
   h = h.replace(/Ran#/g, '<span class="trig-fun">Ran#</span>');
+  // Dist normalized variate: IR is `'t`; the unit shows →t.
+  h = h.replace(/'t/g, '<span class="trig-fun">→t</span>');
 
   h = h.replace(/→([A-M X-Y])/g, '<span style="font-size: 0.8em; margin: 0 4px;">→</span>$1')
        .replace(/\^\(([^)]*)\)/g, (_m, p1) => `<span class="sup">${slot(p1)}</span>`)
@@ -312,6 +319,7 @@ export const formatMath = (input: string): string => {
 };
 
 export const renderMathSymbol = (sym: string): React.ReactNode => {
+  if (sym === "'t" || sym === '→t') return <span>→t</span>;
   const norm = sym.normalize('NFD');
   if (norm.startsWith('x') && (norm.includes('\u0304') || norm.includes('\u0305') || norm.includes('̄') || norm.includes('̅'))) {
     return (

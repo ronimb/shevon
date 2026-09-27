@@ -42,12 +42,12 @@ export default function TechIssues() {
 
       <Row gap={24} align="end">
         <Stat value="0" label="Open R-ids" />
-        <Stat value="p2-calc" label="Next" />
+        <Stat value="p2-eqn-linear" label="Next" />
       </Row>
 
       <Callout tone="info" title="Not this file">
-        `lying-menus`, `calc-ux`, Dist, LineIO stay on `issues.md`.
-        Do not copy R-ids there. `R29` is landed.
+        `lying-menus`, LineIO stay on `issues.md`. Dist is filled
+        (`p2-dist`). Do not copy R-ids there. `p2-calc` / `R29` are landed.
       </Callout>
 
       <Row gap={8} wrap>

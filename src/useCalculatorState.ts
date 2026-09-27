@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { CalcError, calcReal, type AngleMode, type CalcMode, type CalcValue, type DisplayMode, type EqnResult, type HistoryItem, type StatEntry, type StatType, type Vars } from './types.ts';
+import { CalcError, calcReal, type AngleMode, type CalcMode, type CalcValue, type DisplayMode, type EqnKind, type EqnResult, type HistoryItem, type StatEntry, type StatType, type Vars } from './types.ts';
 import { DEFAULT_FORMAT, type DisplayFormat } from './format.ts';
 import type { SetupPrompt, SolveScreen } from './lcd.tsx';
 
@@ -95,6 +95,7 @@ export function useCalculatorState() {
   const [promptValue, setPromptValue] = useState<string>("");
   const [prevPromptValue, setPrevPromptValue] = useState<string>("0");
   const [promptVarsQueue, setPromptVarsQueue] = useState<string[]>([]);
+  const [eqnKind, setEqnKind] = useState<EqnKind>('quad');
   const [eqnCoeffs, setEqnCoeffs] = useState<string[]>(["0", "0", "0"]);
   const [eqnIndex, setEqnIndex] = useState<number>(0);
   const [eqnResults, setEqnResults] = useState<EqnResult[]>([]);
@@ -169,6 +170,7 @@ export function useCalculatorState() {
     promptValue, setPromptValue,
     prevPromptValue, setPrevPromptValue,
     promptVarsQueue, setPromptVarsQueue,
+    eqnKind, setEqnKind,
     eqnCoeffs, setEqnCoeffs,
     eqnIndex, setEqnIndex,
     eqnResults, setEqnResults,

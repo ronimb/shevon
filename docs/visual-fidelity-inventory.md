@@ -8,7 +8,7 @@ against the roadmap’s “fix existing vs. add missing” split.
 [`roadmap.md`](../roadmap.md). Honesty leftovers: [`issues.md`](../issues.md).
 Landed-correctness review: [`docs/tech-issues.md`](tech-issues.md).
 
-Refreshed 26 Sep 2026 after `R29` (∫ limits on the symbol + caret path).
+Refreshed 27 Sep 2026 after `p2-eqn-cubic` (EQN cubic a/b/c/d).
 If this file disagrees with `roadmap.md` on what is scheduled, follow the
 roadmap.
 
@@ -27,7 +27,7 @@ roadmap.
 | Key hit-area coordinates | `src/keys.ts` |
 | COMP cursor/insert/delete | `src/modes/comp.ts` |
 | STAT screens + data editor | `src/modes/stat.tsx` |
-| EQN screens + quadratic solver | `src/modes/eqn.tsx` |
+| EQN screens + quadratic / cubic / linear solvers | `src/modes/eqn.tsx` |
 | Expression evaluation | `src/evaluator.ts` |
 | Mode/type definitions | `src/types.ts` |
 | Live/history key chips and recipes | `src/historyKeys.tsx`, `src/historyOps.ts` |
@@ -54,6 +54,7 @@ rebuild.
 | STAT Edit menu | `stat.tsx` | From editor: SHIFT 1 → 1:Type 2:Data 3:Edit; Edit is 1:Ins 2:Del-A |
 | hyp menu | `lcd.tsx` | Overlays COMP input line; does not dump “hyp” text |
 | EQN quadratic editor | `eqn.tsx` | a/b/c labels, cell caret, bottom-left entry |
+| EQN 2-unk / 3-unk editors | `eqn.tsx` | an/bn/cn(/dn), row numbers, caret, bottom-left entry |
 | Result forms: fractions, mixed fractions | `display.tsx`, SETUP ab/c vs d/c | d/c and ab/c when applicable |
 | Sci ×10ⁿ, ENG, S⇔D toggle | `display.tsx`, `format.ts` | Engineering notation and decimal ↔ fraction |
 | Fix/Sci/Norm decimals | `format.ts` | Via `formatForDisplay` / `formatResultNumber` |
@@ -80,8 +81,7 @@ Ids match [`issues.md`](../issues.md) and [`roadmap.md`](../roadmap.md).
 |----|------------------|---------------|------|
 | `ind-hardcoded` / `vis-indicators` | CMPLX, MAT, VCT, Disp | Rendered but hardcoded dim — never light up | `lcd.tsx` |
 | `ind-arrows` / `vis-indicators` | ▲/▼ arrows | COMP history replay and EQN result light; STAT editor row-nav does not | `lcd.tsx` |
-| `eqn-menu-fallthrough` / `vis-menus` | EQN types 1/2/4 | Menu lists all four; only type 3 (quadratic) works | `eqn.tsx`, `lcd.tsx`, `modeRouter.ts` |
-| `dist-empty` / `vis-menus` | Distribution submenu | Menu label exists but opens empty submenu | `stat.tsx` |
+| `dist-empty` / `vis-menus` | Distribution submenu | 1-VAR P( Q( R( `'t` landed; hidden on paired types | `stat.tsx` |
 | `lying-menus` / `vis-menus` | MODE 2/4/6/7/8 | Listed in MODE menu but silently fall back to COMP | `lcd.tsx`, `modeRouter.ts` |
 | `surd-pi-form` / `vis-result` | Surd `n√m` result | Input template exists; no surd result form | `display.tsx` |
 | `vis-errors` | Stack / Argument ERROR | Syntax / Math jump landed; these screens still missing | `lcd.tsx` |
@@ -99,7 +99,6 @@ Ids match [`issues.md`](../issues.md) and [`roadmap.md`](../roadmap.md).
 | Complex `a+bi` in COMP / CMPLX | EQN quadratic paints a+bi; CMPLX mode and COMP complex I/O are not implemented |
 | Stack / Argument ERROR | Syntax / Math / Variable / Can’t Solve / Time Out exist; Stack / Argument do not |
 | CMPLX / BASE-N / MATRIX / VECTOR / TABLE modes | Listed in MODE menu only; all fall back to COMP |
-| Distribution menu body | No distribution UI beyond empty STAT submenu |
 | LineIO editing | SETUP page 1 shows options; not functional |
 
 ---
@@ -145,12 +144,15 @@ Status bar CSS: `index.css`.
 
 ### 4. EQN mode
 
-- Menu: `EqnMenuScreen` — options 1/2/4 display-only; only 3 (quadratic)
-  implemented.
-- Editor: `EqnQuadScreen` — a/b/c labels, 3-cell grid, caret, bottom-left
-  entry via `EqnQuadEntry`.
-- Results: label on input line, value on result line; ▲/▼ between roots.
-  Negative discriminant paints hardware-style `a+bi` / `a−bi` via `formatComplexPair`.
+- Menu: `EqnMenuScreen` — types 1–4 run (linear, quadratic, cubic).
+- Quadratic / cubic editor: `EqnQuadScreen` — a/b/c or a/b/c/d labels,
+  cell caret, bottom-left entry via `EqnQuadEntry`.
+- Linear editors: `EqnLinearScreen` — an/bn/cn (and dn), row numbers 1–2
+  or 1–3, cell caret, same bottom-left entry.
+- Results: label on input line, value on result line; ▲/▼ between X/Y/Z
+  or roots. Negative discriminant / cubic complex paints hardware-style
+  `a+bi` / `a−bi` via `formatComplexPair`. Singular linear systems and
+  quadratic/cubic `a=0` are Math ERROR.
 
 ### 5. STAT mode
 
@@ -160,8 +162,8 @@ Status bar CSS: `index.css`.
 - DEL deletes the current data line; SHIFT DEL (INS) inserts a blank line
   (on a blank window Ins stays three 0s).
 - SHIFT 1 from the editor shows 1:Type 2:Data 3:Edit; Edit is 1:Ins 2:Del-A.
-- Result and submenus work except Dist (empty). Recalling STAT vars jumps to
-  COMP.
+- Result and submenus include Dist P( Q( R( `'t` on 1-VAR (E-25). Recalling
+  STAT vars stays on the STAT calc line (`STAT_CALC`); STAT stays lit.
 
 ### 6. Result forms
 

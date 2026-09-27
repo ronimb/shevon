@@ -48,9 +48,9 @@ interface Feature {
 const FEATURES: Feature[] = [
   { area: "Modes", name: "COMP", manual: "E-5 N1", status: "done", inCode: "Default calcMode; full expression path", gap: "COMP leftovers still open" },
   { area: "Modes", name: "CMPLX", manual: "E-5 N2", status: "missing", inCode: "Menu row only; CMPLX indicator always dim", gap: "No i, ∠, arg, Conjg, or polar/rect format" },
-  { area: "Modes", name: "STAT", manual: "E-5 N3, E-22", status: "partial", inCode: "Type menu, editor, Sum/Var/MinMax/Reg, FREQ, Edit Ins/Del-A", gap: "Dist, STAT stays active on recall" },
+  { area: "Modes", name: "STAT", manual: "E-5 N3, E-22", status: "done", inCode: "Type menu, editor, Sum/Var/MinMax/Reg, Dist P( Q( R( 't, FREQ, Edit Ins/Del-A; recall stays in STAT", gap: "" },
   { area: "Modes", name: "BASE-N", manual: "E-5 N4, E-26", status: "missing", inCode: "Menu row; selecting 4 returns to COMP", gap: "DEC/HEX/BIN/OCT, and/or/xor/xnor, Not, Neg" },
-  { area: "Modes", name: "EQN", manual: "E-5 N5, E-28", status: "partial", inCode: "Menu shown; quadratic editor + real and complex roots", gap: "2-unk, 3-unk, cubic" },
+  { area: "Modes", name: "EQN", manual: "E-5 N5, E-28", status: "done", inCode: "Menu shown; 2-unk / 3-unk / quadratic / cubic Coefficient Editors", gap: "Exact √ of complex quadratic is p4-exact" },
   { area: "Modes", name: "MATRIX", manual: "E-5 N6, E-29", status: "missing", inCode: "Menu row only", gap: "MatA/B/C, Dim, det, Trn, inverse, MatAns" },
   { area: "Modes", name: "TABLE", manual: "E-5 N7, E-32", status: "missing", inCode: "Menu row only", gap: "f(x), Start/End/Step, 30-row cap, Insufficient MEM" },
   { area: "Modes", name: "VECTOR", manual: "E-5 N8, E-33", status: "missing", inCode: "Menu row only", gap: "VctA/B/C, dot, cross, Abs, VctAns" },
@@ -97,20 +97,20 @@ const FEATURES: Feature[] = [
   { area: "Functions", name: "nPr / nCr", manual: "E-18", status: "done", inCode: "SHIFT × / ÷ wrap operand; non-integer / negative Math ERROR", gap: "Remaining E-39 max-range checks" },
   { area: "Functions", name: "Rnd", manual: "E-15", status: "done", inCode: "Respects current Fix/Sci/Norm", gap: "" },
 
-  { area: "CALC / SOLVE", name: "CALC", manual: "E-19", status: "partial", inCode: "Prompts every [A-MYX] in the raw string, then evaluates", gap: "Scheduled p2-calc: memory letters, previous value, recalc, equalities. Not SETUP LineIO" },
-  { area: "CALC / SOLVE", name: "SOLVE", manual: "E-20 SHIFT CALC", status: "done", inCode: "Prompts other letters (not letters inside Ans / nCr / stems); solve for x; Newton; equation + x= + L-R=; Continue; Variable ERROR / Can’t Solve", gap: "Unshifted CALC is p2-calc" },
+  { area: "CALC / SOLVE", name: "CALC", manual: "E-19", status: "done", inCode: "Memory letters only (not stems); A? + previous value; CALC after = re-prompts; Y=X²+X+3 stores Y", gap: "Not SETUP LineIO; colon / Disp is comp-colon" },
+  { area: "CALC / SOLVE", name: "SOLVE", manual: "E-20 SHIFT CALC", status: "done", inCode: "Prompts other letters (not letters inside Ans / nCr / stems); solve for x; Newton; equation + x= + L-R=; Continue; Variable ERROR / Can’t Solve", gap: "Shared letter scan with CALC" },
 
   { area: "STAT", name: "Eight calculation types", manual: "E-22", status: "done", inCode: "1-VAR through 1/X; linear transforms + quadratic Cramer's", gap: "Quadratic r vs hardware A B C m1 m2 n (backlog)" },
   { area: "STAT", name: "Stat Editor", manual: "E-23", status: "done", inCode: "Grid, caret, FREQ, = advances cell, row caps; first keystroke replaces the cell; DEL deletes the line; SHIFT 1 → Edit → Ins / Del-A", gap: "" },
   { area: "STAT", name: "FREQ column", manual: "E-23", status: "done", inCode: "SETUP STAT ON; 80/40/26 caps; first digit replaces default 1", gap: "" },
-  { area: "STAT", name: "Sum / Var / MinMax", manual: "E-23", status: "done", inCode: "SHIFT 1 STAT menu; inserts symbols", gap: "On the hardware you recall while STAT stays active" },
-  { area: "STAT", name: "Reg + estimates", manual: "E-24", status: "done", inCode: "A B r C; __yhat __xhat __xhat1/2", gap: "Quadratic r not shown (hardware uses A B C m1 m2 n)" },
-  { area: "STAT", name: "Normal Dist P Q R 't", manual: "E-25", status: "missing", inCode: "Dist appears on STAT_RESULT; submenu empty", gap: "Standard normal probabilities" },
+  { area: "STAT", name: "Sum / Var / MinMax", manual: "E-23", status: "done", inCode: "SHIFT 1 STAT menu; inserts symbols on the STAT calc line", gap: "" },
+  { area: "STAT", name: "Reg + estimates", manual: "E-24", status: "done", inCode: "A B r C; __yhat __xhat __xhat1/2; stays in STAT", gap: "Quadratic r not shown (hardware uses A B C m1 m2 n)" },
+  { area: "STAT", name: "Normal Dist P Q R 't", manual: "E-25", status: "done", inCode: "1-VAR Dist P( Q( R( 't; E-25 Fix 3 sample; hidden on A+BX etc.; stays in STAT", gap: "" },
 
-  { area: "EQN", name: "2-unknown linear", manual: "E-28 1", status: "missing", inCode: "Menu text only", gap: "Coefficient editor + X,Y solutions" },
-  { area: "EQN", name: "3-unknown linear", manual: "E-28 2", status: "missing", inCode: "Menu text only", gap: "X,Y,Z" },
+  { area: "EQN", name: "2-unknown linear", manual: "E-28 1", status: "done", inCode: "Coefficient Editor an/bn/cn; bottom-left entry; X,Y; singular is Math ERROR", gap: "" },
+  { area: "EQN", name: "3-unknown linear", manual: "E-28 2", status: "done", inCode: "Coefficient Editor an/bn/cn/dn; X,Y,Z; singular is Math ERROR", gap: "" },
   { area: "EQN", name: "Quadratic", manual: "E-28 3", status: "done", inCode: "a,b,c labels; caret; bottom-left entry; real and a+bi roots; ▲▼", gap: "Exact √ form of complex roots is p4-exact" },
-  { area: "EQN", name: "Cubic", manual: "E-28 4", status: "missing", inCode: "Menu text only", gap: "Up to three real/complex roots" },
+  { area: "EQN", name: "Cubic", manual: "E-28 4", status: "done", inCode: "a,b,c,d labels; caret; bottom-left entry; X1/X2/X3; a=0 Math ERROR", gap: "Exact surd form is p4-exact" },
 
   { area: "CMPLX", name: "a+bi and r∠θ I/O", manual: "E-18", status: "missing", inCode: "i / ∠ unused", gap: "Full CMPLX mode" },
   { area: "CMPLX", name: "arg / Conjg / format cmds", manual: "E-19", status: "missing", inCode: "None", gap: "SHIFT 2 CMPLX menu" },
@@ -134,7 +134,7 @@ const FEATURES: Feature[] = [
   { area: "Platform", name: "PC keyboard", manual: "—", status: "partial", inCode: "Enter, arrows, Shift/Alt, comma (SHIFT )), S/C/T/L/R/Q/A, X/Y vars", gap: "Letter keys steal typing; Shift hold vs overlay toggle" },
   { area: "Platform", name: "History / LaTeX pane", manual: "—", status: "done", inCode: "50 items, Load, physical-key Show Keys; STO/MODE/SETUP actions", gap: "Not hardware behavior; keep as extra. Live Current keys strip is on top" },
   { area: "Platform", name: "Electron + Pages + PWA", manual: "—", status: "partial", inCode: "Scripts and workflow present", gap: "Verify portable exe, Pages deploy, and PWA install end-to-end" },
-  { area: "Platform", name: "Tests", manual: "E-16 examples", status: "partial", inCode: "Golden + parser + CalcValue + STAT Edit (111)", gap: "Remaining numbered sample operations in the PDF" },
+  { area: "Platform", name: "Tests", manual: "E-16 examples", status: "partial", inCode: "Golden + parser + CalcValue + STAT Edit + E-19 CALC + E-25 Dist + stay-in-STAT + E-28 linear + E-28 cubic (171)", gap: "Remaining numbered sample operations in the PDF" },
 ];
 
 const AREAS: Array<Area | "All"> = [
@@ -200,7 +200,7 @@ export default function Coverage() {
       <Stack gap={8}>
         <H1>Hardware coverage</H1>
         <Text tone="secondary">
-          View of `docs/coverage.md` (refreshed 26 Sep 2026). Status is
+          View of `docs/coverage.md` (refreshed 27 Sep 2026). Status is
           behavior, not whether a menu label exists. Scheduled work is in
           `roadmap.md`; honesty leftovers in `issues.md`; landed-correctness
           review in `docs/tech-issues.md`.
@@ -377,13 +377,14 @@ export default function Coverage() {
         <Stack gap={8}>
           <Text>
             MODE 3 → type 1–8 → data grid with optional FREQ. Recalling STAT
-            vars currently jumps to COMP (`p2-stat-mode`). SHIFT 1 opens the
+            vars stays on the STAT calc line. SHIFT 1 opens the
             STAT recall menu while `statType !== null`.
           </Text>
           <Text tone="secondary">
-            MODE 5 → only 3 is handled. Coefficients are decimal strings.
-            Negative discriminant paints hardware-style a+bi / a−bi. Linear
-            and cubic types are still menu text only.
+            MODE 5 → 1 / 2 / 3 / 4 open editors. Linear Coefficient
+            Editors use an/bn/cn(/dn) and bottom-left entry. Quadratic
+            and cubic use a/b/c(/d). Negative discriminant paints
+            hardware-style a+bi / a−bi. Cubic E-28 Ex.5 is in.
           </Text>
         </Stack>
       </CollapsibleSection>

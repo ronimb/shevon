@@ -13,6 +13,8 @@ import {
   moveCompCursorUp,
   placeCaretAtOffset,
   attemptStoreOperand,
+  calcExpressionToEval,
+  collectCalcPromptVars,
   collectSolvePromptVars,
   commitPromptValue,
   expressionHasSolveUnknown,
@@ -28,8 +30,8 @@ import {
   applySquareKey,
 } from './modes/comp.ts';
 import {
-  STAT_RESULT_TOP_OPTIONS,
   STAT_TYPES,
+  statResultTopOptions,
   appendStatRowIfRoom,
   applyStatDelete,
   applyStatDeleteAll,
@@ -44,7 +46,12 @@ import {
 import {
   applyEqnDelete,
   applyEqnDigit,
-  solveQuadratic,
+  eqnMenuSelect,
+  eqnEditorMode,
+  isEqnCoeffEditor,
+  moveEqnIndex,
+  solveEqn,
+  zeroEqnCoeffs,
 } from './modes/eqn.tsx';
 import { isReplayableHistory, MODE_LABEL, setupCommitSequence } from './historyOps.ts';
 import type { CalculatorStore } from './useCalculatorState.ts';
@@ -147,10 +154,11 @@ export function useModeRouter(s: CalculatorStore) {
       return;
     }
     if (s.calcMode === 'STAT_RESULT') {
-      if (val === '1') s.setCalcMode('STAT_MENU');
-      else if (val === '2') s.setCalcMode('STAT_DATA');
-      else if (STAT_RESULT_TOP_OPTIONS[val]) {
-        s.setStatSubMenu(STAT_RESULT_TOP_OPTIONS[val]);
+      const top = statResultTopOptions(s.statType);
+      if (top[val] === 'Type') s.setCalcMode('STAT_MENU');
+      else if (top[val] === 'Data') s.setCalcMode('STAT_DATA');
+      else if (top[val]) {
+        s.setStatSubMenu(top[val]);
         s.setCalcMode('STAT_RESULT_SUB');
       }
       return;
@@ -158,6 +166,7 @@ export function useModeRouter(s: CalculatorStore) {
     if (s.calcMode === 'STAT_RESULT_SUB') {
       const inserted = getStatSubMenuInsert(s.statSubMenu, s.statType, val);
       if (inserted) {
+        // insertStatVar stays on the STAT calc line (`p2-stat-mode`).
         const next = insertStatVar(inserted, s.currentInput, s.showingResult);
         s.setCalcMode(next.calcMode);
         s.setLcdError(next.lcdError);
@@ -289,22 +298,24 @@ export function useModeRouter(s: CalculatorStore) {
       return;
     }
     if (s.calcMode === 'EQN_MENU') {
-      if (val === '3') {
-        s.prependHistory({
-          rawInput: 'EQN quadratic',
-          displayInput: 'EQN quadratic',
-          result: null,
-          latex: '',
-          sequence: ['MODE', '5', '3'],
-          kind: 'action',
-        });
-        s.setCalcMode('EQN_QUAD');
-        s.setEqnCoeffs(["0", "0", "0"]);
-        s.setEqnIndex(0);
-      } else return;
+      const opened = eqnMenuSelect(val);
+      if (!opened) return;
+      s.prependHistory({
+        rawInput: opened.label,
+        displayInput: opened.label,
+        result: null,
+        latex: '',
+        sequence: ['MODE', '5', val],
+        kind: 'action',
+      });
+      s.setEqnKind(opened.kind);
+      s.setCalcMode(eqnEditorMode(opened.kind));
+      s.setEqnCoeffs(zeroEqnCoeffs(opened.kind));
+      s.setEqnIndex(0);
+      s.setLcdError(null);
       return;
     }
-    if (s.calcMode === 'EQN_QUAD') {
+    if (isEqnCoeffEditor(s.calcMode)) {
       s.setEqnCoeffs(prev => applyEqnDigit(prev, s.eqnIndex, val) ?? prev);
       return;
     }
@@ -337,12 +348,12 @@ export function useModeRouter(s: CalculatorStore) {
     }
   }, [s]);
 
-  const performEvaluation = useCallback((scope?: Vars) => {
+  const performEvaluation = useCallback((scope?: Vars, exprOverride?: string) => {
     if (!s.currentInput || s.currentInput.includes('→')) return null;
     const usedVars = scope ?? s.vars;
     try {
       s.setLcdError(null);
-      let expr = s.currentInput;
+      let expr = exprOverride ?? s.currentInput;
       let openCount = (expr.match(/\(/g) || []).length, closeCount = (expr.match(/\)/g) || []).length;
       expr += ')'.repeat(Math.max(0, openCount - closeCount));
 
@@ -364,13 +375,21 @@ export function useModeRouter(s: CalculatorStore) {
     }
   }, [s]);
 
+  /** Unshifted CALC: evaluate the expression (or assignment RHS) after prompts. */
+  const performCalcEvaluation = useCallback((scope?: Vars) => {
+    const raw = s.currentInput.replace(/[‸⬚]/g, '');
+    const plan = calcExpressionToEval(raw);
+    return performEvaluation(scope, plan.evalExpr);
+  }, [s, performEvaluation]);
+
   const applyEvalSuccess = useCallback((evalRes: {
     val: CalcValue;
     raw: string;
     finalSequence: string[];
     varsWrite?: PolRecWrite;
+    storeTarget?: string | null;
   }) => {
-    const { val, raw, finalSequence, varsWrite } = evalRes;
+    const { val, raw, finalSequence, varsWrite, storeTarget } = evalRes;
     const n = calcPrimary(val);
     s.prependHistory({
       rawInput: raw,
@@ -381,7 +400,13 @@ export function useModeRouter(s: CalculatorStore) {
       kind: 'calc',
     });
     s.setAns(n);
-    if (varsWrite) s.setVars(prev => mergePolRecVars(prev, varsWrite));
+    if (varsWrite || storeTarget) {
+      s.setVars(prev => {
+        let next = varsWrite ? mergePolRecVars(prev, varsWrite) : prev;
+        if (storeTarget) next = { ...next, [storeTarget]: n };
+        return next;
+      });
+    }
     s.setCurrentSequence([]);
     s.setLastValue(val);
     s.setShowingResult(true);
@@ -455,17 +480,24 @@ export function useModeRouter(s: CalculatorStore) {
       return;
     }
 
-    const varsInExpr = Array.from(new Set(s.currentInput.match(/[A-MYX]/g) || []));
+    s.solveAfterPromptsRef.current = false;
+    s.setLcdError(null);
+    s.setSolveScreen(null);
+    s.setShowingResult(false);
+    const expr = s.currentInput.replace(/[‸⬚]/g, '');
+    const varsInExpr = collectCalcPromptVars(expr);
     if (varsInExpr.length > 0) {
       s.setPromptVarsQueue(varsInExpr);
       const firstVar = varsInExpr[0];
       s.setPromptVar(firstVar);
       s.setPromptValue("");
-      s.setPrevPromptValue(s.vars[firstVar]?.toString() || "0");
+      s.setPrevPromptValue(String(s.vars[firstVar] ?? 0));
     } else {
-      s.solveRef.current();
+      const plan = calcExpressionToEval(expr);
+      const evalRes = performCalcEvaluation();
+      if (evalRes) applyEvalSuccess({ ...evalRes, storeTarget: plan.storeTarget });
     }
-  }, [s, handleInput]);
+  }, [s, handleInput, performCalcEvaluation, applyEvalSuccess]);
 
   const tackleNextPrompt = useCallback(() => {
     if (!s.promptVar) return;
@@ -487,11 +519,12 @@ export function useModeRouter(s: CalculatorStore) {
       if (s.solveAfterPromptsRef.current) {
         s.setSolveScreen('confirm');
       } else {
-        const evalRes = performEvaluation(merged);
-        if (evalRes) applyEvalSuccess(evalRes);
+        const plan = calcExpressionToEval(s.currentInput.replace(/[‸⬚]/g, ''));
+        const evalRes = performCalcEvaluation(merged);
+        if (evalRes) applyEvalSuccess({ ...evalRes, storeTarget: plan.storeTarget });
       }
     }
-  }, [s, performEvaluation, applyEvalSuccess]);
+  }, [s, performCalcEvaluation, applyEvalSuccess]);
 
   const solve = useCallback(() => {
     if (s.solveScreen === 'confirm') {
@@ -531,17 +564,13 @@ export function useModeRouter(s: CalculatorStore) {
       s.setCalcMode('COMP');
       return;
     }
-    if (s.calcMode === 'EQN_QUAD') {
-      if (s.eqnIndex < 2) {
+    if (isEqnCoeffEditor(s.calcMode)) {
+      if (s.eqnIndex < s.eqnCoeffs.length - 1) {
         s.setEqnIndex(prev => prev + 1);
         return;
       }
       try {
-        const results = solveQuadratic(
-          parseFloat(s.eqnCoeffs[0]) || 0,
-          parseFloat(s.eqnCoeffs[1]) || 0,
-          parseFloat(s.eqnCoeffs[2]) || 0,
-        );
+        const results = solveEqn(s.eqnKind, s.eqnCoeffs);
         s.setLcdError(null);
         s.setEqnResults(results);
         s.setCalcMode('EQN_RESULT');
@@ -556,8 +585,8 @@ export function useModeRouter(s: CalculatorStore) {
       if (s.eqnResultIdx < s.eqnResults.length - 1) {
         s.setEqnResultIdx(prev => prev + 1);
       } else {
-        s.setCalcMode('EQN_QUAD');
-        s.setEqnIndex(2);
+        s.setCalcMode(eqnEditorMode(s.eqnKind));
+        s.setEqnIndex(s.eqnCoeffs.length - 1);
       }
       return;
     }
@@ -589,7 +618,7 @@ export function useModeRouter(s: CalculatorStore) {
       s.setStatCursor(prev => ({ ...prev, row: next.row }));
       return;
     }
-    if (s.calcMode === 'EQN_QUAD') {
+    if (isEqnCoeffEditor(s.calcMode)) {
       s.setEqnCoeffs(prev => applyEqnDelete(prev, s.eqnIndex));
       return;
     }
@@ -615,10 +644,10 @@ export function useModeRouter(s: CalculatorStore) {
   }, [s]);
 
   const clearAll = useCallback(() => {
-    const patch = applyAllClear(s.calcMode);
+    const patch = applyAllClear(s.calcMode, s.eqnKind);
     if (patch.resetEqn) {
       applyOverlayClear();
-      s.setEqnCoeffs(["0", "0", "0"]);
+      s.setEqnCoeffs(zeroEqnCoeffs(s.eqnKind));
       s.setEqnIndex(0);
       s.setCalcMode(patch.calcMode);
       s.setCurrentSequence([]);
@@ -685,8 +714,8 @@ export function useModeRouter(s: CalculatorStore) {
       s.setStatCursor(prev => ({ ...prev, col: Math.min(maxCol, prev.col + 1) }));
       return;
     }
-    if (s.calcMode === 'EQN_QUAD') {
-      s.setEqnIndex(prev => (prev + 1) % 3);
+    if (isEqnCoeffEditor(s.calcMode)) {
+      s.setEqnIndex(prev => moveEqnIndex(s.eqnKind, prev, 'right'));
       return;
     }
     if (s.showingResult) { s.setShowingResult(false); return; }
@@ -700,8 +729,8 @@ export function useModeRouter(s: CalculatorStore) {
       s.setStatCursor(prev => ({ ...prev, col: Math.max(0, prev.col - 1) }));
       return;
     }
-    if (s.calcMode === 'EQN_QUAD') {
-      s.setEqnIndex(prev => (prev + 2) % 3);
+    if (isEqnCoeffEditor(s.calcMode)) {
+      s.setEqnIndex(prev => moveEqnIndex(s.eqnKind, prev, 'left'));
       return;
     }
     if (s.showingResult) { s.setShowingResult(false); return; }
@@ -735,6 +764,10 @@ export function useModeRouter(s: CalculatorStore) {
         if (nextRow >= getStatMaxRows(s.statType, s.statFrequencyEnabled)) return prev;
         return { ...prev, row: nextRow };
       });
+      return;
+    }
+    if (isEqnCoeffEditor(s.calcMode)) {
+      s.setEqnIndex(prev => moveEqnIndex(s.eqnKind, prev, 'down'));
       return;
     }
     if (s.calcMode === 'EQN_RESULT') {
@@ -771,6 +804,10 @@ export function useModeRouter(s: CalculatorStore) {
     }
     if (s.calcMode === 'STAT_DATA') {
       s.setStatCursor(prev => ({ ...prev, row: Math.max(0, prev.row - 1) }));
+      return;
+    }
+    if (isEqnCoeffEditor(s.calcMode)) {
+      s.setEqnIndex(prev => moveEqnIndex(s.eqnKind, prev, 'up'));
       return;
     }
     if (s.calcMode === 'EQN_RESULT') {
