@@ -248,9 +248,12 @@ not block Phase 3.
 - [ ] `p4-tauri` — Replace the Electron portable wrapper with Tauri
   ```
   (WebView2) so the Windows exe is tens of MB, not ~100 MB.
-  After `p4-packaging`. Keep the same Vite `dist/` and the
-  existing desktop APIs (History widen, always-on-top,
-  bring-to-front). Do not change COMP / STAT / EQN. Kickoff:
+  After `p4-packaging`. Soft cutover: daily `build:exe` → Tauri;
+  Electron kept as `build:exe:electron`. Same Vite `dist/` and
+  desktop APIs (History widen, always-on-top, bring-to-front).
+  Phases: A inventory → B Edge WebView2 layout gate → C minimal
+  host → D APIs → E Ron verification matrix → F docs. Does not
+  block Phase 3. Do not change COMP / STAT / EQN. Plan + kickoff:
   [`p4-tauri.md`](docs/prompts/p4-tauri.md).
   ```
 

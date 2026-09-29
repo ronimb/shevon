@@ -162,7 +162,7 @@ MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
 | Photo overlay + hitboxes | — | Done | Absolute keys; triple-click calibration; `calculator_new.png` | — |
 | PC keyboard | — | Partial | Enter, arrows, Shift/Alt, comma (SHIFT )), S/C/T/L/R/Q/D/A, ` = S⇔D, X/Y vars | Letter keys steal typing; Shift hold vs overlay toggle |
 | History / LaTeX pane | — | Done | More pane: 50 items, Load, physical-key Show Keys; STO / MODE / SETUP actions | Not hardware behavior; keep as extra. Live Current keys strip is on top |
-| Electron + Pages + PWA | — | Partial | Lettermark wired; PWA install skipped; one frameless `Shevon.exe` (~100 MB Chromium); Pin icon; Keyboard show/hide shortcut | Ron must launch the exe; `p4-tauri` later for a small WebView2 wrapper; Pages only if a live desktop URL is wanted |
+| Electron + Pages + PWA | — | Partial | Lettermark wired; PWA install skipped; one frameless `Shevon.exe` (~100 MB Chromium); Pin icon; Keyboard show/hide shortcut | Ron must launch the exe; `p4-tauri` planned (Edge gate → Tauri host → API port → Ron WebView matrix) — see [`p4-tauri.md`](prompts/p4-tauri.md); Pages only if a live desktop URL is wanted |
 | Tests | E-16 examples | Partial | Golden + parser + CalcValue + STAT Edit + E-19 CALC + E-25 Dist + stay-in-STAT + E-28 linear + E-28 cubic (171) | Remaining numbered sample operations in the PDF |
 
 ---

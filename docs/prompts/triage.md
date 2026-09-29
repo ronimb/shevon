@@ -68,8 +68,9 @@ Snapshot 27 Sep 2026 (after `p2-eqn-cubic`):
 
 - Next implementation is **`p4-packaging`**. Then Phase 3 (`p3-*`).
   Queue: `roadmap.md` **Now**. PWA install is skipped (Ron will
-  not use it). `p4-tauri` is scheduled (small WebView2 exe) but
-  is **not** Now and does not block Phase 3.
+  not use it). `p4-tauri` is scheduled (Electron → Tauri plan in
+  [`p4-tauri.md`](p4-tauri.md): Edge gate, host, APIs, Ron matrix)
+  but is **not** Now and does not block Phase 3.
 - `p2-eqn-cubic` is landed (EQN type 4). `p2-eqn-linear` is landed (EQN 2-unk / 3-unk). `p2-stat-mode` is landed (recall stays in STAT). `p2-dist` (E-25) is landed. `p2-calc` (E-19) is landed. `R17`, `R28`, and `R29` are landed.
   `ti-stat` … `ti-edges` are landed. `R27` closed (PC `3` works).
 - Phase 2 slices are landed. Do not open Phase 3 until `p4-packaging`

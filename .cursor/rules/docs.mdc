@@ -28,4 +28,6 @@ behave.
   Follow `docs/principles.md` **Naming**.
 - Triage / oversight chats follow `docs/prompts/triage.md`. Do not
   implement leftovers in those chats.
+- When Ron asks to verify / validate all project docs, follow
+  `.cursor/skills/verify-docs/SKILL.md`.
 - Do not recreate a competing task list in chat, a canvas, or the README.

@@ -133,7 +133,7 @@ const FEATURES: Feature[] = [
   { area: "Platform", name: "Photo overlay + hitboxes", manual: "—", status: "done", inCode: "Absolute keys; triple-click calibration; calculator_new.png", gap: "" },
   { area: "Platform", name: "PC keyboard", manual: "—", status: "partial", inCode: "Enter, arrows, Shift/Alt, comma (SHIFT )), S/C/T/L/R/Q/D/A, ` = S⇔D, X/Y vars", gap: "Letter keys steal typing; Shift hold vs overlay toggle" },
   { area: "Platform", name: "History / LaTeX pane", manual: "—", status: "done", inCode: "More pane: 50 items, Load, physical-key Show Keys; STO/MODE/SETUP actions", gap: "Not hardware behavior; keep as extra. Live Current keys strip is on top" },
-  { area: "Platform", name: "Electron + Pages + PWA", manual: "—", status: "partial", inCode: "Lettermark wired; PWA install skipped; one frameless Shevon.exe (~100 MB Chromium); Pin icon; Keyboard show/hide shortcut", gap: "Ron must launch the exe; p4-tauri later for a small WebView2 wrapper; Pages only if a live desktop URL is wanted" },
+  { area: "Platform", name: "Electron + Pages + PWA", manual: "—", status: "partial", inCode: "Lettermark wired; PWA install skipped; one frameless Shevon.exe (~100 MB Chromium); Pin icon; Keyboard show/hide shortcut", gap: "Ron must launch the exe; p4-tauri planned (Edge gate → Tauri → APIs → Ron matrix) — docs/prompts/p4-tauri.md; Pages only if a live desktop URL is wanted" },
   { area: "Platform", name: "Tests", manual: "E-16 examples", status: "partial", inCode: "Golden + parser + CalcValue + STAT Edit + E-19 CALC + E-25 Dist + stay-in-STAT + E-28 linear + E-28 cubic (171)", gap: "Remaining numbered sample operations in the PDF" },
 ];
 

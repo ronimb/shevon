@@ -191,7 +191,10 @@ export default function Packaging() {
         headers={["Id", "Why parked"]}
         rows={[
           ["Phase 3 p3-*", "After packaging"],
-          ["p4-tauri", "After p4-packaging; small WebView2 exe"],
+          [
+            "p4-tauri",
+            "After packaging; plan in p4-tauri.md (Edge→Tauri→APIs→Ron)",
+          ],
           ["p4-exact / p4-samples", "After modes; not Now"],
           ["setup-page2", "vis-menus; CMPLX/Disp/CONT wait"],
           ["lineio-display", "comp-lineio"],

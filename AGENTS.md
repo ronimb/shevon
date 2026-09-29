@@ -47,4 +47,7 @@ go in `issues.md`. Landed-correctness review items go in
 **Triage / oversight** chats follow [`docs/prompts/triage.md`](docs/prompts/triage.md).
 Do not implement leftovers in those chats.
 
+**Verify / validate all docs** (drift, consolidation, canvases): follow
+[`.cursor/skills/verify-docs/SKILL.md`](.cursor/skills/verify-docs/SKILL.md).
+
 Do not write a second task list in the README, a canvas, or chat.
