@@ -56,6 +56,12 @@ export default function ShevonRoadmap() {
         >
           Packaging canvas
         </Button>
+        <Button
+          variant="ghost"
+          onClick={() => open("canvases/validate.canvas.tsx")}
+        >
+          Unit pairing
+        </Button>
       </Row>
 
       <Row gap={24} align="end">

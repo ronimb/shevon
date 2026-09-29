@@ -14,6 +14,7 @@ Detailed plan for Shevon. This file is the
 | LCD element audit                                 | `[docs/visual-fidelity-inventory.md](docs/visual-fidelity-inventory.md)` |
 | Triage / oversight (no implementation)            | `[docs/prompts/triage.md](docs/prompts/triage.md)`                       |
 | Packaging slice (view)                            | `[canvases/packaging.canvas.tsx](canvases/packaging.canvas.tsx)`         |
+| Unit pairing (form + function, no code)           | `[docs/prompts/validate-unit.md](docs/prompts/validate-unit.md)`         |
 
 
 Canvases (`canvases/*.canvas.tsx`) are **views**. If a canvas disagrees with

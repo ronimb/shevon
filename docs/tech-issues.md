@@ -1,6 +1,6 @@
 # Tech issues — landed correctness
 
-Source of truth for review ids `R1`–`R29` and slices `ti-*`.
+Source of truth for review ids `R1`–`R31` and slices `ti-*`.
 Not Phase 2 leftovers and not honesty-policy lies. Do not copy an
 R-id into [`issues.md`](../issues.md).
 
@@ -16,7 +16,19 @@ Status: `[ ]` open · `[x]` done.
 
 ## Open
 
-None. Next scheduled work is `p4-packaging`.
+Logged from the 28 Sep 2026 G1 unit pairing. Do not implement in a
+pairing chat. Scheduled Now remains `p4-packaging`.
+
+- [ ] `R30` — `12.5` `=` paints stacked 25/2. The unit / G1 row is
+      12.5. S⇔D recovers 12.5. `resultDisplayMode` prefers any exact
+      p/q with `d>1`. Not `invented-frac` (that was inexact guesses)
+      and not `surd-pi-form` (π/surd exact forms).
+- [ ] `R31` — After two COMP lines, first ▲ reloads the line already
+      on screen (`replayIndex` starts at 0 = latest). The older line
+      needs a second ▲; that screen is then right (expression +
+      stored result). ▼ from there restores the newer expression but
+      leaves the older result. Closed `replay-no-result` was ▲ with
+      no result underneath — different bug.
 
 ---
 

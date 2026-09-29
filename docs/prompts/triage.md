@@ -81,6 +81,9 @@ Snapshot 27 Sep 2026 (after `p2-eqn-cubic`):
 - Engine debt A–C is landed. Do not re-open `debt-shell` / `debt-value` /
   `debt-source-map` unless a regression shows up.
 - STAT / EQN pairing (no code): [`sanity-stat.md`](sanity-stat.md).
+- Thorough unit pairing (form + function, grouped):
+  [`validate-unit.md`](validate-unit.md). Not Now. No implementation.
+  G1 logged `R30` / `R31`. Next sitting starts at **G2**.
 
 ## Do not
 

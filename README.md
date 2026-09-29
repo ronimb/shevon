@@ -36,6 +36,22 @@ npm run electron:dev          # dev: Vite + Electron together
 npm run build:exe             # portable Windows .exe → dist-desktop/Shevon.exe
 ```
 
+`dist-desktop/Shevon.exe` is tracked so a second machine can
+`git pull` and launch without rebuilding. Rebuild with
+`npm run build:exe` after source changes. A smaller WebView2
+wrapper is scheduled as `p4-tauri` (not Now).
+
+## Unit pairing (form + function)
+
+Copy [`docs/prompts/validate-unit.md`](docs/prompts/validate-unit.md)
+below the line into a **new** chat (or open the Validate canvas).
+One group per sitting. G1 already logged `R30` / `R31` in
+[`docs/tech-issues.md`](docs/tech-issues.md) — start at **G2**
+unless you are re-checking G1. Pairing chats do not implement.
+
+You need a local `manual.pdf` (gitignored). Bring that file with
+you; the repo will not have it after clone/pull.
+
 ## Other scripts
 
 - `npm run build` — production web build into `dist/`

@@ -1,7 +1,10 @@
 node_modules/
 build/
 dist/
-dist-desktop/
+# Rebuild via npm run build:exe. Track only the portable exe so
+# another machine can pull and launch without rebuilding Electron.
+dist-desktop/*
+!dist-desktop/Shevon.exe
 coverage/
 .DS_Store
 *.log
