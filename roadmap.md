@@ -12,7 +12,7 @@ Detailed plan for Shevon. This file is the
 | Ideas not yet assigned to a phase                 | `[backlog.md](backlog.md)`                                               |
 | Feature-by-feature hardware map                   | `[docs/coverage.md](docs/coverage.md)`                                   |
 | LCD element audit                                 | `[docs/visual-fidelity-inventory.md](docs/visual-fidelity-inventory.md)` |
-| Triage / oversight (no implementation)            | `[docs/prompts/triage.md](docs/prompts/triage.md)`                       |
+| Triage / oversight (no implementation)            | `[docs/prompts/supervisor.md](docs/prompts/supervisor.md)`               |
 | Packaging slice (view)                            | `[canvases/packaging.canvas.tsx](canvases/packaging.canvas.tsx)`         |
 | Unit pairing (form + function, no code)           | `[docs/prompts/validate-unit.md](docs/prompts/validate-unit.md)`         |
 
@@ -38,7 +38,8 @@ Lying MODE rows wait for the matching feature. LineIO / 99-byte /
 Catalog of landed-correctness ids: `[docs/tech-issues.md](docs/tech-issues.md)`.
 Honesty leftovers: `[issues.md](issues.md)`. After every slice: `[sanity-landed.md](docs/prompts/sanity-landed.md)`.
 STAT / EQN pairing (no code): `[sanity-stat.md](docs/prompts/sanity-stat.md)`.
-Triage (no code): `[triage.md](docs/prompts/triage.md)`.
+Triage (no code): `[supervisor.md](docs/prompts/supervisor.md)`
+([`triage.md`](docs/prompts/triage.md) is an alias).
 
 ### Queue
 
@@ -454,5 +455,5 @@ that same change. New ideas with no phase go in `[backlog.md](backlog.md)`.
 Honesty / leftover defects go in `[issues.md](issues.md)`, with a phase or
 action id when one exists. Landed-correctness review items (`R*`, `ti-*`) go in
 `[docs/tech-issues.md](docs/tech-issues.md)`. Triage /
-oversight chats follow `[docs/prompts/triage.md](docs/prompts/triage.md)`
-and do not implement leftovers.
+oversight chats follow `[docs/prompts/supervisor.md](docs/prompts/supervisor.md)`
+(`triage.md` is an alias) and do not implement leftovers.

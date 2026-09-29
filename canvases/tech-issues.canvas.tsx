@@ -61,11 +61,11 @@ export default function TechIssues() {
           variant="ghost"
           onClick={() =>
             start(
-              "Follow docs/prompts/triage.md exactly. You are triage and oversight only. Do not implement leftovers.",
+              "Follow docs/prompts/supervisor.md exactly. You are the Shevon supervisor (triage and oversight). Do not implement leftovers.",
             )
           }
         >
-          Start triage
+          Start supervisor
         </Button>
       </Row>
 

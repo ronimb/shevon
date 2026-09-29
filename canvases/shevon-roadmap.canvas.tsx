@@ -12,7 +12,7 @@ import {
   useCanvasAction,
 } from "cursor/canvas";
 
-const TRIAGE = `Follow docs/prompts/triage.md exactly. You are triage and oversight only. Do not implement leftovers. Start with one briefing from the files as they are now.`;
+const TRIAGE = `Follow docs/prompts/supervisor.md exactly. You are the Shevon supervisor (triage and oversight). Do not implement leftovers. Start with one briefing from the files as they are now.`;
 
 const P4_PACKAGING = `Follow docs/prompts/p4-packaging.md exactly. One slice. Verify first, then one surface at a time so Ron can try it. Afterward smoke docs/prompts/sanity-landed.md. Do not start Phase 3, LineIO, or p4-exact.`;
 
@@ -117,8 +117,8 @@ export default function ShevonRoadmap() {
       </Text>
 
       <Row gap={8} wrap>
-        <Pill active onClick={() => open("docs/prompts/triage.md")}>
-          triage.md
+        <Pill active onClick={() => open("docs/prompts/supervisor.md")}>
+          supervisor.md
         </Pill>
         <Pill onClick={() => open("docs/principles.md")}>principles</Pill>
         <Pill onClick={() => open("backlog.md")}>backlog</Pill>

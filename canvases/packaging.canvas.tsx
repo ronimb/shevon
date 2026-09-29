@@ -20,7 +20,7 @@ const P4 = `Follow docs/prompts/p4-packaging.md exactly. One slice. Inventory al
 
 const SANITY = `Follow docs/prompts/sanity-landed.md exactly. Smoke COMP / STAT / EQN only. Do not implement leftovers or start Phase 3.`;
 
-const TRIAGE = `Follow docs/prompts/triage.md exactly. You are triage and oversight only. Do not implement leftovers. Start with one briefing from the files as they are now.`;
+const TRIAGE = `Follow docs/prompts/supervisor.md exactly. You are the Shevon supervisor (triage and oversight). Do not implement leftovers. Start with one briefing from the files as they are now.`;
 
 const PAIR = `Follow docs/prompts/sanity-stat.md exactly. Pairing / verification only. Do not implement leftovers or packaging.`;
 
@@ -55,7 +55,7 @@ export default function Packaging() {
           Start sanity-landed
         </Button>
         <Button variant="ghost" onClick={() => start(TRIAGE)}>
-          Start triage
+          Start supervisor
         </Button>
       </Row>
 
@@ -215,8 +215,8 @@ export default function Packaging() {
         <Pill onClick={() => open("canvases/shevon-roadmap.canvas.tsx")}>
           Roadmap canvas
         </Pill>
-        <Pill onClick={() => open("docs/prompts/triage.md")}>
-          triage.md
+        <Pill onClick={() => open("docs/prompts/supervisor.md")}>
+          supervisor.md
         </Pill>
       </Row>
     </Stack>

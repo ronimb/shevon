@@ -43,7 +43,7 @@ explicitly asks in the same message.
 | `README.md` | How to run; short Status pointer to Now | Duplicate full roadmap |
 | `AGENTS.md` / `.cursor/rules/*.mdc` | Agent gates | Competing Now |
 | `docs/prompts/<id>.md` | One-slice kickoff (or pairing) | Second roadmap |
-| `docs/prompts/triage.md` | Oversight chat + snapshot | Implementation |
+| `docs/prompts/supervisor.md` | Oversight chat + snapshot (`triage.md` alias) | Implementation |
 
 Historical kickoffs (`docs/prompts/ti-*.md`, `debt-*.md`, landed
 `p2-*.md`) may stay for regressions — do not re-open them as Now.
@@ -68,7 +68,7 @@ List and open (as needed):
 
 - Root: `roadmap.md`, `issues.md`, `backlog.md`, `README.md`, `AGENTS.md`
 - `docs/`: `principles.md`, `coverage.md`, `tech-issues.md`,
-  `visual-fidelity-inventory.md`, `prompts/triage.md`, and any
+  `visual-fidelity-inventory.md`, `prompts/supervisor.md`, and any
   kickoff named in **Now**
 - `canvases/*.canvas.tsx`
 - `.cursor/rules/*.mdc` (must agree with `AGENTS.md` / principles)

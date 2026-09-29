@@ -83,7 +83,8 @@ from those files — not a second plan.
 | [`docs/visual-fidelity-inventory.md`](docs/visual-fidelity-inventory.md) | LCD element audit |
 
 Agents: [`AGENTS.md`](AGENTS.md) and `.cursor/rules/`. Triage / oversight
-chats follow [`docs/prompts/triage.md`](docs/prompts/triage.md). Do not
+chats follow [`docs/prompts/supervisor.md`](docs/prompts/supervisor.md)
+([`triage.md`](docs/prompts/triage.md) is an alias). Do not
 name the hardware vendor or original model (`docs/principles.md` **Naming**).
 
 ## Status

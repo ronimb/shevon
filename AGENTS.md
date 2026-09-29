@@ -32,8 +32,8 @@ reviewing UI or calculator behavior.
 | [`backlog.md`](backlog.md) | Unassigned feature ideas only |
 | [`docs/coverage.md`](docs/coverage.md) | Feature-by-feature hardware coverage |
 | [`docs/visual-fidelity-inventory.md`](docs/visual-fidelity-inventory.md) | LCD element audit |
+| [`docs/prompts/supervisor.md`](docs/prompts/supervisor.md) | Triage / oversight chats (not an implementation slice) |
 | [`docs/prompts/tech-debt.md`](docs/prompts/tech-debt.md) | Engine debt A–C (landed; historical) |
-| [`docs/prompts/triage.md`](docs/prompts/triage.md) | Triage / oversight chats (not an implementation slice) |
 
 Canvases under `canvases/` are **views**. Refresh them from the markdown when
 the story changed. If a canvas disagrees with a markdown file, the markdown
@@ -44,8 +44,10 @@ the same change. New unscheduled ideas go in `backlog.md`. Honesty leftovers
 go in `issues.md`. Landed-correctness review items go in
 `docs/tech-issues.md` — do not copy the same R-id into both files.
 
-**Triage / oversight** chats follow [`docs/prompts/triage.md`](docs/prompts/triage.md).
-Do not implement leftovers in those chats.
+**Triage / oversight** chats follow
+[`docs/prompts/supervisor.md`](docs/prompts/supervisor.md)
+([`triage.md`](docs/prompts/triage.md) is an alias). Do not implement
+leftovers in those chats.
 
 **Verify / validate all docs** (drift, consolidation, canvases): follow
 [`.cursor/skills/verify-docs/SKILL.md`](.cursor/skills/verify-docs/SKILL.md).

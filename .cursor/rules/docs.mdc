@@ -17,8 +17,8 @@ behave.
 | `backlog.md` | Unassigned ideas only — not the task list |
 | `docs/coverage.md` | hardware feature coverage |
 | `docs/visual-fidelity-inventory.md` | LCD element audit |
+| `docs/prompts/supervisor.md` | Triage / oversight chats (not an implementation slice); `triage.md` is an alias |
 | `docs/prompts/tech-debt.md` | Engine debt A–C (landed; historical) |
-| `docs/prompts/triage.md` | Triage / oversight chats (not an implementation slice) |
 
 - Update the matching `.md` file in the same change when you add, finish,
   defer, or close work.
@@ -26,8 +26,9 @@ behave.
   markdown, markdown wins — refresh the canvas when the story changed.
 - Do not name the hardware vendor or the original calculator model.
   Follow `docs/principles.md` **Naming**.
-- Triage / oversight chats follow `docs/prompts/triage.md`. Do not
-  implement leftovers in those chats.
+- Triage / oversight chats follow `docs/prompts/supervisor.md`
+  (`docs/prompts/triage.md` is an alias). Do not implement leftovers
+  in those chats.
 - When Ron asks to verify / validate all project docs, follow
   `.cursor/skills/verify-docs/SKILL.md`.
 - Do not recreate a competing task list in chat, a canvas, or the README.
