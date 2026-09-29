@@ -9,13 +9,10 @@ import { LcdScreen } from './lcd.tsx';
 import { useKeyFlash, usePcKeyboard } from './keyboard.ts';
 import { useCalculatorState } from './useCalculatorState.ts';
 import { useModeRouter } from './modeRouter.ts';
+import { isDesktopApp } from './desktopBridge.ts';
 
 const BRING_FRONT_KEY = 'calc_bring_front_accel';
 const BRING_FRONT_DEFAULT = 'CommandOrControl+Shift+Space';
-
-function isElectronApp(): boolean {
-  return typeof navigator !== 'undefined' && /Electron/i.test(navigator.userAgent);
-}
 
 function eventToAccelerator(e: KeyboardEvent | React.KeyboardEvent): string | null {
   if (['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) return null;
@@ -59,13 +56,13 @@ const Calculator: React.FC = () => {
 
   const store = useCalculatorState();
   const actions = useModeRouter(store);
-  const isElectron = isElectronApp();
+  const isDesktop = isDesktopApp();
 
   useEffect(() => {
     const handleResize = () => {
       const chromeH = document.querySelector('.app-chrome')?.getBoundingClientRect().height ?? 40;
       const stripH = showCurrentKeys ? 110 : 0;
-      const paneW = showPane && (isElectron || window.innerWidth >= 768) ? 382 : 0;
+      const paneW = showPane && (isDesktop || window.innerWidth >= 768) ? 382 : 0;
       const availH = Math.max(280, window.innerHeight - chromeH - stripH);
       const availW = Math.max(240, window.innerWidth - paneW);
       setScale(Math.min(1, availH / 1000, availW / 504));
@@ -74,7 +71,7 @@ const Calculator: React.FC = () => {
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [showCurrentKeys, showPane, isElectron]);
+  }, [showCurrentKeys, showPane, isDesktop]);
 
   useEffect(() => {
     localStorage.setItem('calc_show_current_keys_on', showCurrentKeys ? '1' : '0');
@@ -85,10 +82,10 @@ const Calculator: React.FC = () => {
   }, [showPane]);
 
   useEffect(() => {
-    if (!isElectron) return;
+    if (!isDesktop) return;
     localStorage.setItem(BRING_FRONT_KEY, bringAccel);
     void window.shevonDesktop?.setBringToFrontAccelerator(bringAccel);
-  }, [isElectron, bringAccel]);
+  }, [isDesktop, bringAccel]);
 
   useEffect(() => {
     if (!captureBring) return;
@@ -224,7 +221,7 @@ const Calculator: React.FC = () => {
 
   return (
     <div className="app-shell flex flex-col bg-[#121212] m-0 overflow-hidden font-sans">
-      <div className="app-chrome flex items-center gap-2 px-3 py-2 shrink-0">
+      <div className="app-chrome flex items-center gap-2 px-3 py-2 shrink-0" data-tauri-drag-region>
         <button
           type="button"
           onClick={() => setShowCurrentKeys(v => !v)}
@@ -232,7 +229,7 @@ const Calculator: React.FC = () => {
         >
           {showCurrentKeys ? 'Hide keys' : 'Show keys'}
         </button>
-        <div className="flex-1 min-h-[28px]" />
+        <div className="flex-1 min-h-[28px]" data-tauri-drag-region />
         <button
           type="button"
           onClick={() => setShowPane(!showPane)}
@@ -240,7 +237,7 @@ const Calculator: React.FC = () => {
         >
           More
         </button>
-        {isElectron ? (
+        {isDesktop ? (
           <button
             type="button"
             title={pinned ? 'Unpin' : 'Pin on top'}
@@ -258,10 +255,13 @@ const Calculator: React.FC = () => {
             </svg>
           </button>
         ) : null}
-        {isElectron ? (
+        {isDesktop ? (
           <button
             type="button"
-            onClick={() => window.close()}
+            onClick={() => {
+              if (window.shevonDesktop?.closeApp) void window.shevonDesktop.closeApp();
+              else window.close();
+            }}
             className="app-no-drag px-3 py-1.5 bg-[#1c1c1c] text-[10px] font-black tracking-widest uppercase text-white/50 rounded-full border border-white/10 hover:bg-[#2a2a2a]"
           >
             Close
@@ -416,7 +416,7 @@ const Calculator: React.FC = () => {
       </div>
 
       {showPane && (
-        <div className={`app-no-drag relative z-[40] flex-shrink-0 bg-[#1a1a1a] rounded-3xl border border-white/5 shadow-2xl flex flex-col overflow-hidden ${isElectron ? 'w-[350px] h-full max-h-none' : 'w-full md:w-[350px] h-fit max-h-[min(900px,calc(100vh-6rem))]'}`}>
+        <div className={`app-no-drag relative z-[40] flex-shrink-0 bg-[#1a1a1a] rounded-3xl border border-white/5 shadow-2xl flex flex-col overflow-hidden ${isDesktop ? 'w-[350px] h-full max-h-none' : 'w-full md:w-[350px] h-fit max-h-[min(900px,calc(100vh-6rem))]'}`}>
           <div className="flex border-b border-white/5 relative pr-10">
             <button
               onClick={() => setPaneView('history')}
@@ -514,7 +514,7 @@ const Calculator: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-6 text-sm">
-                {isElectron ? (
+                {isDesktop ? (
                 <section>
                   <h4 className="text-blue-400 font-bold mb-2 uppercase text-[10px] tracking-widest">Show / hide</h4>
                   <p className="text-white/50 text-[11px] leading-relaxed mb-3">

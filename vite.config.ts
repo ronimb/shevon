@@ -14,5 +14,9 @@ export default defineConfig({
   server: {
     // Opt out of HMR with DISABLE_HMR=true (e.g. to avoid flicker during agent edits).
     hmr: process.env.DISABLE_HMR !== 'true',
+    watch: {
+      // Tauri: do not reload when Rust rebuilds under src-tauri/.
+      ignored: ['**/src-tauri/**'],
+    },
   },
 });

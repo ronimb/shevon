@@ -18,6 +18,10 @@ math library. Behavior is checked against the official manual
 ## Prerequisites
 
 - Node.js 18+
+- **Desktop exe (Tauri / WebView2):** Rust stable (`rustup`), MSVC
+  Build Tools (Desktop development with C++), and the WebView2
+  Runtime (preinstalled on current Windows 10/11; otherwise
+  [Evergreen Bootstrapper](https://developer.microsoft.com/microsoft-edge/webview2/))
 
 ## Run locally (web)
 
@@ -29,25 +33,30 @@ npm run dev
 Then open http://localhost:3000. No API keys or environment variables are
 required. (`.env.example` documents the only optional dev toggle, `DISABLE_HMR`.)
 
-## Run as a desktop app (Electron)
+## Run as a desktop app (Tauri / WebView2)
 
 ```bash
-npm run electron:dev          # dev: Vite + Electron together
-npm run build:exe             # portable Windows .exe → dist-desktop/Shevon.exe
+npm run tauri:dev           # dev: Vite + Tauri together
+npm run build:exe           # Windows .exe → dist-desktop/Shevon.exe (~10 MB)
 ```
 
-`dist-desktop/Shevon.exe` is tracked so a second machine can
-`git pull` and launch without rebuilding. Rebuild with
-`npm run build:exe` after source changes. A smaller WebView2
-wrapper is scheduled as `p4-tauri` (not Now).
+`dist-desktop/Shevon.exe` is the daily portable (WebView2; tens of MB).
+Rebuild with `npm run build:exe` after source changes.
+
+Electron fallback (Chromium, ~100 MB):
+
+```bash
+npm run electron:dev
+npm run build:exe:electron  # → dist-desktop/Shevon-electron.exe
+```
 
 ## Unit pairing (form + function)
 
 Copy [`docs/prompts/validate-unit.md`](docs/prompts/validate-unit.md)
 below the line into a **new** chat (or open the Validate canvas).
-One group per sitting. G1 already logged `R30` / `R31` in
-[`docs/tech-issues.md`](docs/tech-issues.md) — start at **G2**
-unless you are re-checking G1. Pairing chats do not implement.
+One group per sitting. G1 re-check closed `R30`; `R31` remains in
+[`docs/tech-issues.md`](docs/tech-issues.md). Pairing chats do not
+implement.
 
 You need a local `manual.pdf` (gitignored). Bring that file with
 you; the repo will not have it after clone/pull.
@@ -93,10 +102,8 @@ Daily driver is COMP + STAT + EQN (FREQ, Dist, stay-in-STAT, SOLVE,
 EQN types 1–4). CMPLX, BASE-N, MATRIX, VECTOR, TABLE, CONST, and CONV
 are menu chrome only.
 
-Phase 2 is landed. Next id is [`roadmap.md`](roadmap.md) **Now**
-(`p4-packaging`). Tab icon is in. PWA install is skipped. Portable
-exe is `dist-desktop/Shevon.exe` (~100 MB; Ron still needs to
-launch it). A small Tauri wrapper is scheduled as `p4-tauri`
-after this slice — not Now. Pages only if a live desktop URL
-is wanted.
-Coverage: [`docs/coverage.md`](docs/coverage.md).
+Phase 2 is landed. `p4-packaging` and `p4-tauri` are in
+(WebView2 daily exe ~10 MB; Electron kept as
+`build:exe:electron`). Next id is [`roadmap.md`](roadmap.md)
+**Now** (`show-keys-size`). Coverage:
+[`docs/coverage.md`](docs/coverage.md).

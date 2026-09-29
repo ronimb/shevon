@@ -15,7 +15,11 @@
     "lint": "tsc --noEmit",
     "test": "vitest run",
     "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && electron .\"",
-    "build:exe": "npm run build && electron-builder --win"
+    "build:exe": "tauri build && node scripts/copy-tauri-exe.mjs",
+    "build:exe:electron": "npm run build && electron-builder --win",
+    "build:exe:tauri": "npm run build:exe",
+    "tauri": "tauri",
+    "tauri:dev": "tauri dev"
   },
   "build": {
     "appId": "com.shevon.app",
@@ -29,7 +33,7 @@
         "portable"
       ],
       "icon": "public/icons/icon.png",
-      "artifactName": "Shevon.exe",
+      "artifactName": "Shevon-electron.exe",
       "publish": null
     },
     "files": [
@@ -43,6 +47,7 @@
   },
   "dependencies": {
     "@tailwindcss/vite": "^4.1.14",
+    "@tauri-apps/api": "^2.12.0",
     "@vitejs/plugin-react": "^5.0.4",
     "clsx": "^2.1.1",
     "gh-pages": "^6.3.0",
@@ -54,6 +59,7 @@
     "vite": "^6.2.0"
   },
   "devDependencies": {
+    "@tauri-apps/cli": "^2.12.0",
     "@types/node": "^22.14.0",
     "autoprefixer": "^10.4.21",
     "concurrently": "^9.2.1",

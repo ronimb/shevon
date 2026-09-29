@@ -15,8 +15,9 @@ Status is about **behavior**, not whether a menu label exists.
 Scheduled work: [`roadmap.md`](../roadmap.md). Honesty leftovers:
 [`issues.md`](../issues.md). Landed-correctness review:
 [`docs/tech-issues.md`](tech-issues.md).
-Refreshed 27 Sep 2026. Test count: 171. Queue: `roadmap.md` **Now**
-(`p4-packaging`). Percent is Done (`R17`). Phase 2 slices are landed.
+Refreshed 29 Sep 2026. Test count: 175. Queue: `roadmap.md` **Now**
+(`show-keys-size`). Percent is Done (`R17`). Phase 2 slices,
+`p4-packaging`, and `p4-tauri` are landed.
 
 ---
 
@@ -24,8 +25,8 @@ Refreshed 27 Sep 2026. Test count: 171. Queue: `roadmap.md` **Now**
 
 | Status | Count |
 |--------|------:|
-| Done | 45 |
-| Partial | 11 |
+| Done | 46 |
+| Partial | 10 |
 | Missing | 20 |
 | **Total** | **76** |
 
@@ -162,7 +163,7 @@ MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
 | Photo overlay + hitboxes | — | Done | Absolute keys; triple-click calibration; `calculator_new.png` | — |
 | PC keyboard | — | Partial | Enter, arrows, Shift/Alt, comma (SHIFT )), S/C/T/L/R/Q/D/A, ` = S⇔D, X/Y vars | Letter keys steal typing; Shift hold vs overlay toggle |
 | History / LaTeX pane | — | Done | More pane: 50 items, Load, physical-key Show Keys; STO / MODE / SETUP actions | Not hardware behavior; keep as extra. Live Current keys strip is on top |
-| Electron + Pages + PWA | — | Partial | Lettermark wired; PWA install skipped; one frameless `Shevon.exe` (~100 MB Chromium); Pin icon; Keyboard show/hide shortcut | Ron must launch the exe; `p4-tauri` planned (Edge gate → Tauri host → API port → Ron WebView matrix) — see [`p4-tauri.md`](prompts/p4-tauri.md); Pages only if a live desktop URL is wanted |
+| Tauri / WebView2 + Electron fallback | — | Done | Daily `build:exe` → frameless `Shevon.exe` (~10 MB WebView2); Pin; History widen; Keyboard show/hide; Electron `build:exe:electron` → `Shevon-electron.exe`; Pages/PWA install skipped | — |
 | Tests | E-16 examples | Partial | Golden + parser + CalcValue + STAT Edit + E-19 CALC + E-25 Dist + stay-in-STAT + E-28 linear + E-28 cubic (171) | Remaining numbered sample operations in the PDF |
 
 ---

@@ -32,6 +32,15 @@ body {
     -webkit-app-region: no-drag;
 }
 
+/* Tauri / WebView2 drag region (alongside Electron -webkit-app-region). */
+[data-tauri-drag-region] {
+    app-region: drag;
+}
+.app-no-drag,
+.app-no-drag [data-tauri-drag-region] {
+    app-region: no-drag;
+}
+
 .calc-container {
     background-color: var(--calc-bg);
 }

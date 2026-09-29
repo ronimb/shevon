@@ -1,0 +1,14 @@
+[[permission]]
+identifier = "allow-set-history-open"
+description = "Widen or narrow the window for the History pane"
+commands.allow = ["set_history_open"]
+
+[[permission]]
+identifier = "allow-shevon-set-always-on-top"
+description = "Toggle always-on-top (Pin) via shevonDesktop bridge"
+commands.allow = ["set_always_on_top"]
+
+[[permission]]
+identifier = "allow-set-bring-to-front-accelerator"
+description = "Register the bring-to-front / hide global shortcut"
+commands.allow = ["set_bring_to_front_accelerator"]

@@ -31,22 +31,28 @@ wrap-up, then move them to **Landed**).
 ## Now
 
 Daily-driver bar: COMP + STAT + EQN. One slice per chat. Phase 2
-slices are closed. Do not open Phase 3 until `p4-packaging` is in.
+slices are closed. `p4-packaging` and `p4-tauri` are in (Pages
+skipped; WebView2 daily exe verified). Phase 3 is unblocked but
+not Now — `g1-resolve` then `show-keys-size` before Phase 3.
 Lying MODE rows wait for the matching feature. LineIO / 99-byte /
 `:` / `hist-letters` stay parked.
 
 Catalog of landed-correctness ids: `[docs/tech-issues.md](docs/tech-issues.md)`.
 Honesty leftovers: `[issues.md](issues.md)`. After every slice: `[sanity-landed.md](docs/prompts/sanity-landed.md)`.
 STAT / EQN pairing (no code): `[sanity-stat.md](docs/prompts/sanity-stat.md)`.
+Unit pairing (no code): `[validate-unit.md](docs/prompts/validate-unit.md)`
+— walk and log only; fixes are separate resolution chats after the
+sitting.
 Triage (no code): `[supervisor.md](docs/prompts/supervisor.md)`
 ([`triage.md`](docs/prompts/triage.md) is an alias).
 
 ### Queue
 
 
-| Order | Id              | What                                                | Kickoff                                 |
-| ----- | --------------- | --------------------------------------------------- | --------------------------------------- |
-| 1     | `p4-packaging`  | Pages / PWA / portable exe / icon                   | [`p4-packaging.md`](docs/prompts/p4-packaging.md) |
+| Order | Id               | What                                              | Kickoff                                       |
+| ----- | ---------------- | ------------------------------------------------- | --------------------------------------------- |
+| 1     | `g1-resolve`     | Close G1 `R*` + `prompt-prev-size` (caret / AC / history / ×10ˣ / π) | [`g1-resolve.md`](docs/prompts/g1-resolve.md) |
+| 2     | `show-keys-size` | Scale Show keys / Current history chips for small screens | [`show-keys-size.md`](docs/prompts/show-keys-size.md) |
 
 
 `ti-stat` … `ti-edges`, `R17` (`r17-percent`), `R28` (`r28-exp`), and
@@ -134,8 +140,9 @@ See **Landed**. Remaining COMP gaps that did not block Phase 1 are listed under
 ## Phase 2 — Finish STAT and EQN
 
 **Status: landed.** Ron’s 27 Sep 2026 walk was clear except
-`setup-page2` (already on `issues.md` / `vis-menus`). Do not open
-Phase 3 until `p4-packaging` is in.
+`setup-page2` (already on `issues.md` / `vis-menus`).
+`p4-packaging` and `p4-tauri` are in; Phase 3 is unblocked. **Now** is
+`show-keys-size`.
 
 - [x] `p2-freq` — SETUP STAT FREQ ON/OFF; editor row limits 80 / 40 / 26.
 - [x] `p2-solve` — SOLVE: prompt remaining variables, “solve for x”, then
@@ -197,7 +204,8 @@ Phase 3 until `p4-packaging` is in.
 ## Phase 3 — Remaining hardware modes
 
 **Status: not started.** One mode per slice, with manual sample operations as
-tests before done. Do not start until Phase 2 closes.
+tests before done. Packaging gate is clear; Phase 3 waits until
+`show-keys-size` leaves **Now**.
 
 - [ ] `p3-cmplx` — CMPLX: i, ∠, a+bi / r∠θ, arg, Conjg, `'r∠θ` / `'a+bi`.
 - [ ] `p3-basen` — BASE-N: bases, d/h/b/o prefixes, logic ops, 16/32-bit ranges.
@@ -215,10 +223,9 @@ policy). Do not add a separate not-implemented pass.
 
 ## Phase 4 — Fidelity and packaging
 
-**Status: packaging in progress** (`p4-packaging` is **Now**).
-`p4-tauri` waits until that slice is in. `p4-exact` / `p4-samples`
-wait. Phase 3 waits until `p4-packaging` is in — `p4-tauri` does
-not block Phase 3.
+**Status: packaging + Tauri landed.** `p4-exact` /
+`p4-samples` wait. Phase 3 is unblocked and does not wait on
+packaging.
 
 - [ ] `p4-exact` — Natural result forms: n√m, p/q π, mixed fractions — not just
   ```
@@ -229,32 +236,20 @@ not block Phase 3.
   ```
   regression suite.
   ```
-- [ ] `p4-packaging` — Verify GitHub Pages, PWA, and electron-builder portable
+- [x] `p4-packaging` — Tab / manifest / `win.icon` use a full-bleed
   ```
-  exe; real app icon. **Pulled forward:** run after remaining Phase 2
-  (see **Now** §3), before Phase 3. Tab / manifest / `win.icon` use a
-  full-bleed Shevon lettermark (`scripts/make-icons.ps1`), not a photo
-  crop. PWA install is **skipped** (Ron: no mobile / no Add to
-  Home Screen). Manifest still says Shevon. Portable exe is
-  `dist-desktop/Shevon.exe` (one file). Frameless; drag/close on
-  the strip above the unit; window sized to the face. Waiting on
-  Ron to launch again. More widens the window (History +
-  Keyboard). Pin is an icon (always-on-top). Show keys
-  centers the scaled unit. Bring-to-front shortcut lives
-  under Keyboard (default Ctrl+Shift+Space; toggles hide). `sin(30)` still
-  0.5. Pages only if a live desktop URL is wanted. The ~100 MB
-  exe is Electron+Chromium; shrinking it is `p4-tauri`, not
-  this slice. Not Done.
+  Shevon lettermark (`scripts/make-icons.ps1`). PWA install
+  skipped. Portable `dist-desktop/Shevon.exe` (frameless;
+  History widen; Pin; Keyboard bring-to-front). Ron verified
+  launch; `sin(30)` still 0.5. Pages skipped (no live desktop
+  URL wanted). ~100 MB Electron shell replaced by `p4-tauri`.
   ```
-- [ ] `p4-tauri` — Replace the Electron portable wrapper with Tauri
+- [x] `p4-tauri` — Electron → Tauri / WebView2 soft cutover (29 Sep
   ```
-  (WebView2) so the Windows exe is tens of MB, not ~100 MB.
-  After `p4-packaging`. Soft cutover: daily `build:exe` → Tauri;
-  Electron kept as `build:exe:electron`. Same Vite `dist/` and
-  desktop APIs (History widen, always-on-top, bring-to-front).
-  Phases: A inventory → B Edge WebView2 layout gate → C minimal
-  host → D APIs → E Ron verification matrix → F docs. Does not
-  block Phase 3. Do not change COMP / STAT / EQN. Plan + kickoff:
+  2026). Daily `build:exe` → ~10 MB `dist-desktop/Shevon.exe`;
+  Electron fallback `build:exe:electron` → `Shevon-electron.exe`.
+  Same Vite `dist/`; desktop APIs (History widen, Pin,
+  bring-to-front). Phase E matrix signed by Ron. Plan:
   [`p4-tauri.md`](docs/prompts/p4-tauri.md).
   ```
 
@@ -286,6 +281,13 @@ recipe, same as `reconstructSequence`.
   Opening the strip or History pane rescales the unit so it stays fully
   visible. AC clears the LCD and the strip. Records calculations **and**
   non-calc operations (STO letter, MODE, SETUP, CLR, M+/M−).
+- [ ] `show-keys-size` — Chip glyphs too large on ~13" laptops (fine on
+  ```
+  ~23"). Same UI in Electron and Tauri. Scale with window / DPI.
+  **Before Phase 3.** Pairing confirms in validate-unit **G14** after
+  G1 wraps. Issue: `show-keys-size`.
+  Kickoff: `[docs/prompts/show-keys-size.md](docs/prompts/show-keys-size.md)`.
+  ```
 - [ ] Remaining letter shortcuts (and SHIFT/ALPHA overlays for A–F / M)
   audited against this contract.
 - [ ] `shift-ac-mem` — SHIFT AC clears memory with a visible
@@ -293,7 +295,7 @@ recipe, same as `reconstructSequence`.
   2. Kickoff: `[docs/prompts/shift-ac-mem.md](docs/prompts/shift-ac-mem.md)`.
 
 Related defects: `[issues.md](issues.md)` `hist-letters`, `comp-keys`,
-`shift-ac-mem`.
+`shift-ac-mem`, `show-keys-size`.
 
 ---
 
@@ -358,6 +360,11 @@ quadratic complex roots as a+bi. STAT Edit (E-23): DEL deletes the line,
 Ins / Del-A from the editor SHIFT 1 menu (`p2-edit`). EQN 2-unk / 3-unk
 Coefficient Editors + E-28 samples (`p2-eqn-linear`); cubic a/b/c/d
 + E-28 Ex.5 (`p2-eqn-cubic`).
+
+**Packaging** — `p4-packaging` (29 Sep 2026): local Shevon
+lettermark, PWA install and Pages skipped. `p4-tauri` (29 Sep
+2026): WebView2 daily `Shevon.exe` (~10 MB); Electron fallback
+`build:exe:electron`.
 
 **Visual** — COMP / EQN / STAT carets (`vis-cursor`); ENG/hyp/Abs/Ran# no
 longer dump raw ASCII. `vis-no-literal`: shared LCD/History template table so

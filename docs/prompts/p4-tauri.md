@@ -1,11 +1,15 @@
 # Kickoff — `p4-tauri` (Electron → Tauri / WebView2)
 
-Copy everything below the line into a **new agent chat** when this
-slice is **Now**. One slice. Soft cutover only.
+**Landed 29 Sep 2026.** Soft cutover done: daily `npm run build:exe`
+is Tauri/WebView2; Electron is `npm run build:exe:electron`. Keep
+this file as the migration plan archive. Do not re-run as Now.
 
-**Gate:** do not start until `p4-packaging` is checked in
-`roadmap.md`. This does **not** block Phase 3. Do not start Phase 3
-leftovers, LineIO, or `p4-exact` here.
+Copy everything below the line only if re-opening the slice for
+regression. One slice. Soft cutover only.
+
+`p4-packaging` is checked (Pages skipped; exe verified). This does
+**not** block Phase 3. Do not start Phase 3 leftovers, LineIO, or
+`p4-exact` here.
 
 This file is the **source of truth** for the migration plan (phases,
 WebView verification, cutover). Canvases are views.
@@ -56,7 +60,7 @@ Also preserve: frameless; title **Shevon**; icon
 
 ### Phase A — Prerequisites
 
-1. Confirm `p4-packaging` is checked.
+1. Confirm `p4-packaging` is checked (already true as of 29 Sep 2026).
 2. `npm test`, `npm run lint`, `npm run build` green.
 3. Re-confirm inventory above. Do not invent a second web stack.
 
@@ -77,7 +81,7 @@ Catch LCD/overlay breakage in Edge’s engine before Rust.
 |---|--------|-------|
 | B1 | Faceplate + hitboxes: AC, digit, SHIFT, MODE flash correct keys | |
 | B2 | LCD dual line; status S/A/M/STAT/D (Degree) | |
-| B3 | Fraction template paint (stacked); note `R30` if `12.5`→25/2 — do not “fix” under this slice | |
+| B3 | Fraction template paint (stacked); `R30` closed — unit also does 25/2 from `12.5` | |
 | B4 | √ / xⁿ templates look like the unit | |
 | B5 | Show keys on/off — unit rescales, no clip | |
 | B6 | `sin(30)` `=` → 0.5; `log10(100)` `=` → 2 | |
@@ -158,13 +162,11 @@ Edge if Phase B found issues.
    `build:exe:electron`.
 2. `docs/coverage.md` Platform row.
 3. Check `roadmap.md` `p4-tauri` only after Ron signed Phase E.
-4. Triage: after packaging, Phase 3 is still next for modes;
-   `p4-tauri` stays Phase 4 scheduled unless pulled into **Now**.
-5. Refresh packaging canvas parked / status row.
+4. Triage: Phase 3 stays unblocked; this slice is **Now** until checked.
+5. Refresh packaging / roadmap canvases if status rows drifted.
 
 ## Do not
 
-- Start while `p4-packaging` is still **Now**.
 - Start Phase 3 (`p3-*`), `p4-exact`, `p4-samples`, LineIO, or
   `setup-page2` chrome.
 - Change COMP / STAT / EQN “while you’re in there.”
@@ -196,8 +198,8 @@ Edge if Phase B found issues.
 
 ## Relative order
 
-1. Finish / check `p4-packaging`.
+1. `p4-packaging` is checked.
 2. Unit pairing G2+ may continue independently (browser or current exe).
-3. When size matters: run Phases A→F in an implementation chat,
-   stopping for Ron at B, C, and E.
-4. Phase 3 may proceed after packaging; do not wait on Tauri.
+3. Run Phases A→F in an implementation chat, stopping for Ron at
+   B, C, and E.
+4. Phase 3 may proceed in parallel with Tauri; do not wait on each other.

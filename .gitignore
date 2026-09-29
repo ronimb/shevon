@@ -1,8 +1,9 @@
 node_modules/
 build/
 dist/
-# Rebuild via npm run build:exe. Track only the portable exe so
-# another machine can pull and launch without rebuilding Electron.
+# Daily portable is Tauri/WebView2 (~tens of MB). Rebuild with
+# npm run build:exe. Electron fallback: npm run build:exe:electron
+# → Shevon-electron.exe (not tracked).
 dist-desktop/*
 !dist-desktop/Shevon.exe
 coverage/

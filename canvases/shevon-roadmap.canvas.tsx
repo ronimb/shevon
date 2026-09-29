@@ -14,7 +14,9 @@ import {
 
 const TRIAGE = `Follow docs/prompts/supervisor.md exactly. You are the Shevon supervisor (triage and oversight). Do not implement leftovers. Start with one briefing from the files as they are now.`;
 
-const P4_PACKAGING = `Follow docs/prompts/p4-packaging.md exactly. One slice. Verify first, then one surface at a time so Ron can try it. Afterward smoke docs/prompts/sanity-landed.md. Do not start Phase 3, LineIO, or p4-exact.`;
+const SHOW_KEYS = `Follow docs/prompts/show-keys-size.md exactly. One slice. Do not start Phase 3 leftovers, LineIO, or p4-exact. Do not change COMP / STAT / EQN beyond Show keys sizing.`;
+
+const VALIDATE = `Follow docs/prompts/validate-unit.md exactly. Pairing / verification only. Start at G2. Default: guide and scribe — tell Ron what to press on the unit then Shevon; wait for his reports. Do NOT drive the browser unless Ron asks. Do not implement leftovers, Phase 3, LineIO, or packaging.`;
 
 export default function ShevonRoadmap() {
   const dispatch = useCanvasAction();
@@ -65,15 +67,14 @@ export default function ShevonRoadmap() {
       </Row>
 
       <Row gap={24} align="end">
-        <Stat value="p4-packaging" label="Next slice" />
-        <Stat value="Packaging" label="Current slice" />
-        <Stat value="45/76" label="Coverage done" />
+        <Stat value="show-keys-size" label="Next slice" />
+        <Stat value="p4-tauri" label="Landed" tone="success" />
+        <Stat value="46/76" label="Coverage done" />
       </Row>
 
-      <Callout tone="info" title="p4-packaging — exe ready to launch">
-        `dist-desktop/Shevon.exe` is built. Waiting on Ron
-        to launch it. Pages only if a live desktop URL is wanted.
-        Do not start Phase 3.
+      <Callout tone="info" title="show-keys-size is Now">
+        Then Phase 3. After G1 wraps, next pairing sitting is G14
+        (Show keys size), then G2+.
       </Callout>
 
       <H2>Now</H2>
@@ -81,36 +82,34 @@ export default function ShevonRoadmap() {
         striped
         headers={["#", "Id", "What", "Kickoff"]}
         rows={[
-          ["1", "p4-packaging", "Pages / PWA / exe / icon", "p4-packaging.md"],
+          ["1", "show-keys-size", "Scale Show keys chips (small laptop)", "show-keys-size.md"],
         ]}
       />
 
       <Row gap={8} wrap>
-        <Button variant="primary" onClick={() => start(P4_PACKAGING)}>
-          Start p4-packaging
+        <Button variant="primary" onClick={() => start(SHOW_KEYS)}>
+          Start show-keys-size
         </Button>
-        <Button
-          variant="secondary"
-          onClick={() => open("docs/tech-issues.md")}
-        >
-          Open tech-issues.md
+        <Button variant="secondary" onClick={() => start(VALIDATE)}>
+          Start unit pairing
         </Button>
         <Button
           variant="ghost"
-          onClick={() =>
-            start(
-              "Follow docs/prompts/sanity-stat.md exactly. Pairing / verification only. Do not implement leftovers or packaging.",
-            )
-          }
+          onClick={() => open("docs/prompts/show-keys-size.md")}
         >
-          Start STAT pairing
+          show-keys-size.md
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={() => open("docs/tech-issues.md")}
+        >
+          Open tech-issues.md
         </Button>
       </Row>
 
       <H2>Gates</H2>
       <Text>
-        No Phase 3 until packaging. `p4-tauri` is scheduled
-        (small exe) but is not Now and does not block Phase 3.
+        Packaging + Tauri are in. Next: `show-keys-size`, then Phase 3.
         No LineIO / 99-byte / `:` / `hist-letters` in this
         queue. Lying MODE rows wait on the matching feature.
         Debt A–C stays landed. EQN 1–4 run.
@@ -120,10 +119,12 @@ export default function ShevonRoadmap() {
         <Pill active onClick={() => open("docs/prompts/supervisor.md")}>
           supervisor.md
         </Pill>
-        <Pill onClick={() => open("docs/principles.md")}>principles</Pill>
-        <Pill onClick={() => open("backlog.md")}>backlog</Pill>
-        <Pill onClick={() => open("docs/prompts/tech-debt.md")}>
-          tech-debt (historical)
+        <Pill onClick={() => start(TRIAGE)}>Start supervisor</Pill>
+        <Pill onClick={() => open("docs/prompts/show-keys-size.md")}>
+          show-keys-size.md
+        </Pill>
+        <Pill onClick={() => open("docs/prompts/validate-unit.md")}>
+          validate-unit.md
         </Pill>
       </Row>
     </Stack>
