@@ -179,7 +179,7 @@ const TEMPLATE_SPECS: TemplateSpec[] = [
   { stem: 'e^', html: a => `e<span class="sup">${slot(a[0])}</span>`, latex: a => `e^{${lx(a[0])}}` },
   {
     stem: '×10^',
-    html: a => `<span class="sci-times10">×10</span><span class="sup">${slot(a[0])}</span>`,
+    html: a => `<span class="sci-times10">×10</span><span class="sup sci-exp">${slot(a[0])}</span>`,
     latex: a => `\\times 10^{${lx(a[0])}}`,
   },
   { stem: '10^', html: a => `10<span class="sup">${slot(a[0])}</span>`, latex: a => `10^{${lx(a[0])}}` },
@@ -289,6 +289,8 @@ export const formatMath = (input: string): string => {
   h = h.replace(/Ran#/g, '<span class="trig-fun">Ran#</span>');
   // Dist normalized variate: IR is `'t`; the unit shows →t.
   h = h.replace(/'t/g, '<span class="trig-fun">→t</span>');
+  // Classic serif π (curved top / flared legs), never the letters "pi" (R37).
+  h = h.replace(/π/g, '<span class="math-pi">π</span>');
 
   h = h.replace(/→([A-M X-Y])/g, '<span style="font-size: 0.8em; margin: 0 4px;">→</span>$1')
        .replace(/\^\(([^)]*)\)/g, (_m, p1) => `<span class="sup">${slot(p1)}</span>`)

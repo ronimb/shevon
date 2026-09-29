@@ -49,6 +49,11 @@ go in `issues.md`. Landed-correctness review items go in
 ([`triage.md`](docs/prompts/triage.md) is an alias). Do not implement
 leftovers in those chats.
 
+**Unit pairing** chats follow
+[`docs/prompts/validate-unit.md`](docs/prompts/validate-unit.md):
+walk and log only, then a **separate** issue-resolution chat. Do not
+fix mid-sitting.
+
 **Verify / validate all docs** (drift, consolidation, canvases): follow
 [`.cursor/skills/verify-docs/SKILL.md`](.cursor/skills/verify-docs/SKILL.md).
 

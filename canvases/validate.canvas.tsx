@@ -12,10 +12,10 @@ import {
   useCanvasAction,
 } from "cursor/canvas";
 
-const PRE = `Follow docs/prompts/validate-unit.md exactly. Pairing / verification only. Do not implement leftovers, Phase 3, p4-tauri, LineIO, or packaging. Ron has the unit. You drive Shevon. For every item check form and function. Log new fails to docs/tech-issues.md or issues.md — never both. Do not refile known leftovers.`;
+const PRE = `Follow docs/prompts/validate-unit.md exactly. Pairing / verification only. Workflow: validation session (walk + log) then separate issue-resolution chat — never fix in this chat. Do not implement leftovers, Phase 3, p4-tauri, LineIO, or packaging. Default: guide and scribe only — name one row, tell Ron what to press on the unit then on Shevon, wait for his reports, compare and log. Do NOT open/lock/CDP/click the browser or drive Shevon unless Ron explicitly asks. Form includes visuals: log R* for glyph/shape/chrome mismatches Ron notices (π serif vs straight, ×10ˣ paint, caret, AC blank vs 0). Do NOT dismiss those as pixel-perfect font out of scope. Template editing QA mandatory (DEL empty, ▲▼, no IR leak). End sitting with a list of new R*/issue ids. Do not refile known leftovers.`;
 
 const group = (id: string) =>
-  `${PRE} Start with ${id} only. Finish that group, then stop.`;
+  `${PRE} Start with ${id} only. Finish that group, then stop. Summarize new R*/issue ids; do not start fixes.`;
 
 export default function Validate() {
   const dispatch = useCanvasAction();
@@ -29,7 +29,7 @@ export default function Validate() {
         <H1>Unit pairing</H1>
         <Text tone="secondary">
           View of `docs/prompts/validate-unit.md`. Markdown wins.
-          Each function is in exactly one group.
+          Workflow: validate → log → resolve in a later chat.
         </Text>
       </Stack>
 
@@ -53,15 +53,15 @@ export default function Validate() {
 
       <Row gap={24} align="end">
         <Stat value="14" label="Groups" />
-        <Stat value="G2" label="Next sitting" tone="warning" />
+        <Stat value="G14" label="After G1" tone="warning" />
         <Stat value="G13" label="Honesty only" />
       </Row>
 
-      <Callout tone="warning" title="Pairing only">
-        Form and function vs the unit. One group per sitting. Do
-        not implement. G1 logged `R30` / `R31` — start at **G2**.
-        Known leftovers stay parked (`setup-page2`, `lying-menus`,
-        `prompt-prev-size`, `ind-arrows`, `p4-exact`).
+      <Callout tone="warning" title="Validate → log → resolve later">
+        Pairing only: walk one group, log `R*` / issues, stop. Fixes
+        are a separate kickoff after the sitting. You press the unit
+        and Shevon; agent coaches. Form includes visuals. After G1:
+        G14 (`show-keys-size`), then G2+. Do not implement here.
       </Callout>
 
       <H2>Groups (no overlap)</H2>
@@ -69,20 +69,20 @@ export default function Validate() {
         striped
         headers={["Id", "Group", "What is in here"]}
         rows={[
-          ["G1", "Arithmetic and entry", "Done sitting — R30 / R31 open"],
-          ["G2", "Fractions and display", "Frac, S⇔D, Fix/Sci/Norm, ENG, %, DMS"],
-          ["G3", "Powers and roots", "x² x³ xⁿ √ ³√ ⁿ√ x⁻¹"],
+          ["G1", "Arithmetic and entry", "Sitting done — R30–R37 + prompt-prev-size closed (g1-resolve)"],
+          ["G2", "Fractions and display", "Frac, ▲▼, DEL empty/no leak, S⇔D, Fix/Sci, ENG, %, DMS"],
+          ["G3", "Powers and roots", "x² x³ xⁿ √ ³√ ⁿ√ x⁻¹; DEL empty / no leak"],
           ["G4", "Logs and exponentials", "log ln log□ 10^ e^"],
           ["G5", "Trigonometry and hyperbolic", "D/R/G, sin family, hyp, Abs"],
           ["G6", "Combinatorics and random", "x! nPr nCr Ran# RanInt#"],
-          ["G7", "Calculus templates", "∫ caret, d/dx, Σ"],
+          ["G7", "Calculus templates", "∫ caret, d/dx, Σ; DEL empty / no leak"],
           ["G8", "Polar and rectangular", "Pol Rec + X,Y"],
           ["G9", "Memory", "STO RCL A–F X Y M CLR"],
           ["G10", "CALC and SOLVE", "Prompts, errors, Continue"],
           ["G11", "STAT", "Types, FREQ, Dist, stay-in-STAT"],
           ["G12", "EQN", "Types 1–4 editors and solves"],
           ["G13", "Honesty", "MODE 2/4/6/7/8, SETUP 2, CONST/CONV"],
-          ["G14", "Extras (optional)", "Overlay, Show keys, exe — not vs unit"],
+          ["G14", "Extras (after G1)", "Show keys size (show-keys-size), overlay, exe"],
         ]}
       />
       <Text tone="secondary">

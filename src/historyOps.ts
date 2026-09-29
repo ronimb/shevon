@@ -91,3 +91,69 @@ export { STO_LETTER_KEY };
 export function isReplayableHistory(item: HistoryItem): boolean {
   return item.kind === 'calc' || (item.result !== null && item.rawInput.includes('→'));
 }
+
+function nextReplayableFrom(history: HistoryItem[], start: number): number {
+  let idx = start;
+  while (idx < history.length && !isReplayableHistory(history[idx])) idx++;
+  return idx < history.length ? idx : -1;
+}
+
+function prevReplayableFrom(history: HistoryItem[], start: number): number {
+  let idx = start;
+  while (idx >= 0 && !isReplayableHistory(history[idx])) idx--;
+  return idx;
+}
+
+/**
+ * ▲ after the latest `=` must skip the line already on screen (history[0]).
+ * From a blank AC line, first ▲ loads the latest. (R31)
+ */
+export function nextHistoryReplayUp(
+  history: HistoryItem[],
+  replayIndex: number,
+  showingResult: boolean,
+  currentInput: string,
+): number | null {
+  if (history.length === 0) return null;
+  let start: number;
+  if (replayIndex < 0) {
+    const blankLive = currentInput === '‸';
+    if (!showingResult && !blankLive) return null;
+    const latest = nextReplayableFrom(history, 0);
+    if (latest < 0) return null;
+    if (showingResult) {
+      const onScreen = currentInput.replace(/[‸⬚]/g, '');
+      if (history[latest].rawInput === onScreen) {
+        start = latest + 1;
+      } else {
+        start = latest;
+      }
+    } else {
+      start = latest;
+    }
+  } else {
+    start = replayIndex + 1;
+  }
+  const idx = nextReplayableFrom(history, start);
+  return idx < 0 ? null : idx;
+}
+
+/** ▼ toward newer history; `-1` exits replay to a blank COMP line. (R31) */
+export function nextHistoryReplayDown(
+  history: HistoryItem[],
+  replayIndex: number,
+): number | null {
+  if (replayIndex < 0) return null;
+  const idx = prevReplayableFrom(history, replayIndex - 1);
+  return idx; // may be -1 = exit
+}
+
+/** Whether ▲ can move to an older replayable line from the current view. */
+export function canHistoryReplayUp(
+  history: HistoryItem[],
+  replayIndex: number,
+  showingResult: boolean,
+  currentInput: string,
+): boolean {
+  return nextHistoryReplayUp(history, replayIndex, showingResult, currentInput) !== null;
+}

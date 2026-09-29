@@ -53,19 +53,25 @@ Each session, do only this:
    run must not silently fall through to COMP, except where `issues.md`
    already records “leave the lie until the feature ships”
    (`lying-menus`, `setup-page2`).
-4. **Kickoff** — when Ron is ready for the next slice, write or refresh
+4. **Unit pairing workflow** — validation sittings
+   ([`validate-unit.md`](validate-unit.md)) **only** walk and log.
+   Issue resolution is a **later** implementation chat from a
+   kickoff / **Now** id. Never tell Ron to “just fix it in the
+   pairing chat.” After a group closes, route new `R*` / issues into
+   the queue when he asks; do not invent a parallel fix list in chat.
+5. **Kickoff** — when Ron is ready for the next slice, write or refresh
    `docs/prompts/<id>.md` in the existing style: copy below the line
    into a **new** chat; one slice; explicit Must-do / Do-not / Done when.
    Do **not** start that slice in this chat.
-5. **Drift** — if roadmap, tech-issues, issues, coverage, README, or a
+6. **Drift** — if roadmap, tech-issues, issues, coverage, README, or a
    canvas disagree, say so and offer the smallest markdown (then canvas)
    fix. Full doc audits follow `.cursor/skills/verify-docs/SKILL.md`.
    Do not “fix” coverage by changing calculator code.
-6. **Dead / stuck implementation chats** — if a slice chat 400s or
+7. **Dead / stuck implementation chats** — if a slice chat 400s or
    cannot continue, tell Ron to start a **new** chat from the kickoff;
    put recovery notes in that kickoff (e.g. do not `Read` large PNGs).
    Do not implement the slice here to “save” it.
-7. **Planning-only asks** — expand kickoffs / plans in markdown when
+8. **Planning-only asks** — expand kickoffs / plans in markdown when
    Ron asks for a plan. Do not implement unless he clearly starts an
    implementation slice.
 
@@ -76,16 +82,16 @@ with that file, the **roadmap wins** — then refresh this snapshot.
 
 Snapshot 29 Sep 2026:
 
-- Next implementation is **`p4-packaging`**. Then Phase 3 (`p3-*`).
-  Queue: `roadmap.md` **Now**.
-- PWA install is skipped (Ron will not use it). `p4-tauri` is
-  scheduled (plan in [`p4-tauri.md`](p4-tauri.md)) but is **not** Now
-  and does not block Phase 3.
+- Next implementation is **`g1-resolve`**, then **`show-keys-size`**,
+  then Phase 3. Queue: `roadmap.md` **Now**.
+  `p4-packaging` and `p4-tauri` are landed.
+- `g1-resolve` closes G1 `R31` `R32` `R34`–`R37` plus
+  `prompt-prev-size`. Kickoff: [`g1-resolve.md`](g1-resolve.md).
+- After G1 pairing, next validate sitting is still **G14** (Show
+  keys size) before G2–G13 — [`validate-unit.md`](validate-unit.md).
+  Workflow: **validation session → log → separate issue-resolution
+  chat** (never fix inside pairing).
 - Phase 2 is landed. Daily driver: COMP + STAT + EQN (types 1–4).
-- Open landed-correctness from G1 pairing: `R30`, `R31` in
-  `docs/tech-issues.md`. Unit pairing continues at **G2**
-  ([`validate-unit.md`](validate-unit.md)) — pairing chats do not
-  implement.
 - Engine debt A–C is landed. Do not re-open unless a regression shows.
 - Do not pull LineIO, 99-byte, colon/Disp, or `hist-letters` into Now
   unless Ron schedules them.
@@ -98,7 +104,8 @@ Snapshot 29 Sep 2026:
   `roadmap.md` / `docs/tech-issues.md` / `issues.md`.
 - Mark a phase or id done from chat memory. Re-read the files.
 - Disable lying MODE rows as a standalone pass (`vis-menus` policy).
-- Start Phase 3 or `p4-tauri` host work because it looks more fun.
+- Start Phase 3 because it looks more fun while `g1-resolve` /
+  `show-keys-size` are **Now**.
 - `Read` overlay photos or icon PNGs into chat (provider 400 risk).
 
 ## Reply shape

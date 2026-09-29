@@ -1,7 +1,12 @@
 # Kickoff — `p4-packaging` (Pages / PWA / portable exe / icon)
 
-Copy everything below the line into a **new agent chat**. One slice.
-Phase 2 is in. Do not start Phase 3, LineIO, or `p4-exact`.
+**Landed 29 Sep 2026.** Do not re-open. Pages skipped; exe
+verified. Next implementation is [`p4-tauri.md`](p4-tauri.md).
+Historical kickoff text below is kept for regressions.
+
+Copy everything below the line into a **new agent chat** only if
+re-verifying packaging. One slice. Phase 2 is in. Do not start
+Phase 3, LineIO, or `p4-exact`.
 
 ---
 
@@ -14,13 +19,10 @@ only as a COMP/STAT/EQN smoke — packaging must not regress the unit.
 
 You are **verifying and finishing shipping**, not adding modes.
 Scripts already exist (`deploy`, `build:exe`, Pages workflow).
-Inventory already ran in a dead chat (lint / 171 tests / `build`
-green). `public/icons/` PNGs may already exist from that chat —
-**reuse them**. Do not `Read` `src/calculator_new.png` or those
-PNGs into the chat (provider 400; that thread cannot be recovered).
-Today the tab still uses Vite’s `/vite.svg`, the PWA icon is a
-**remote CDN** URL, Electron `win.icon` is unset, and the
-window/title is a generic emulator name.
+`public/icons/` PNGs already exist — **reuse them**. Do not `Read`
+`src/calculator_new.png` or those PNGs into the chat (provider 400).
+Tab / manifest / Electron already use the local Shevon lettermark;
+title is Shevon; portable exe is `dist-desktop/Shevon.exe`.
 
 **Iterate with Ron.** Finish one must-do, stop, let him try that
 surface, then take the next. Do not silently ship all four in one

@@ -6,6 +6,7 @@ import { formatMath, formatResultNumber, SciNotation } from './display.tsx';
 import { formatEngineering, formatDMS, type DisplayFormat } from './format.ts';
 import { toFraction } from './evaluator.ts';
 import { allowsCalcSolveHyp, moveCompCursorRight } from './modes/comp.ts';
+import { canHistoryReplayUp } from './historyOps.ts';
 import {
   StatDataScreen,
   StatEditScreen,
@@ -72,9 +73,8 @@ export function lcdIndicators(opts: {
   const canCaretLeft = errorArrows || (compEditing && caretIdx > 0);
   const canCaretRight = errorArrows || (compEditing && moveCompCursorRight(currentInput) !== currentInput);
   const canReplayUp =
-    calcMode === 'COMP' && history.length > 0 &&
-    ((replayIndex < 0 && (showingResult || currentInput === '‸')) ||
-      (replayIndex >= 0 && replayIndex < history.length - 1));
+    calcMode === 'COMP' &&
+    canHistoryReplayUp(history, replayIndex, showingResult, currentInput);
   const canReplayDown = calcMode === 'COMP' && replayIndex >= 0;
   return {
     canCaretLeft,
@@ -84,11 +84,37 @@ export function lcdIndicators(opts: {
   };
 }
 
-/** Hardware: idle AC shows 0; while typing the result line stays blank (R24). */
-export function resultLineWhileEditing(currentInput: string, showingResult: boolean): '0' | '' {
-  if (showingResult) return '';
-  const raw = currentInput.replace(/[‸⬚]/g, '');
-  return raw.length === 0 ? '0' : '';
+/**
+ * Result line while not showing a computed result: always blank.
+ * Blank-while-typing (R24) and AC idle with no painted 0 (R34).
+ */
+export function resultLineWhileEditing(_currentInput: string, _showingResult: boolean): '' {
+  return '';
+}
+
+/**
+ * Unit hides the COMP caret after `=`, during Ans-operator continue
+ * (`Ans+‸`), and while traversing history. One shared paint rule (R32 / R35 / R31).
+ */
+export function lcdShowsCompCaret(
+  currentInput: string,
+  showingResult: boolean,
+  replayIndex: number,
+): boolean {
+  if (showingResult || replayIndex >= 0) return false;
+  // Ans continuation right after an operator — no caret until the user types further.
+  if (/^Ans[+×÷\-]‸$/.test(currentInput)) return false;
+  return currentInput.includes('‸');
+}
+
+/** Strip the caret marker when the unit would hide it. */
+export function lcdPaintInput(
+  currentInput: string,
+  showingResult: boolean,
+  replayIndex: number,
+): string {
+  if (lcdShowsCompCaret(currentInput, showingResult, replayIndex)) return currentInput;
+  return currentInput.replace(/‸/g, '');
 }
 
 export interface LcdProps {
@@ -285,14 +311,20 @@ export function LcdScreen(p: LcdProps) {
       return <div dangerouslySetInnerHTML={{ __html: formatMath(p.currentInput.replace('‸', '')) }} />;
     }
 
-    return <div dangerouslySetInnerHTML={{ __html: formatMath(p.currentInput) }} />;
+    return (
+      <div
+        dangerouslySetInnerHTML={{
+          __html: formatMath(lcdPaintInput(p.currentInput, p.showingResult, p.replayIndex)),
+        }}
+      />
+    );
   };
 
   const renderResult = () => {
     if (allowsCalcSolveHyp(p.calcMode) && p.promptVar) {
       return (
         <div className="decimal-result flex flex-col items-end">
-          <div className="text-[0.7rem] opacity-50 mb-[-4px]">{p.prevPromptValue}</div>
+          <div className="prompt-prev-value mb-[-4px]">{p.prevPromptValue}</div>
           <div>{p.promptValue}</div>
         </div>
       );
@@ -380,7 +412,7 @@ export function LcdScreen(p: LcdProps) {
     }
 
     const idle = resultLineWhileEditing(p.currentInput, p.showingResult);
-    return idle === '0' ? <div className="decimal-result">0</div> : null;
+    return idle ? <div className="decimal-result">{idle}</div> : null;
   };
 
   return (

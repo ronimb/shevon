@@ -7,6 +7,30 @@ Copy everything below the line into a **new agent chat**. This chat is
 One group per sitting is fine. Finish the open group before starting
 the next. Do not overlap groups — each function lives in exactly one.
 
+### Workflow (persisted — two phases)
+
+Do **not** collapse these into one chat.
+
+1. **Validation session** (this kickoff) — walk one group with Ron.
+   Guide + scribe only. Log new fails to `docs/tech-issues.md`
+   (`R*`) or `issues.md` (honesty / extras, with Associated id).
+   Never both for the same defect. **No calculator code changes.**
+2. **Issue resolution** (separate chat) — after the sitting (or after
+   a cluster of related fails), supervisor routes fixes into
+   `roadmap.md` **Now** or a one-id kickoff. Implementation chat
+   copies that kickoff, lands the fix, runs
+   [`sanity-landed.md`](sanity-landed.md) when required, closes the
+   matching `R*` / issue row.
+3. **Re-check** (optional next validation sitting) — re-walk only the
+   rows that failed, or continue the next group. Do not start fixing
+   mid-group because a fail showed up.
+
+Order for the current program: finish **G1** → resolution chat
+[`g1-resolve.md`](g1-resolve.md) (`R31` `R32` `R34`–`R37` +
+`prompt-prev-size`) → validation sitting **G14** /
+implementation `show-keys-size` → resume **G2**–G13. Pairing never
+jumps the queue; fixes never land inside pairing.
+
 ---
 
 Follow `docs/principles.md`. Sources: `manual.pdf` (the spec),
@@ -15,17 +39,93 @@ Follow `docs/principles.md`. Sources: `manual.pdf` (the spec),
 [`issues.md`](../../issues.md),
 [`docs/tech-issues.md`](../tech-issues.md).
 
-Ron has the **unit**. The agent drives **Shevon**
-(`dist-desktop/Shevon.exe` after `git pull`, or
-`npm install` + `npm run dev` → http://localhost:3000). Walk
-faceplate keys unless a line says PC keyboard. `manual.pdf` is
-gitignored — Ron must have a local copy. G1 already logged
-`R30` / `R31`; start at **G2** unless re-checking G1.
+Ron has the **unit** and runs **Shevon** (exe or
+`http://localhost:3000`). The agent is a **guide and scribe**:
+name the next row, tell Ron exactly what to press and what to
+compare, wait for his reports, log pass/fail. `manual.pdf` is
+gitignored — Ron must have a local copy. G1 already logged `R30` / `R31`; start at **G2** unless re-checking
+G1. (`R30` closed on re-check — unit also paints 25/2.) After **G1
+wraps**, the next pairing sitting walks **G14** (Show keys size —
+`show-keys-size`) before continuing G2–G13. That chrome fix is
+scheduled after `p4-tauri` and **before Phase 3**.
 
-For **every** item: check **form** (elements, placement/role, no
-literal `ENG` / `hyp` / `abs(` dump) **and** **function** (same key
-sequence → same result or error as the unit, to displayed precision).
-Pixel-perfect LCD font is out of scope.
+### Default: guide only (no browser driving)
+
+Do **not** open, lock, click, CDP, or script Shevon in the browser
+(or the exe). Do not spend tokens mapping hitboxes or pressing keys.
+Ron does both devices. The agent only coaches and records.
+
+**Exception:** drive Shevon in the browser only if Ron explicitly
+asks in that chat (e.g. “you drive Shevon” / “press it for me”).
+Even then, follow **Cadence** — never before his unit report for
+that row.
+
+### Cadence (mandatory — one item at a time)
+
+1. Agent names the row (group + #), the key sequence, and what to
+   check for form. **Stop.**
+2. Ron runs it on the **unit** and reports form + result (or error).
+3. Agent tells Ron the same sequence on **Shevon** (unless he already
+   did both). Ron reports Shevon form + result.
+4. Compare: form pass/fail + unit value → Shevon value. Log if new.
+5. AC on both. Next row.
+
+Never batch rows, never “pre-drive” Shevon, never score a row from
+Shevon alone or from memory of the manual. No unit report → do not
+ask for (or drive) Shevon for that row.
+
+For **every** item: check **form** (elements, placement/role,
+glyphs/templates, chrome) **and** **function** (same key sequence →
+same result or error as the unit, to displayed precision).
+
+### Form includes visuals (log them)
+
+**Form is not only “is it a π / not the letters pi.”** When Ron (or
+the photo) shows a **noticeable** visual mismatch vs the unit, treat
+it as a form **fail** and log an `R*` — even if the value is right
+and the symbol class is right. Examples that **must** be logged:
+
+- Glyph shape / weight (classic serif π vs straight-edged π — `R37`)
+- Condensed vs normal-width parts of a template (`×10ˣ` — `R36`)
+- Caret visible when the unit hides it (`R32`, `R35`)
+- Idle / AC result chrome (blank vs painted `0` — `R34`)
+- Stacked vs flat, wrong slot boxes, wrong indicator lit
+
+Ask for form notes every row (symbol look, caret, empty slots,
+result chrome), not only the numeric answer.
+
+**Out of scope (do not file):** true pixel-perfect LCD *typeface*
+mimicry — matching the hardware’s exact font raster, anti-aliasing,
+or sub-pixel spacing across the whole display. That is roadmap
+“pixel-perfect LCD font” (after Phase 3). Do **not** use that
+carve-out to skip a glyph/template/chrome difference Ron can see
+side-by-side. When unsure: **log the `R*`** and note
+`vis-elements` / `vis-result` / `vis-indicators` in the text. Never
+rewrite the kickoff row to say “font polish, out of scope” instead
+of filing.
+
+### Template editing QA (every stacked / boxed template)
+
+Whenever a row uses a template (`a b/c`, mixed, √, xⁿ, ∫, log□,
+hyp, …), also verify edit hygiene — not only a happy-path `=`:
+
+1. **No IR / code leak on the LCD** — never show stems or tails such
+   as `frac(`, `mix(`, `sqrt(`, `int(`, `,2)`, bare `,`, or a dangling
+   `)`. Paint must stay stacked/boxed glyphs (or empty ⬚ slots).
+2. **DEL / Backspace on an empty slot** — e.g. denominator filled,
+   numerator empty, caret in numerator: DEL must not leave a leak;
+   match the unit (usually unwrap / promote the other part, or clear
+   the template cleanly).
+3. **▲ / ▼ inside the template** — move between numerator and
+   denominator (and whole/num/den on mixed) the way the unit does;
+   do not jump to COMP history unless the caret is outside the
+   template.
+4. **Partial fill then DEL** — delete the last digit of a slot, then
+   DEL again on the empty slot; still no leak.
+
+If a happy-path row already passed but edit hygiene fails, log a new
+`R*` (landed-correctness). Do not call it “known” under closed
+`ir-leak` / `ascii-tokens` unless the exact sequence is already open.
 
 Log a new fail once: landed-correctness → `docs/tech-issues.md`
 (`R*`); honesty leftover → `issues.md` with an Associated id. Never
@@ -39,18 +139,34 @@ format surprises you.
 
 - Implement or “quickly fix” in this chat.
 - Start Phase 3, `p4-exact`, `p4-tauri`, or LineIO.
+- Open the browser / lock the tab / CDP / click calculator keys
+  unless Ron explicitly asked you to drive Shevon.
+- Press Shevon (when driving) before Ron’s unit report for that row.
+- Dismiss Ron’s visual / glyph / chrome notes as “pixel-perfect font
+  out of scope” without logging an `R*` (see **Form includes
+  visuals**).
 - Treat MODE 2/4/6/7/8 fallthrough, SETUP page 2 numbering, LineIO
   chrome, STAT ▲▼ lights, or CALC previous-value size as new work
   (`lying-menus`, `setup-page2`, `lineio-display`, `ind-arrows`,
-  `prompt-prev-size`).
+  `prompt-prev-size`) — those are already parked; still log if the
+  walk finds a *different* visual fail.
 - Name the hardware vendor or original model.
 - Touch `manual.pdf`.
 
 ## Done when (the sitting)
 
 - Each item in the groups you walked is **pass** or **fail** with one
-  unit value and one Shevon value (or a form note).
-- No calculator code changed.
+  **unit** value (from Ron) and one Shevon value (from Ron, or from
+  the agent only if he asked it to drive), plus a **form** note
+  (glyph / caret / chrome) when anything looked different.
+- Every walked row had a hardware report before Shevon was scored.
+- Template rows include edit-hygiene notes (DEL / ▲▼ / no IR leak)
+  when the group uses templates.
+- Noticeable visual mismatches Ron reported are logged as `R*` (not
+  waved off as font polish).
+- End-of-sitting summary lists **new** `R*` / issue ids logged this
+  group (for the supervisor / resolution chats). No fixes landed here.
+- No calculator code changed. No unsolicited browser automation.
 
 ---
 
@@ -60,38 +176,44 @@ Digits, operators, Ans, scientific entry, replay. Not fractions.
 
 | # | Function | Form | Function (unit = Shevon) |
 |---|---------|------|--------------------------|
-| 1 | Digits + decimal | Entry bottom-left / input line | `12.5` `=` → 12.5 |
+| 1 | Digits + decimal | Entry bottom-left / input line | `12.5` `=` → stacked 25/2 (MathIO; S⇔D → 12.5) |
 | 2 | `+ − × ÷` | Operators as symbols, not words | `7−3×2` `=` → 1 |
 | 3 | `( )` | Parens on the line | `(7−3)×2` `=` → 8 |
 | 4 | Unary `(−)` | Minus as negate, not subtract | `(−)` `3` `x²` `=` → −9 (`R15`) |
-| 5 | `=` then Ans | Next line can use Ans | `5` `=` then `+` `2` `=` → 7 |
+| 5 | `=` then Ans | Next line can use Ans; unit hides caret after `+` (`R32`) | `5` `=` then `+` `2` `=` → 7 |
 | 6 | DEL | Deletes last token / slot | Type `12`, DEL, `3` `=` → 13 |
-| 7 | AC | Clears line; idle result `0` (`R24`) | AC → 0 |
-| 8 | `×10ˣ` | Condensed `×10` + superscript; caret in `×10^(` (`R28`) | `2` `×10ˣ` `3` `=` → 2000 |
-| 9 | π | SHIFT `×10ˣ` is the π symbol, not “pi” | `2` π `=` matches the unit |
+| 7 | AC | Clears line; unit: no result (`R34`); Shevon still paints 0 | AC clears; compare result chrome |
+| 8 | `×10ˣ` | Condensed `×10` + normal-width superscript; no caret after `=` (`R35` `R36`) | `2` `×10ˣ` `3` `=` → 2000 |
+| 9 | π | SHIFT `×10ˣ` is the π symbol, not “pi”; classic serif vs straight (`R37`) | `2` π `=` matches the unit |
 | 10 | e | ALPHA `×10ˣ` is e | e `=` matches the unit |
-| 11 | Implicit multiply | `2π`, `2sin` look like the unit | `2` π `=` and `2` sin `30` `=` |
-| 12 | COMP history ▲▼ | Replay one past line; result underneath | Two COMP lines, ▲ shows the older |
+| 11 | Implicit multiply | `2π`, `2sin` look like the unit | `2` π `=` (unit keeps `2π` — `surd-pi-form` / `p4-exact`, do not refile) and `2` sin `30` `=` |
+| 12 | COMP history ▲▼ | Replay past line + result; no caret (`R31`) | Two+ COMP lines; unit: one ▲ to older; ▼ keeps expression↔result |
 
 ## G2 — Fractions and display
 
-Templates and result formats. Not powers.
+Templates and result formats. Not powers. Apply **Template editing
+QA** on rows 1–4 (and Rnd if you open a template).
 
 | # | Function | Form | Function |
 |---|---------|------|----------|
 | 1 | `a b/c` | Stacked frac template, not `frac(` | `2` `a b/c` `3` `+` `1` `a b/c` `2` `=` → 7/6 or mixed |
 | 2 | Mixed fraction | SHIFT `a b/c` mixed template | Enter a mixed value; `=` |
-| 3 | S⇔D | Toggles fraction ↔ decimal | After 7/6, S⇔D → decimal and back |
-| 4 | SETUP ab/c vs d/c | Page 2 items **1** / **2** on Shevon | Same value mixed vs improper |
-| 5 | Fix | FIX indicator; digit count | SETUP Fix 3; `2÷3` `=` → 0.667 |
-| 6 | Sci | SCI indicator | SETUP Sci 3; a wide number matches the unit |
-| 7 | Norm 1 / 2 | FIX/SCI off | SETUP Norm; small/large switch vs the unit |
-| 8 | ENG / SHIFT ENG | Result exponent steps by 3; not the letters ENG | After a result, ENG then SHIFT ENG |
-| 9 | `%` | SHIFT `(`; not a percent template | `200+10%` `=` → 200.1 (`R17`) |
-| 10 | Rnd | `Rnd(` template | Under Fix 3, Rnd of a long value matches the unit |
-| 11 | ° ′ ″ | Sexagesimal glyphs, not decimals only | Enter DMS; °′″ key toggles |
+| 3 | Frac ▲ / ▼ | Caret moves num ↔ den (not COMP history) | Fill num; ▼ to den; ▲ back; match unit |
+| 4 | Frac DEL empty num | Den filled, num empty; DEL in num — no `,n)` / `frac(` leak | e.g. enter den `2`, caret in empty num, DEL; LCD stays clean vs unit |
+| 5 | S⇔D | Toggles fraction ↔ decimal | After 7/6, S⇔D → decimal and back |
+| 6 | SETUP ab/c vs d/c | Page 2 items **1** / **2** on Shevon | Same value mixed vs improper |
+| 7 | Fix | FIX indicator; digit count | SETUP Fix 3; `2÷3` `=` → 0.667 |
+| 8 | Sci | SCI indicator | SETUP Sci 3; a wide number matches the unit |
+| 9 | Norm 1 / 2 | FIX/SCI off | SETUP Norm; small/large switch vs the unit |
+| 10 | ENG / SHIFT ENG | Result exponent steps by 3; not the letters ENG | After a result, ENG then SHIFT ENG |
+| 11 | `%` | SHIFT `(`; not a percent template | `200+10%` `=` → 200.1 (`R17`) |
+| 12 | Rnd | `Rnd(` template; DEL empty arg — no `Rnd(` dump | Under Fix 3, Rnd of a long value matches the unit |
+| 13 | ° ′ ″ | Sexagesimal glyphs, not decimals only | Enter DMS; °′″ key toggles |
 
 ## G3 — Powers and roots
+
+Apply **Template editing QA** on √ / xⁿ / ⁿ√ (DEL empty box, no
+`sqrt(` / `pwr(` / `root(` leak).
 
 | # | Function | Form | Function |
 |---|---------|------|----------|
@@ -104,10 +226,13 @@ Templates and result formats. Not powers.
 | 7 | ⁿ√ | SHIFT xⁿ | ³√-style nth root of 32 → 2 (root 5) |
 | 8 | x⁻¹ | Superscript −1 | `4` x⁻¹ `=` → 1/4 or 0.25 |
 | 9 | Odd root of negative | Real, not Math ERROR (`R5`) | ³√ `(−)8` `=` → −2 |
+| 10 | √ DEL empty | Open √, DEL with empty radicand — no `sqrt(` leak | Match unit unwrap/clear |
 
 ## G4 — Logs and exponentials
 
 π / e already walked in G1. log(a,b) LineIO comma form is `comp-lineio` — skip.
+Apply **Template editing QA** (DEL empty arg / base box; no `log10(`
+/ `ln(` / `log_b(` leak).
 
 | # | Function | Form | Function |
 |---|---------|------|----------|
@@ -121,6 +246,8 @@ Templates and result formats. Not powers.
 
 Abs lives here (SHIFT hyp). °′″ already walked in G2. DRG conversions
 (SHIFT DRG) are Missing — honesty in G13, not here.
+Apply **Template editing QA** on open sin/hyp/Abs (DEL empty;
+no `sin(` / `abs(` / `hyp` letter dump).
 
 | # | Function | Form | Function |
 |---|---------|------|----------|
@@ -151,6 +278,9 @@ Factorial above 69 is `fact-max` / `comp-range` — if 70! works here and
 errors on the unit, log only if not already open.
 
 ## G7 — Calculus templates
+
+Apply **Template editing QA** (DEL empty integrand / limit; no
+`int(` / `diff(` / `Σ(` leak).
 
 | # | Function | Form | Function |
 |---|---------|------|----------|
@@ -260,26 +390,36 @@ leave the lie until the feature ships, unless you see a **new** lie.
 | 9 | SHIFT 8 CONV | No conversions |
 | 10 | SHIFT DRG | No ° r g menu (`comp-drg`) |
 
-## G14 — Emulator extras (optional, not vs the unit)
+## G14 — Emulator extras (optional vs the unit; do this sitting after G1)
 
-Do not score these against the hardware face.
+Not scored against the hardware face. **After G1 wraps, walk this
+group next** (before G2) so `show-keys-size` is confirmed on the
+laptop; the fix slice is queued before Phase 3.
 
 | # | What | Check |
 |---|------|--------|
 | 1 | Overlay hitboxes | Keys land on the art |
 | 2 | Show keys strip | Physical-key chips; X is ALPHA `)` |
-| 3 | History pane Load | Loads COMP; clears overlays (`R26`) |
-| 4 | Exe chrome | Frameless; Show keys / History off the face; Pin; `sin(30)` → 0.5 |
+| 3 | Show keys size | On ~13" (or a narrow window): chips readable but not huge; strip does not dominate the face. Issue `show-keys-size`. Pass if already scaled; fail + keep issue open if oversized |
+| 4 | History pane Load | Loads COMP; clears overlays (`R26`) |
+| 5 | Exe chrome | Frameless; Show keys / History off the face; Pin; `sin(30)` → 0.5 |
 
 ---
 
 ## How to run the evening
 
-1. Open this file and the unit. Start Shevon.
-2. Pick **one** group (G1–G13). Tell the agent the group id.
-3. Walk every row. Agent records a three-column log: item, form
-   pass/fail, function (unit → Shevon).
-4. Stop at the end of the group. Next group is a new sitting or the
-   same chat with “G2 next”.
-5. Launch from [Validate](../../canvases/validate.canvas.tsx) if you
-   want a group-scoped chat.
+1. Open this file, the **unit**, and Shevon (exe or `:3000`).
+2. Pick **one** group. After G1 is done, next sitting is **G14**
+   (Show keys size), then resume **G2**–G13. Tell the agent the
+   group id.
+3. For each row, follow **Cadence**: agent coaches; you report unit
+   then Shevon (G14 is Shevon-only — still one row at a time). Agent
+   records item, form pass/fail, function (unit → Shevon). Keep the
+   agent off the browser unless you ask.
+4. Stop at the end of the group. Agent lists new `R*` / issue ids.
+   **Do not** open a fix chat mid-group. Resolution is a later
+   sitting / kickoff (see **Workflow** above).
+5. Next group is a new sitting or the same chat with “G14 next” /
+   “G2 next”. Launch from
+   [Validate](../../canvases/validate.canvas.tsx) if you want a
+   group-scoped chat.

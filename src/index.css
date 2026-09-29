@@ -87,14 +87,28 @@ body {
     margin-left: 0.08em;
     line-height: 1;
 }
-/* Faceplate ×10ˣ entry — one ×10 unit, input-line size (not result 0.6em). */
+/* Faceplate ×10ˣ entry — condensed ×10; exponent stays normal-width (R28 / R36). */
 .sci-times10 {
     font-size: 0.95em;
     font-family: inherit;
     margin: 0 0.04em;
     vertical-align: 0.02em;
     font-weight: 700;
-    letter-spacing: -0.06em;
+    letter-spacing: -0.12em;
+}
+.sci-exp {
+    letter-spacing: normal;
+    font-stretch: normal;
+    font-weight: 700;
+}
+/* Classic serif π — curved top bar / flared legs feel (R37). */
+.math-pi {
+    font-family: "Times New Roman", Times, "Liberation Serif", serif;
+    font-style: normal;
+    font-weight: 400;
+    letter-spacing: 0;
+    font-size: 1.05em;
+    line-height: 1;
 }
 .math-sym { font-family: "Times New Roman", serif; font-style: italic; font-weight: bold; }
 .root {
@@ -298,6 +312,13 @@ body {
 }
 
 .decimal-result { font-size: 2.2rem; font-weight: bold; letter-spacing: -1.2px; }
+/* SOLVE/CALC previous value — same size as the result line (prompt-prev-size). */
+.prompt-prev-value {
+    font-size: inherit;
+    font-weight: inherit;
+    letter-spacing: inherit;
+    opacity: 1;
+}
 .pair-result {
     font-size: 1.15rem;
     font-weight: 700;
@@ -467,6 +488,10 @@ body {
     font-size: 0.9em;
     vertical-align: 0.02em;
     margin: 0 0.04em;
+    letter-spacing: -0.12em;
+}
+.lcd-screen-mini .sci-exp {
+    letter-spacing: normal;
 }
 
 .lcd-screen-mini .sub {

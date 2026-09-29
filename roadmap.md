@@ -33,7 +33,7 @@ wrap-up, then move them to **Landed**).
 Daily-driver bar: COMP + STAT + EQN. One slice per chat. Phase 2
 slices are closed. `p4-packaging` and `p4-tauri` are in (Pages
 skipped; WebView2 daily exe verified). Phase 3 is unblocked but
-not Now — `g1-resolve` then `show-keys-size` before Phase 3.
+not Now — `show-keys-size` before Phase 3.
 Lying MODE rows wait for the matching feature. LineIO / 99-byte /
 `:` / `hist-letters` stay parked.
 
@@ -51,12 +51,13 @@ Triage (no code): `[supervisor.md](docs/prompts/supervisor.md)`
 
 | Order | Id               | What                                              | Kickoff                                       |
 | ----- | ---------------- | ------------------------------------------------- | --------------------------------------------- |
-| 1     | `g1-resolve`     | Close G1 `R*` + `prompt-prev-size` (caret / AC / history / ×10ˣ / π) | [`g1-resolve.md`](docs/prompts/g1-resolve.md) |
-| 2     | `show-keys-size` | Scale Show keys / Current history chips for small screens | [`show-keys-size.md`](docs/prompts/show-keys-size.md) |
+| 1     | `show-keys-size` | Scale Show keys / Current history chips for small screens | [`show-keys-size.md`](docs/prompts/show-keys-size.md) |
 
 
-`ti-stat` … `ti-edges`, `R17` (`r17-percent`), `R28` (`r28-exp`), and
-`R29` (`r29-int`) are in **Landed**. `R27` closed (PC `3` works).
+`ti-stat` … `ti-edges`, `R17` (`r17-percent`), `R28` (`r28-exp`),
+`R29` (`r29-int`), and `g1-resolve` (`R31`–`R32`, `R34`–`R37` +
+`prompt-prev-size`) are in **Landed**. `R27` closed (PC `3` works).
+`R30` / `R33` closed earlier this sitting (not bugs / frac ▲▼).
 
 Engine debt A–C historical: `[tech-debt.md](docs/prompts/tech-debt.md)`.
 
@@ -71,8 +72,8 @@ Applies to **every** phase. Principles:
 
 - [ ] `vis-elements` — Missing or misplaced chrome on shipped screens.
   ```
-  Open: `prompt-prev-size`. EQN a/b/c, carets, and ∫ limits on the
-  symbol (`R29`) landed.
+  Open: (none from prompt-prev-size — closed with g1-resolve). EQN a/b/c,
+  carets, and ∫ limits on the symbol (`R29`) landed.
   ```
 - [ ] `vis-indicators` — Light status indicators from real state. ◀▶ and the
   ```
@@ -100,7 +101,8 @@ Applies to **every** phase. Principles:
   shows a symbol or opens a menu. ENG/hyp dumps are gone; trig/hyp/`ln` now
   paint styled names and unclosed templates no longer leak IR stems (one
   shared table in `src/display.tsx` for the LCD and History). Faceplate
-  ×10ˣ paints condensed `×10` plus a superscript (`R28`).
+  ×10ˣ paints condensed `×10` plus a normal-width superscript (`R28` /
+  `R36`); π uses serif `.math-pi` (`R37`).
   ```
 - [ ] `vis-checklist` — Definition of done per feature: element + behavior
   ```
@@ -369,9 +371,13 @@ lettermark, PWA install and Pages skipped. `p4-tauri` (29 Sep
 **Visual** — COMP / EQN / STAT carets (`vis-cursor`); ENG/hyp/Abs/Ran# no
 longer dump raw ASCII. `vis-no-literal`: shared LCD/History template table so
 trig/hyp/`ln` paint styled names and unclosed templates never leak IR stems
-(`ir-leak`, `ascii-tokens`). Faceplate ×10ˣ paints condensed `×10` (`R28`). ∫ limits sit on the
-symbol (`R29`).
-`vis-indicators`: ◀▶ + COMP-history ▲▼ light.
+(`ir-leak`, `ascii-tokens`). Faceplate ×10ˣ paints condensed `×10` plus a
+normal-width exponent (`R28` / `R36`); π uses serif `.math-pi` (`R37`).
+∫ limits sit on the symbol (`R29`).
+`vis-indicators`: ◀▶ + COMP-history ▲▼ light. SOLVE/CALC previous value is
+normal result size (`prompt-prev-size`). Caret hidden after `=` / Ans-op /
+history replay; AC idle result blank (`g1-resolve` / `R31`–`R32` /
+`R34`–`R35`).
 
 **SOLVE** — E-20/E-21/E-41: Variable ERROR, Can’t Solve, initial-X prompt,
 X= result, L−R residual, Continue (`p2-solve`). LCD errors are one
@@ -394,8 +400,8 @@ lit; `=` uses the current STAT data. CALC / SOLVE / hyp do not overlay
 **Tests** — golden (manual samples + Phase 1/2 + vis-no-literal +
 history/keys + SOLVE + E-19 CALC + E-40 offset/jump + STAT Edit + E-25 Dist + stay-in-STAT + `ti-stat` +
 `ti-numerics` + `ti-store` + `ti-parse` + `ti-keys` + `ti-escape` +
-`ti-edges` + `r17-percent` + `r28-exp` + `r29-int` + E-28 linear + E-28 cubic) + parser (implicit
-multiply) = 171 (27 Sep 2026).
+`ti-edges` + `r17-percent` + `r28-exp` + `r29-int` + `g1-resolve` + E-28 linear + E-28 cubic) + parser (implicit
+multiply) = 181 (29 Sep 2026).
 
 **ti-stat** — STAT editor first keystroke replaces the cell (FREQ `1` → `5`);
 `evaluateExpression` does not overlay A/B/C/R/N on user memory; invalid
@@ -426,7 +432,8 @@ prompt / SOLVE / `lcdError`. History Load enters COMP and drops overlays.
 **ti-edges** — `(−) 3 x²` is −9 (postfix x² above prefix `(−)`);
 Pol/Rec write X,Y via `setVars`; EQN a=0 is Math ERROR; `|x| < 1e-15`
 uses Norm sci; singular ∫ is Time Out; persisted Ans/vars/angle are
-validated; the result line is blank while typing.
+validated; the result line is blank while typing and after AC (no idle
+`0` — `R34` refined the earlier R24 idle-0 note).
 
 **r17-percent** — `%` is ÷100 on every path (`200+10%` = 200.1,
 `200-10%` = 199.9). Not percent-of.
@@ -436,6 +443,12 @@ validated; the result line is blank while typing.
 ◀ reverses: integrand → before ∫ → after dx → upper → lower →
 integrand. ▲ from integrand/lower → upper and stops; ▼ from
 integrand/upper → lower and stops. `int(sqr(x),0,1)` is still 1/3.
+
+**g1-resolve** — COMP caret hidden after `=` / Ans-operator continue /
+history replay (`R32` / `R35` / `R31`); first history ▲ skips the
+on-screen latest; ▼ restores matching result; ×10ˣ exponent
+normal-width (`R36`); serif π (`R37`); CALC/SOLVE prev value normal
+size (`prompt-prev-size`).
 
 **debt-source-map** — IR rewrite carries original offsets onto AST nodes and
 `CalcError.offset`. Syntax / Math ERROR ◀▶ jumps to the fault token. Implicit

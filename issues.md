@@ -78,10 +78,9 @@ Status: `[ ]` open · `[x]` fixed (move to **Closed** at the next wrap-up).
 - [ ] `surd-pi-form` — Surd input templates exist; results fall back to
       decimal (or an exact p/q). π stays decimal unless the value is an integer.
       **Associated:** `p4-exact`, `vis-result`.
-- [ ] `prompt-prev-size` — SOLVE/CALC previous value (bottom-right, e.g.
-      `12` at `Y?`) is painted smaller and faded (`0.7rem` / 50%
-      opacity). The unit uses the normal result size. R7 behavior is
-      fine; this is chrome only. Same paint as unshifted CALC.
+- [x] `prompt-prev-size` — SOLVE/CALC previous value uses normal result
+      size (`.prompt-prev-value`), not `0.7rem` / 50% fade. Closed with
+      `g1-resolve` 29 Sep 2026. R7 behavior unchanged.
       **Associated:** `vis-elements`.
 
 ---
@@ -118,6 +117,15 @@ Status: `[ ]` open · `[x]` fixed (move to **Closed** at the next wrap-up).
       `ALPHA`, `)` / `ALPHA`, `S⇔D`. `L` now matches the log key (`log10`),
       not log□ / Sum.
       **Associated:** Emulator extras (`hist-letters`).
+- [ ] `show-keys-size` — Show keys / Current history chips (and History
+      pane Show Keys) paint oversized glyphs on a small laptop (~13").
+      Fine on a large monitor (~23"). Same Vite UI in Electron and
+      Tauri — not a host-only bug. Chips should scale with the window /
+      DPI so the strip stays usable without dominating the face.
+      **Associated:** Emulator extras `show-keys-size` (queued after
+      `p4-tauri`, before Phase 3). Pairing: validate-unit **G14** after
+      G1. Kickoff:
+      [`docs/prompts/show-keys-size.md`](docs/prompts/show-keys-size.md).
 
 ---
 

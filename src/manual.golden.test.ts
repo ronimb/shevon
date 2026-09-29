@@ -1,19 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { allowsCalcSolveHyp, allowsCompLineEdit, applyAllClear, applyHistoryLoad, applyPowerKey, applySquareKey, attemptStoreOperand, calcExpressionToEval, collectCalcPromptVars, collectSolvePromptVars, commitPromptValue, expressionHasSolveUnknown, isStatSessionMode, moveCompCursorDown, moveCompCursorLeft, moveCompCursorRight, moveCompCursorUp, newtonSolveX, parseCalcAssignment, placeCaretAtOffset, reconstructSequence, wrapPrecedingBinary } from './modes/comp.ts';
+import { allowsCalcSolveHyp, allowsCompLineEdit, applyAllClear, applyHistoryLoad, applyPowerKey, applySquareKey, attemptStoreOperand, calcExpressionToEval, collectCalcPromptVars, collectSolvePromptVars, commitPromptValue, expressionHasSolveUnknown, isStatSessionMode, deleteCompAtCursor, moveCompCursorDown, moveCompCursorLeft, moveCompCursorRight, moveCompCursorUp, newtonSolveX, parseCalcAssignment, placeCaretAtOffset, reconstructSequence, wrapPrecedingBinary } from './modes/comp.ts';
 import { CURSOR_PATS } from './keys.ts';
 import { chipFamily, renderMiniButton } from './historyKeys.tsx';
-import { liveOperationSequence, setupCommitSequence } from './historyOps.ts';
+import { isLcdMenu, lcdPaintInput, lcdShowsCompCaret, LcdScreen, resultLineWhileEditing } from './lcd.tsx';
+import { liveOperationSequence, nextHistoryReplayDown, nextHistoryReplayUp, setupCommitSequence } from './historyOps.ts';
 import { evaluateExpression, mergePolRecVars, toFraction } from './evaluator.ts';
-import { isLcdMenu, resultLineWhileEditing } from './lcd.tsx';
 import { loadPersistedAngle, loadPersistedAns, loadPersistedVars } from './useCalculatorState.ts';
+import type { HistoryItem } from './types.ts';
 import {
   CalcError,
   calcComplex,
   calcErrorLabel,
   calcInteger,
   calcPrimary,
+  calcReal,
   complexAbs,
   complexArg,
   complexToPolar,
@@ -321,15 +323,58 @@ describe('vis-no-literal / ir-leak — IR stems never reach the LCD', () => {
     const html = formatMath('2×10^(3)');
     expect(html).toContain('sci-times10');
     expect(html).toContain('>×10<');
-    expect(html).toContain('class="sup"');
+    expect(html).toContain('sci-exp');
+    expect(html).toContain('class="sup sci-exp"');
     expect(html).toContain('>3</span>');
     expect(html).not.toContain('10^');
     expect(html.replace(/<[^>]+>/g, '')).toBe('2×103');
     expect(toLaTeX('2×10^(3)')).toBe('2\\times 10^{3}');
     const logTen = formatMath('10^(2)');
     expect(logTen).not.toContain('sci-times10');
+    expect(logTen).not.toContain('sci-exp');
     expect(logTen).toContain('class="sup"');
     expect(logTen.replace(/<[^>]+>/g, '')).toBe('102');
+  });
+});
+
+describe('fraction ▲/▼ and DEL on an empty numerator', () => {
+  it('▼ from the numerator lands at the end of the denominator', () => {
+    expect(moveCompCursorDown('frac(2‸,)')).toBe('frac(2,‸)');
+    expect(moveCompCursorDown('frac(1‸,2)')).toBe('frac(1,2‸)');
+    expect(moveCompCursorDown('frac(12‸,34)')).toBe('frac(12,34‸)');
+    expect(moveCompCursorDown('frac(1,2‸)')).toBe('frac(1,2‸)');
+    expect(moveCompCursorDown('1+frac(2‸,3)')).toBe('1+frac(2,3‸)');
+  });
+
+  it('▲ from the denominator lands at the end of the numerator', () => {
+    expect(moveCompCursorUp('frac(2,3‸)')).toBe('frac(2‸,3)');
+    expect(moveCompCursorUp('frac(1,‸2)')).toBe('frac(1‸,2)');
+    expect(moveCompCursorUp('frac(‸,2)')).toBe('frac(‸,2)');
+    expect(moveCompCursorUp('frac(12,34‸)')).toBe('frac(12‸,34)');
+  });
+
+  it('the innermost fraction moves, including the stacked part of a mixed number', () => {
+    expect(moveCompCursorDown('frac(frac(1‸,2),3)')).toBe('frac(frac(1,2‸),3)');
+    expect(moveCompCursorUp('frac(frac(1,2‸),3)')).toBe('frac(frac(1‸,2),3)');
+    expect(moveCompCursorDown('frac(frac(1,2)‸,3)')).toBe('frac(frac(1,2),3‸)');
+    expect(moveCompCursorDown('mix(1,2‸,3)')).toBe('mix(1,2,3‸)');
+    expect(moveCompCursorUp('mix(1,2,3‸)')).toBe('mix(1,2‸,3)');
+    expect(moveCompCursorDown('mix(1‸,2,3)')).toBe('mix(1‸,2,3)');
+    expect(moveCompCursorDown('int(frac(1‸,2),,,x)')).toBe('int(frac(1,2‸),,,x)');
+  });
+
+  it('DEL on an empty numerator keeps the denominator and does not leak the call tail', () => {
+    expect(deleteCompAtCursor('frac(‸,2)')).toBe('2‸');
+    expect(deleteCompAtCursor('frac(‸,)')).toBe('‸');
+    expect(deleteCompAtCursor('1+frac(‸,2)+3')).toBe('1+2‸+3');
+    expect(deleteCompAtCursor('frac(‸,sqrt(4))')).toBe('sqrt(4)‸');
+    const leaked = deleteCompAtCursor('frac(‸,2)');
+    expect(leaked).not.toContain(',');
+    expect(leaked).not.toContain(')');
+    const html = formatMath(leaked ?? '');
+    expect(html).not.toContain(',2)');
+    expect(html).not.toContain('frac(');
+    expect(deleteCompAtCursor('frac(1‸,2)')).toBe('frac(‸,2)');
   });
 });
 
@@ -392,8 +437,6 @@ describe('r29-int — ∫ limits on the symbol, caret path', () => {
     expect(moveCompCursorDown('int(,‸,,x)')).toBe('int(,‸,,x)');
     expect(moveCompCursorUp('int(,,‸,x)')).toBe('int(,,‸,x)');
     expect(moveCompCursorDown('int(X²,,1‸,x)')).toBe('int(X²,‸,1,x)');
-    expect(moveCompCursorDown('frac(1‸,2)')).toBe('frac(1‸,2)');
-    expect(moveCompCursorUp('frac(1,‸2)')).toBe('frac(1,‸2)');
     expect(moveCompCursorDown('pol(3,‸4)')).toBe('pol(3,‸4)');
     expect(moveCompCursorDown('diff(‸,x,)')).toBe('diff(‸,x,)');
     expect(moveCompCursorUp('diff(‸,x,)')).toBe('diff(‸,x,)');
@@ -419,10 +462,10 @@ describe('r28-exp — ×10ˣ condensed paint, caret, eval', () => {
   it('digits after ×10ˣ stay in the exponent superscript', () => {
     const typed = formatMath('2×10^(3‸)');
     expect(typed).toContain('sci-times10');
-    expect(typed).toContain('class="sup"');
+    expect(typed).toContain('sci-exp');
     expect(typed).toContain('cursor');
     expect(typed).not.toContain('10^');
-    const sup = typed.match(/<span class="sup">([\s\S]*?)<\/span>/);
+    const sup = typed.match(/<span class="sup sci-exp">([\s\S]*?)<\/span>/);
     expect(sup?.[1]).toContain('3');
     expect(sup?.[1]).toContain('cursor');
   });
@@ -1295,10 +1338,117 @@ describe('ti-edges — signed square, %, EQN a=0, display, ∫, persist (R15–R
     expect(loadPersistedAngle(null)).toBe('DEG');
   });
 
-  it('result line is blank while typing, 0 when idle (R24)', () => {
-    expect(resultLineWhileEditing('‸', false)).toBe('0');
+  it('result line stays blank while typing and after AC (R24 / R34)', () => {
+    expect(resultLineWhileEditing('‸', false)).toBe('');
     expect(resultLineWhileEditing('1+2‸', false)).toBe('');
     expect(resultLineWhileEditing('1+2‸', true)).toBe('');
+  });
+});
+
+describe('g1-resolve — caret / AC / history / ×10ˣ / π / prompt prev', () => {
+  it('hides caret after = and during Ans+ continue (R32 / R35)', () => {
+    expect(lcdShowsCompCaret('5‸', true, -1)).toBe(false);
+    expect(lcdShowsCompCaret('2×10^(3)‸', true, -1)).toBe(false);
+    expect(lcdPaintInput('5‸', true, -1)).toBe('5');
+    expect(lcdShowsCompCaret('Ans+‸', false, -1)).toBe(false);
+    expect(lcdPaintInput('Ans+‸', false, -1)).not.toContain('‸');
+    expect(lcdShowsCompCaret('Ans+2‸', false, -1)).toBe(true);
+    expect(lcdShowsCompCaret('1+2‸', false, -1)).toBe(true);
+  });
+
+  it('hides caret while traversing COMP history (R31)', () => {
+    expect(lcdShowsCompCaret('27²‸', true, 1)).toBe(false);
+    expect(lcdPaintInput('27²‸', true, 1)).toBe('27²');
+  });
+
+  it('first ▲ after = skips the on-screen latest line (R31)', () => {
+    const hist: HistoryItem[] = [
+      {
+        id: 'a', rawInput: '18÷2', displayInput: '18÷2', result: calcReal(9),
+        latex: '', sequence: ['1', '8', '÷', '2'], kind: 'calc',
+      },
+      {
+        id: 'b', rawInput: '27²', displayInput: '27²', result: calcReal(729),
+        latex: '', sequence: ['2', '7', 'x²'], kind: 'calc',
+      },
+      {
+        id: 'c', rawInput: '5+3', displayInput: '5+3', result: calcReal(8),
+        latex: '', sequence: ['5', '+', '3'], kind: 'calc',
+      },
+    ];
+    // After latest =, expression on screen is history[0]
+    expect(nextHistoryReplayUp(hist, -1, true, '18÷2‸')).toBe(1);
+    expect(hist[1]!.rawInput).toBe('27²');
+    // Further ▲
+    expect(nextHistoryReplayUp(hist, 1, true, '27²‸')).toBe(2);
+    // ▼ restores newer with matching index (caller syncs result)
+    expect(nextHistoryReplayDown(hist, 2)).toBe(1);
+    expect(nextHistoryReplayDown(hist, 1)).toBe(0);
+    expect(hist[0]!.result).toEqual(calcReal(9));
+    expect(nextHistoryReplayDown(hist, 0)).toBe(-1);
+    // From blank AC, first ▲ loads latest
+    expect(nextHistoryReplayUp(hist, -1, false, '‸')).toBe(0);
+  });
+
+  it('×10ˣ exponent uses sci-exp (normal-width), not condensed with 10 (R36)', () => {
+    const html = formatMath('2×10^(3)');
+    expect(html).toMatch(/sci-times10[^>]*>×10</);
+    expect(html).toContain('sci-exp');
+    const exp = html.match(/<span class="sup sci-exp">([^<]*)<\/span>/);
+    expect(exp?.[1]).toBe('3');
+  });
+
+  it('π paints via math-pi class, never the letters pi (R37)', () => {
+    const html = formatMath('2π');
+    expect(html).toContain('math-pi');
+    expect(html).toContain('>π</span>');
+    expect(html).not.toMatch(/>pi</i);
+    expect(html.replace(/<[^>]+>/g, '')).toBe('2π');
+  });
+
+  it('SOLVE/CALC previous value uses normal result size (prompt-prev-size)', () => {
+    const html = renderToStaticMarkup(React.createElement(LcdScreen, {
+      isShift: false,
+      isAlpha: false,
+      isSto: false,
+      isRcl: false,
+      vars: EMPTY_VARS,
+      statType: null,
+      angleMode: 'DEG',
+      displayFormat: { kind: 'norm', n: 1 },
+      displayMode: 'decimal',
+      mixedFraction: false,
+      calcMode: 'COMP',
+      showingResult: false,
+      lcdError: null,
+      solveScreen: null,
+      solveResidual: 0,
+      promptVar: 'Y',
+      promptValue: '',
+      prevPromptValue: '12',
+      currentInput: 'Y=X+10‸',
+      ans: 0,
+      result: calcReal(0),
+      history: [],
+      replayIndex: -1,
+      eqnCoeffs: [],
+      eqnIndex: 0,
+      eqnResults: [],
+      eqnResultIdx: 0,
+      showHypMenu: false,
+      setupPrompt: null,
+      setupPage: 0,
+      statFrequencyEnabled: false,
+      statData: [],
+      statCursor: { row: 0, col: 0 },
+      statSubMenu: null,
+      engMode: null,
+      dmsResult: false,
+    }));
+    expect(html).toContain('prompt-prev-value');
+    expect(html).toContain('>12<');
+    expect(html).not.toContain('0.7rem');
+    expect(html).not.toContain('opacity-50');
   });
 });
 

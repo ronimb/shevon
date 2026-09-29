@@ -582,12 +582,133 @@ export function moveCompCursorLeft(currentInput: string): string {
   return moveCompCursorLeftBasic(currentInput);
 }
 
-/** ▲/▼ swap ∫ upper/lower. From the integrand they jump to those slots.
- *  From a bound they swap to the other bound. No comma-walk in other templates. */
+interface SlotRange { start: number; end: number }
+
+interface ArgCall {
+  stemStart: number;
+  end: number;
+  args: SlotRange[];
+}
+
+/** Balanced `stem(…)` calls. `end` is just past `)`, or the string end when unclosed. */
+function parseArgCalls(raw: string, stem: string): ArgCall[] {
+  const out: ArgCall[] = [];
+  const token = stem + '(';
+  let from = 0;
+  while (from < raw.length) {
+    const i = raw.indexOf(token, from);
+    if (i < 0) break;
+    const open = i + stem.length;
+    let depth = 0;
+    let close = -1;
+    const commas: number[] = [];
+    for (let j = open; j < raw.length; j++) {
+      const ch = raw[j];
+      if (ch === '(') depth++;
+      else if (ch === ')') {
+        depth--;
+        if (depth === 0) {
+          close = j;
+          break;
+        }
+      } else if (ch === ',' && depth === 1) commas.push(j);
+    }
+    const bodyEnd = close === -1 ? raw.length : close;
+    const args: SlotRange[] = [];
+    let cur = open + 1;
+    for (const comma of commas) {
+      args.push({ start: cur, end: comma });
+      cur = comma + 1;
+    }
+    args.push({ start: cur, end: bodyEnd });
+    out.push({
+      stemStart: i,
+      end: close === -1 ? bodyEnd : close + 1,
+      args,
+    });
+    from = i + token.length;
+  }
+  return out;
+}
+
+interface FracNav {
+  stemStart: number;
+  end: number;
+  num: SlotRange;
+  den: SlotRange;
+}
+
+/** Stacked fractions: `frac(num,den)` and the fraction part of `mix(whole,num,den)`. */
+function fractionNavHits(raw: string): FracNav[] {
+  const hits: FracNav[] = [];
+  for (const call of parseArgCalls(raw, 'frac')) {
+    if (call.args.length < 2) continue;
+    hits.push({ stemStart: call.stemStart, end: call.end, num: call.args[0], den: call.args[1] });
+  }
+  for (const call of parseArgCalls(raw, 'mix')) {
+    if (call.args.length < 3) continue;
+    hits.push({ stemStart: call.stemStart, end: call.end, num: call.args[1], den: call.args[2] });
+  }
+  return hits;
+}
+
+function fractionSlotAt(raw: string, caret: number): { nav: FracNav; slot: 'num' | 'den' } | null {
+  let best: { nav: FracNav; slot: 'num' | 'den'; span: number } | null = null;
+  for (const nav of fractionNavHits(raw)) {
+    let slot: 'num' | 'den' | null = null;
+    if (caret >= nav.num.start && caret <= nav.num.end) slot = 'num';
+    else if (caret >= nav.den.start && caret <= nav.den.end) slot = 'den';
+    if (!slot) continue;
+    const span = nav.end - nav.stemStart;
+    if (!best || span < best.span) best = { nav, slot, span };
+  }
+  return best ? { nav: best.nav, slot: best.slot } : null;
+}
+
+/** Drop the rest of a call whose `(` is already open. `src` is the text after that `(`. */
+function skipBalancedTail(src: string): string {
+  let depth = 1;
+  for (let i = 0; i < src.length; i++) {
+    if (src[i] === '(') depth++;
+    else if (src[i] === ')') {
+      depth--;
+      if (depth === 0) return src.slice(i + 1);
+    }
+  }
+  return '';
+}
+
+/** One top-level argument, then whatever follows the call's closing `)`. */
+function readTopArg(src: string): { arg: string; rest: string } {
+  let depth = 1;
+  let arg = '';
+  for (let i = 0; i < src.length; i++) {
+    const ch = src[i];
+    if (ch === '(') {
+      depth++;
+      arg += ch;
+    } else if (ch === ')') {
+      depth--;
+      if (depth === 0) return { arg, rest: src.slice(i + 1) };
+      arg += ch;
+    } else if (ch === ',' && depth === 1) {
+      return { arg, rest: skipBalancedTail(src.slice(i)) };
+    } else {
+      arg += ch;
+    }
+  }
+  return { arg, rest: '' };
+}
+
+/** ▲/▼ swap ∫ upper/lower, and move between a fraction's numerator and denominator.
+ *  From the integrand they jump to those slots. From a bound they swap to the
+ *  other bound. The innermost stacked fraction wins over an enclosing ∫. */
 export function moveCompCursorDown(currentInput: string): string {
   const i = currentInput.indexOf('‸');
   if (i === -1) return currentInput;
   const raw = currentInput.replace(/‸/g, '');
+  const frac = fractionSlotAt(raw, i);
+  if (frac?.slot === 'num') return placeCaret(raw, frac.nav.den.end);
   const hit = intHit(raw, i);
   if ((hit?.slot === 'integrand' || hit?.slot === 'upper') && hit.t.args[1]) {
     return placeCaret(raw, hit.t.args[1].start);
@@ -599,6 +720,8 @@ export function moveCompCursorUp(currentInput: string): string {
   const i = currentInput.indexOf('‸');
   if (i === -1) return currentInput;
   const raw = currentInput.replace(/‸/g, '');
+  const frac = fractionSlotAt(raw, i);
+  if (frac?.slot === 'den') return placeCaret(raw, frac.nav.num.end);
   const hit = intHit(raw, i);
   if ((hit?.slot === 'integrand' || hit?.slot === 'lower') && hit.t.args[2]) {
     return placeCaret(raw, hit.t.args[2].start);
@@ -613,6 +736,15 @@ export function deleteCompAtCursor(currentInput: string): string | null {
 
   let found = PATS.find(p => before.endsWith(p));
   if (found) {
+    // Empty numerator: drop the fraction bar and keep the denominator.
+    // Swallowing only `frac(` would leave the tail (`,2)`) as literal text.
+    if (found === 'frac(' && after.startsWith(',')) {
+      const hoisted = readTopArg(after.slice(1));
+      return before.slice(0, -found.length) + hoisted.arg + '‸' + hoisted.rest;
+    }
+    if (found === 'frac(' || found === 'mix(') {
+      return before.slice(0, -found.length) + '‸' + skipBalancedTail(after);
+    }
     let nextAfter = after;
     if ((found.endsWith('(') || found.endsWith(',')) && after.startsWith(')')) {
       nextAfter = after.slice(1);
@@ -680,6 +812,10 @@ export function deleteCompAtCursor(currentInput: string): string | null {
         if (stem) {
            let content = segment.slice(parenIdx + 1);
            let prefix = prefixWithStem.slice(0, -stem.length);
+           if (stem === 'frac' || stem === 'mix') {
+             const rest = after.startsWith(')') ? after.slice(1) : skipBalancedTail(after);
+             return prefix + content + '‸' + rest;
+           }
            let nextAfter = after;
            if (after.startsWith(')')) nextAfter = after.slice(1);
            return prefix + content + '‸' + nextAfter;

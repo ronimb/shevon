@@ -16,7 +16,7 @@ const TRIAGE = `Follow docs/prompts/supervisor.md exactly. You are the Shevon su
 
 const SHOW_KEYS = `Follow docs/prompts/show-keys-size.md exactly. One slice. Do not start Phase 3 leftovers, LineIO, or p4-exact. Do not change COMP / STAT / EQN beyond Show keys sizing.`;
 
-const VALIDATE = `Follow docs/prompts/validate-unit.md exactly. Pairing / verification only. Start at G2. Default: guide and scribe — tell Ron what to press on the unit then Shevon; wait for his reports. Do NOT drive the browser unless Ron asks. Do not implement leftovers, Phase 3, LineIO, or packaging.`;
+const VALIDATE = `Follow docs/prompts/validate-unit.md exactly. Pairing / verification only. Workflow: walk + log only; fixes are a separate chat. Default: guide and scribe. Do NOT drive the browser unless Ron asks.`;
 
 export default function ShevonRoadmap() {
   const dispatch = useCanvasAction();
@@ -48,18 +48,6 @@ export default function ShevonRoadmap() {
         </Button>
         <Button
           variant="ghost"
-          onClick={() => open("canvases/coverage.canvas.tsx")}
-        >
-          Coverage canvas
-        </Button>
-        <Button
-          variant="ghost"
-          onClick={() => open("canvases/packaging.canvas.tsx")}
-        >
-          Packaging canvas
-        </Button>
-        <Button
-          variant="ghost"
           onClick={() => open("canvases/validate.canvas.tsx")}
         >
           Unit pairing
@@ -68,13 +56,13 @@ export default function ShevonRoadmap() {
 
       <Row gap={24} align="end">
         <Stat value="show-keys-size" label="Next slice" />
-        <Stat value="p4-tauri" label="Landed" tone="success" />
+        <Stat value="g1-resolve" label="Landed" tone="success" />
         <Stat value="46/76" label="Coverage done" />
       </Row>
 
       <Callout tone="info" title="show-keys-size is Now">
-        Then Phase 3. After G1 wraps, next pairing sitting is G14
-        (Show keys size), then G2+.
+        G1 caret / AC / history / ×10ˣ / π / prompt-prev closed.
+        Then Phase 3. Pairing stays walk-and-log only.
       </Callout>
 
       <H2>Now</H2>
@@ -90,7 +78,7 @@ export default function ShevonRoadmap() {
         <Button variant="primary" onClick={() => start(SHOW_KEYS)}>
           Start show-keys-size
         </Button>
-        <Button variant="secondary" onClick={() => start(VALIDATE)}>
+        <Button variant="ghost" onClick={() => start(VALIDATE)}>
           Start unit pairing
         </Button>
         <Button
@@ -105,14 +93,17 @@ export default function ShevonRoadmap() {
         >
           Open tech-issues.md
         </Button>
+        <Button variant="ghost" onClick={() => start(TRIAGE)}>
+          Start supervisor
+        </Button>
       </Row>
 
       <H2>Gates</H2>
       <Text>
-        Packaging + Tauri are in. Next: `show-keys-size`, then Phase 3.
-        No LineIO / 99-byte / `:` / `hist-letters` in this
-        queue. Lying MODE rows wait on the matching feature.
-        Debt A–C stays landed. EQN 1–4 run.
+        Packaging + Tauri + `g1-resolve` are in. Next:
+        `show-keys-size` → Phase 3. No LineIO / 99-byte / `:` /
+        `hist-letters` in this queue. Lying MODE rows wait on the
+        matching feature. Debt A–C stays landed. EQN 1–4 run.
       </Text>
 
       <Row gap={8} wrap>

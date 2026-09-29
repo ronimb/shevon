@@ -65,7 +65,7 @@ rebuild.
 | Keypad overlay | `Calculator.tsx`, `keys.ts` | Transparent buttons over faceplate PNG |
 | ENG / hyp / Abs / Ran# / RanInt# | `modeRouter.ts`, `display.tsx` | No literal ENG/hyp dump; abs is `| |`; Ran# templates |
 | Trig / hyp / `ln` / unclosed templates | `display.tsx` | Shared `paintTemplates` table; IR stems never reach the LCD (`vis-no-literal`) |
-| ×10ˣ entry | `display.tsx`, `keys.ts` | Condensed `×10` + superscript; caret jumps `×10^(` (`R28`) |
+| ×10ˣ entry | `display.tsx`, `keys.ts` | Condensed `×10` + normal-width `.sci-exp` superscript; caret jumps `×10^(` (`R28` / `R36`) |
 | ∫ template | `display.tsx`, `modes/comp.ts` | Limits on the ∫ glyph; ▶ integrand → lower → upper → after dx → before ∫; ◀ reverses that cycle; ▲/▼ only jump upper↔lower (`R29`) |
 | ◀▶ + COMP ▲▼ | `lcd.tsx` | Light from caret navigability and COMP history replay |
 | Pol/Rec pair result | `evaluator.ts`, `lcd.tsx`, `display.tsx` | Top-level `=` paints `r=…, θ=…` or bottom-right `x=…, y=…` (`debt-value`) |
@@ -87,7 +87,10 @@ Ids match [`issues.md`](../issues.md) and [`roadmap.md`](../roadmap.md).
 | `vis-errors` | Stack / Argument ERROR | Syntax / Math jump landed; these screens still missing | `lcd.tsx` |
 | `lineio-display` / `comp-lineio` | MthIO / LineIO | SETUP shows options; not functional | `lcd.tsx`, `modeRouter.ts` |
 | `setup-page2` / `vis-menus` | SETUP page 2 | Unit: 1 ab/c 2 d/c 3 CMPLX 4 STAT 5 Disp 6 CONT. Shevon: 1–2 plus STAT as 3 | `lcd.tsx` |
-| `prompt-prev-size` / `vis-elements` | SOLVE/CALC previous value | Bottom-right number is 0.7rem / faded; unit uses result size | `lcd.tsx` |
+
+Closed with `g1-resolve`: `prompt-prev-size` (prev value normal size);
+caret after `=` / Ans+ / history; AC blank result; ×10ˣ `.sci-exp`;
+serif `.math-pi`.
 
 ---
 
@@ -172,7 +175,7 @@ Status bar CSS: `index.css`.
 | Fractions (d/c) | `frac()` template | Yes |
 | Mixed fractions (ab/c) | `mix()` template | Yes when SETUP ab/c |
 | Surds (n√m) | `root(n,)` / `sqrt()` | No surd result form |
-| π | SHIFT+×10ˣ inserts `π` | Decimal unless integer |
+| π | SHIFT+×10ˣ inserts `π` (serif `.math-pi`) | Decimal unless integer |
 | Scientific ×10ⁿ | Boxed `×10^(` paints condensed `×10` + superscript | Yes via `SciNotation` |
 | Complex a+bi | No (CMPLX unused) | EQN quadratic only (`formatComplexPair`) |
 | Pol/Rec r,θ | `pol(‸` / `rec(‸` (comma typed) | Single line `r=…, θ=…` / bottom-right `x=…, y=…` |
@@ -219,7 +222,8 @@ overlay size** as the faceplate keycap (`keys.ts`):
 
 ## Summary
 
-Open visual holes on shipped COMP: `prompt-prev-size`.
+Open visual holes on shipped COMP: none from `prompt-prev-size`
+(closed with `g1-resolve`).
 STAT ▲▼ and dim CMPLX/MAT/VCT/Disp stay on `vis-indicators`. Menu
 lies wait on the matching feature (`vis-menus`).
 

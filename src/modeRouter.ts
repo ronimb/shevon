@@ -53,7 +53,7 @@ import {
   solveEqn,
   zeroEqnCoeffs,
 } from './modes/eqn.tsx';
-import { isReplayableHistory, MODE_LABEL, setupCommitSequence } from './historyOps.ts';
+import { MODE_LABEL, nextHistoryReplayDown, nextHistoryReplayUp, setupCommitSequence } from './historyOps.ts';
 import type { CalculatorStore } from './useCalculatorState.ts';
 
 export function useModeRouter(s: CalculatorStore) {
@@ -741,16 +741,28 @@ export function useModeRouter(s: CalculatorStore) {
     if (s.calcMode === 'SETUP') { s.setSetupPage(p => (p === 0 ? 1 : 0)); return; }
     if (s.solveScreen || s.promptVar) return;
     if (s.calcMode === 'COMP' && s.replayIndex >= 0) {
-      let idx = s.replayIndex - 1;
-      while (idx >= 0 && !isReplayableHistory(s.history[idx])) idx--;
+      const idx = nextHistoryReplayDown(s.history, s.replayIndex);
+      if (idx === null) return;
       if (idx < 0) {
         s.setReplayIndex(-1);
         s.setCurrentInput('‸');
         s.setCurrentSequence([]);
+        s.setShowingResult(false);
       } else {
+        const item = s.history[idx];
         s.setReplayIndex(idx);
-        s.setCurrentInput(s.history[idx].rawInput + '‸');
-        s.setCurrentSequence([...s.history[idx].sequence]);
+        s.setCurrentInput(item.rawInput + '‸');
+        s.setCurrentSequence([...item.sequence]);
+        if (item.result !== null) {
+          const n = calcPrimary(item.result);
+          s.setShowingResult(true);
+          s.setAns(n);
+          s.setLastValue(item.result);
+          s.setDisplayMode(resultDisplayMode(n));
+          s.setLcdError(null);
+          s.setEngMode(null);
+          s.setDmsResult(false);
+        }
       }
       return;
     }
@@ -782,25 +794,28 @@ export function useModeRouter(s: CalculatorStore) {
   const handleUp = useCallback(() => {
     if (s.calcMode === 'SETUP') { s.setSetupPage(p => (p === 0 ? 1 : 0)); return; }
     if (s.solveScreen || s.promptVar) return;
-    const blankLive = s.currentInput === '‸';
-    if (s.calcMode === 'COMP' && s.history.length > 0 && (s.showingResult || s.replayIndex >= 0 || blankLive)) {
-      let idx = s.replayIndex < 0 ? 0 : s.replayIndex + 1;
-      while (idx < s.history.length && !isReplayableHistory(s.history[idx])) idx++;
-      const item = s.history[idx];
-      if (item && item.result !== null) {
-        const n = calcPrimary(item.result);
-        s.setReplayIndex(idx);
-        s.setShowingResult(true);
-        s.setAns(n);
-        s.setLastValue(item.result);
-        s.setDisplayMode(resultDisplayMode(n));
-        s.setLcdError(null);
-        s.setEngMode(null);
-        s.setDmsResult(false);
-        s.setCurrentInput(item.rawInput + '‸');
-        s.setCurrentSequence([...item.sequence]);
+    if (s.calcMode === 'COMP') {
+      const idx = nextHistoryReplayUp(
+        s.history, s.replayIndex, s.showingResult, s.currentInput,
+      );
+      if (idx !== null) {
+        const item = s.history[idx];
+        if (item && item.result !== null) {
+          const n = calcPrimary(item.result);
+          s.setReplayIndex(idx);
+          s.setShowingResult(true);
+          s.setAns(n);
+          s.setLastValue(item.result);
+          s.setDisplayMode(resultDisplayMode(n));
+          s.setLcdError(null);
+          s.setEngMode(null);
+          s.setDmsResult(false);
+          s.setCurrentInput(item.rawInput + '‸');
+          s.setCurrentSequence([...item.sequence]);
+        }
+        return;
       }
-      return;
+      if (s.showingResult || s.replayIndex >= 0 || s.currentInput === '‸') return;
     }
     if (s.calcMode === 'STAT_DATA') {
       s.setStatCursor(prev => ({ ...prev, row: Math.max(0, prev.row - 1) }));

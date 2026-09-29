@@ -1,6 +1,6 @@
 # Tech issues — landed correctness
 
-Source of truth for review ids `R1`–`R31` and slices `ti-*`.
+Source of truth for review ids `R1`–`R37` and slices `ti-*`.
 Not Phase 2 leftovers and not honesty-policy lies. Do not copy an
 R-id into [`issues.md`](../issues.md).
 
@@ -16,19 +16,33 @@ Status: `[ ]` open · `[x]` done.
 
 ## Open
 
-Logged from the 28 Sep 2026 G1 unit pairing. Do not implement in a
-pairing chat. Scheduled Now remains `p4-packaging`.
+_(none — G1 pairing fails closed 29 Sep 2026 via `g1-resolve`.)_
 
-- [ ] `R30` — `12.5` `=` paints stacked 25/2. The unit / G1 row is
-      12.5. S⇔D recovers 12.5. `resultDisplayMode` prefers any exact
-      p/q with `d>1`. Not `invented-frac` (that was inexact guesses)
-      and not `surd-pi-form` (π/surd exact forms).
-- [ ] `R31` — After two COMP lines, first ▲ reloads the line already
-      on screen (`replayIndex` starts at 0 = latest). The older line
-      needs a second ▲; that screen is then right (expression +
-      stored result). ▼ from there restores the newer expression but
-      leaves the older result. Closed `replay-no-result` was ▲ with
-      no result underneath — different bug.
+---
+
+## Closed this sitting
+
+- [x] `R30` — Not a bug. Re-check 29 Sep 2026: unit and Shevon both
+      paint stacked 25/2 after `12.5` `=`. Earlier filing used the
+      checklist’s “12.5” as the unit value; that row was wrong.
+- [x] `R33` — Fraction ▲/▼ moves between numerator and denominator
+      (innermost `frac` / mix stacked part). DEL on an empty
+      numerator keeps the denominator (`frac(‸,2)` → `2‸`) instead
+      of leaking literal `,2)`. Goldens in `manual.golden.test.ts`.
+- [x] `R31` — COMP history ▲▼: first ▲ after latest `=` skips the
+      on-screen line; further ▲/▼ keep expression + matching result;
+      caret hidden while replaying (`g1-resolve`).
+- [x] `R32` — Caret hidden after Ans-operator continue (`Ans+‸`)
+      until the user types further (`g1-resolve`, shared with `R35`).
+- [x] `R34` — After AC, result line stays blank (no idle `0`).
+      Blank-while-typing from `R24` kept (`g1-resolve`).
+- [x] `R35` — Caret hidden after `=` while the expression stays
+      (`g1-resolve`, shared paint rule with `R32` / history).
+- [x] `R36` — `×10ˣ`: condensed `10`; exponent is normal-width
+      `.sci-exp` (not condensed with the `10`). `R28` unchanged
+      (`g1-resolve`).
+- [x] `R37` — π paints classic serif `.math-pi`, never the letters
+      “pi” (`g1-resolve`).
 
 ---
 
@@ -97,5 +111,6 @@ closed as ÷100 (`r17-percent`). Kickoffs stay under
 
 `lying-menus`, `eqn-menu-fallthrough`, `dist-empty`, `lineio-display`,
 `setup-page2`, `stat-jump-comp`, `fact-max`, `sigma-bounds`,
-`ind-hardcoded`, `ind-arrows`, `surd-pi-form`, `prompt-prev-size`,
+`ind-hardcoded`, `ind-arrows`, `surd-pi-form`,
 `comp-keys`, `hist-letters`, `shift-ac-mem`.
+(`prompt-prev-size` closed with `g1-resolve` — see [`issues.md`](../issues.md).)

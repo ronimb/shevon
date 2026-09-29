@@ -41,14 +41,13 @@ export default function TechIssues() {
       </Row>
 
       <Row gap={24} align="end">
-        <Stat value="2" label="Open R-ids" />
+        <Stat value="0" label="Open R-ids" tone="success" />
         <Stat value="show-keys-size" label="Next" />
       </Row>
 
-      <Callout tone="info" title="Not this file">
-        `lying-menus`, LineIO stay on `issues.md`. Dist is filled
-        (`p2-dist`). Do not copy R-ids there. `R33` frac ▲/▼ + DEL
-        is closed; open are `R31` / `R32`.
+      <Callout tone="info" title="G1 closed">
+        `R30`–`R37` are checked in the catalog (`g1-resolve`). Honesty
+        leftovers stay on `issues.md` — do not copy R-ids there.
       </Callout>
 
       <Row gap={8} wrap>
@@ -71,8 +70,9 @@ export default function TechIssues() {
       </Row>
 
       <Text tone="secondary">
-        `ti-stat` … `ti-edges`, `R17`, `R27`–`R30`, and `R33` are
-        closed in the catalog. `R31` / `R32` are open.
+        `ti-stat` … `ti-edges`, `R17`, `R27`–`R37`, and
+        `prompt-prev-size` are closed. Next slice is
+        `show-keys-size`.
       </Text>
 
       <Row gap={8} wrap>
