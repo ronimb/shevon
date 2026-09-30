@@ -179,7 +179,7 @@ const TEMPLATE_SPECS: TemplateSpec[] = [
   { stem: 'e^', html: a => `e<span class="sup">${slot(a[0])}</span>`, latex: a => `e^{${lx(a[0])}}` },
   {
     stem: '×10^',
-    html: a => `<span class="sci-times10">×10</span><span class="sup sci-exp">${slot(a[0])}</span>`,
+    html: a => `<span class="sci-times10">×10</span><span class="sup">${slot(a[0])}</span>`,
     latex: a => `\\times 10^{${lx(a[0])}}`,
   },
   { stem: '10^', html: a => `10<span class="sup">${slot(a[0])}</span>`, latex: a => `10^{${lx(a[0])}}` },

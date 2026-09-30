@@ -1,5 +1,7 @@
 # Kickoff — `g1-resolve` (G1 form/chrome + small display)
 
+`R36` was later dropped (unresolved, not prioritized). Do not reopen it.
+
 Copy everything below the line into a **new agent chat**. One slice.
 This is the **issue-resolution** chat after G1 pairing — not a
 validation sitting. Do not start Phase 3, LineIO, or `p4-exact`.

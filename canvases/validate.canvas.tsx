@@ -69,7 +69,7 @@ export default function Validate() {
         striped
         headers={["Id", "Group", "What is in here"]}
         rows={[
-          ["G1", "Arithmetic and entry", "Sitting done — R30–R37 + prompt-prev-size closed (g1-resolve)"],
+          ["G1", "Arithmetic and entry", "Sitting done — R36 ×10ˣ glyph dropped"],
           ["G2", "Fractions and display", "Frac, ▲▼, DEL empty/no leak, S⇔D, Fix/Sci, ENG, %, DMS"],
           ["G3", "Powers and roots", "x² x³ xⁿ √ ³√ ⁿ√ x⁻¹; DEL empty / no leak"],
           ["G4", "Logs and exponentials", "log ln log□ 10^ e^"],

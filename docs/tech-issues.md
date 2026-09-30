@@ -16,7 +16,16 @@ Status: `[ ]` open · `[x]` done.
 
 ## Open
 
-_(none — G1 pairing fails closed 29 Sep 2026 via `g1-resolve`.)_
+_(none.)_
+
+---
+
+## Dropped
+
+- `R36` — `×10ˣ` glyph (condensed `10`, normal-width exponent) is
+  unresolved. Not prioritized; dropped 30 Sep 2026. Paint stays the
+  `R28` form (one condensed `×10` plus an ordinary superscript).
+  Do not re-open `R28` or pick this up again.
 
 ---
 
@@ -38,9 +47,6 @@ _(none — G1 pairing fails closed 29 Sep 2026 via `g1-resolve`.)_
       Blank-while-typing from `R24` kept (`g1-resolve`).
 - [x] `R35` — Caret hidden after `=` while the expression stays
       (`g1-resolve`, shared paint rule with `R32` / history).
-- [x] `R36` — `×10ˣ`: condensed `10`; exponent is normal-width
-      `.sci-exp` (not condensed with the `10`). `R28` unchanged
-      (`g1-resolve`).
 - [x] `R37` — π paints classic serif `.math-pi`, never the letters
       “pi” (`g1-resolve`).
 

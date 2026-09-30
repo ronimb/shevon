@@ -46,8 +46,8 @@ export default function TechIssues() {
       </Row>
 
       <Callout tone="info" title="G1 closed">
-        `R30`–`R37` are checked in the catalog (`g1-resolve`). Honesty
-        leftovers stay on `issues.md` — do not copy R-ids there.
+        `R31`–`R35` and `R37` are checked. `R36` (`×10ˣ` glyph) is
+        unresolved and dropped. Honesty leftovers stay on `issues.md`.
       </Callout>
 
       <Row gap={8} wrap>
@@ -70,8 +70,8 @@ export default function TechIssues() {
       </Row>
 
       <Text tone="secondary">
-        `ti-stat` … `ti-edges`, `R17`, `R27`–`R37`, and
-        `prompt-prev-size` are closed. Next slice is
+        `ti-stat` … `ti-edges`, `R17`, `R27`–`R35`, `R37`, and
+        `prompt-prev-size` are closed. `R36` dropped. Next slice is
         `show-keys-size`.
       </Text>
 

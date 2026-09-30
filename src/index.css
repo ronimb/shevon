@@ -87,19 +87,14 @@ body {
     margin-left: 0.08em;
     line-height: 1;
 }
-/* Faceplate ×10ˣ entry — condensed ×10; exponent stays normal-width (R28 / R36). */
+/* Faceplate ×10ˣ entry — one ×10 unit, input-line size (not result 0.6em). */
 .sci-times10 {
     font-size: 0.95em;
     font-family: inherit;
     margin: 0 0.04em;
     vertical-align: 0.02em;
     font-weight: 700;
-    letter-spacing: -0.12em;
-}
-.sci-exp {
-    letter-spacing: normal;
-    font-stretch: normal;
-    font-weight: 700;
+    letter-spacing: -0.06em;
 }
 /* Classic serif π — curved top bar / flared legs feel (R37). */
 .math-pi {
@@ -488,10 +483,6 @@ body {
     font-size: 0.9em;
     vertical-align: 0.02em;
     margin: 0 0.04em;
-    letter-spacing: -0.12em;
-}
-.lcd-screen-mini .sci-exp {
-    letter-spacing: normal;
 }
 
 .lcd-screen-mini .sub {

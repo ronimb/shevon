@@ -65,7 +65,7 @@ rebuild.
 | Keypad overlay | `Calculator.tsx`, `keys.ts` | Transparent buttons over faceplate PNG |
 | ENG / hyp / Abs / Ran# / RanInt# | `modeRouter.ts`, `display.tsx` | No literal ENG/hyp dump; abs is `| |`; Ran# templates |
 | Trig / hyp / `ln` / unclosed templates | `display.tsx` | Shared `paintTemplates` table; IR stems never reach the LCD (`vis-no-literal`) |
-| ×10ˣ entry | `display.tsx`, `keys.ts` | Condensed `×10` + normal-width `.sci-exp` superscript; caret jumps `×10^(` (`R28` / `R36`) |
+| ×10ˣ entry | `display.tsx`, `keys.ts` | Condensed `×10` + superscript; caret jumps `×10^(` (`R28`). `R36` dropped |
 | ∫ template | `display.tsx`, `modes/comp.ts` | Limits on the ∫ glyph; ▶ integrand → lower → upper → after dx → before ∫; ◀ reverses that cycle; ▲/▼ only jump upper↔lower (`R29`) |
 | ◀▶ + COMP ▲▼ | `lcd.tsx` | Light from caret navigability and COMP history replay |
 | Pol/Rec pair result | `evaluator.ts`, `lcd.tsx`, `display.tsx` | Top-level `=` paints `r=…, θ=…` or bottom-right `x=…, y=…` (`debt-value`) |
@@ -89,8 +89,8 @@ Ids match [`issues.md`](../issues.md) and [`roadmap.md`](../roadmap.md).
 | `setup-page2` / `vis-menus` | SETUP page 2 | Unit: 1 ab/c 2 d/c 3 CMPLX 4 STAT 5 Disp 6 CONT. Shevon: 1–2 plus STAT as 3 | `lcd.tsx` |
 
 Closed with `g1-resolve`: `prompt-prev-size` (prev value normal size);
-caret after `=` / Ans+ / history; AC blank result; ×10ˣ `.sci-exp`;
-serif `.math-pi`.
+caret after `=` / Ans+ / history; AC blank result; serif `.math-pi`.
+`R36` (`×10ˣ` glyph) dropped — unresolved, not prioritized.
 
 ---
 

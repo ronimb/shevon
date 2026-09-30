@@ -86,7 +86,6 @@ it as a form **fail** and log an `R*` — even if the value is right
 and the symbol class is right. Examples that **must** be logged:
 
 - Glyph shape / weight (classic serif π vs straight-edged π — `R37`)
-- Condensed vs normal-width parts of a template (`×10ˣ` — `R36`)
 - Caret visible when the unit hides it (`R32`, `R35`)
 - Idle / AC result chrome (blank vs painted `0` — `R34`)
 - Stacked vs flat, wrong slot boxes, wrong indicator lit
@@ -183,7 +182,7 @@ Digits, operators, Ans, scientific entry, replay. Not fractions.
 | 5 | `=` then Ans | Next line can use Ans; unit hides caret after `+` (`R32`) | `5` `=` then `+` `2` `=` → 7 |
 | 6 | DEL | Deletes last token / slot | Type `12`, DEL, `3` `=` → 13 |
 | 7 | AC | Clears line; unit: no result (`R34`); Shevon still paints 0 | AC clears; compare result chrome |
-| 8 | `×10ˣ` | Condensed `×10` + normal-width superscript; no caret after `=` (`R35` `R36`) | `2` `×10ˣ` `3` `=` → 2000 |
+| 8 | `×10ˣ` | Condensed `×10` + superscript; caret hidden after `=` (`R35`). Glyph detail `R36` dropped — do not refile | `2` `×10ˣ` `3` `=` → 2000 |
 | 9 | π | SHIFT `×10ˣ` is the π symbol, not “pi”; classic serif vs straight (`R37`) | `2` π `=` matches the unit |
 | 10 | e | ALPHA `×10ˣ` is e | e `=` matches the unit |
 | 11 | Implicit multiply | `2π`, `2sin` look like the unit | `2` π `=` (unit keeps `2π` — `surd-pi-form` / `p4-exact`, do not refile) and `2` sin `30` `=` |

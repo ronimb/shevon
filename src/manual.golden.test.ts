@@ -323,15 +323,13 @@ describe('vis-no-literal / ir-leak — IR stems never reach the LCD', () => {
     const html = formatMath('2×10^(3)');
     expect(html).toContain('sci-times10');
     expect(html).toContain('>×10<');
-    expect(html).toContain('sci-exp');
-    expect(html).toContain('class="sup sci-exp"');
+    expect(html).toContain('class="sup"');
     expect(html).toContain('>3</span>');
     expect(html).not.toContain('10^');
     expect(html.replace(/<[^>]+>/g, '')).toBe('2×103');
     expect(toLaTeX('2×10^(3)')).toBe('2\\times 10^{3}');
     const logTen = formatMath('10^(2)');
     expect(logTen).not.toContain('sci-times10');
-    expect(logTen).not.toContain('sci-exp');
     expect(logTen).toContain('class="sup"');
     expect(logTen.replace(/<[^>]+>/g, '')).toBe('102');
   });
@@ -462,10 +460,10 @@ describe('r28-exp — ×10ˣ condensed paint, caret, eval', () => {
   it('digits after ×10ˣ stay in the exponent superscript', () => {
     const typed = formatMath('2×10^(3‸)');
     expect(typed).toContain('sci-times10');
-    expect(typed).toContain('sci-exp');
+    expect(typed).toContain('class="sup"');
     expect(typed).toContain('cursor');
     expect(typed).not.toContain('10^');
-    const sup = typed.match(/<span class="sup sci-exp">([\s\S]*?)<\/span>/);
+    const sup = typed.match(/<span class="sup">([\s\S]*?)<\/span>/);
     expect(sup?.[1]).toContain('3');
     expect(sup?.[1]).toContain('cursor');
   });
@@ -1388,14 +1386,6 @@ describe('g1-resolve — caret / AC / history / ×10ˣ / π / prompt prev', () =
     expect(nextHistoryReplayDown(hist, 0)).toBe(-1);
     // From blank AC, first ▲ loads latest
     expect(nextHistoryReplayUp(hist, -1, false, '‸')).toBe(0);
-  });
-
-  it('×10ˣ exponent uses sci-exp (normal-width), not condensed with 10 (R36)', () => {
-    const html = formatMath('2×10^(3)');
-    expect(html).toMatch(/sci-times10[^>]*>×10</);
-    expect(html).toContain('sci-exp');
-    const exp = html.match(/<span class="sup sci-exp">([^<]*)<\/span>/);
-    expect(exp?.[1]).toBe('3');
   });
 
   it('π paints via math-pi class, never the letters pi (R37)', () => {
