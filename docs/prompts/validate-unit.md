@@ -180,7 +180,7 @@ Digits, operators, Ans, scientific entry, replay. Not fractions.
 | 4 | Unary `(−)` | Minus as negate, not subtract | `(−)` `3` `x²` `=` → −9 (`R15`) |
 | 5 | `=` then Ans | Next line can use Ans; unit hides caret after `+` (`R32`) | `5` `=` then `+` `2` `=` → 7 |
 | 6 | DEL | Deletes last token / slot | Type `12`, DEL, `3` `=` → 13 |
-| 7 | AC | Clears line; unit: no result (`R34`); Shevon still paints 0 | AC clears; compare result chrome |
+| 7 | AC | Clears line; no idle `0` (`R34` closed). Re-check of the fix is untested | AC clears; result line stays blank |
 | 8 | `×10ˣ` | Condensed `×10` + superscript; caret hidden after `=` (`R35`). Glyph detail `R36` dropped — do not refile | `2` `×10ˣ` `3` `=` → 2000 |
 | 9 | π | SHIFT `×10ˣ` is the π symbol, not “pi”; classic serif vs straight (`R37`) | `2` π `=` matches the unit |
 | 10 | e | ALPHA `×10ˣ` is e | e `=` matches the unit |

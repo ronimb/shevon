@@ -86,9 +86,12 @@ Snapshot 30 Sep 2026:
   **Now**. `show-keys-size` (with `show-keys-face` and `hist-scroll`)
   is closed. `p4-packaging`, `p4-tauri`, and `g1-resolve` are landed.
 - SHIFT/ALPHA hold is desired and current — do not change it.
-- G14 pairing and its resolution are done. Next validate sitting is
-  **G2** — [`validate-unit.md`](validate-unit.md). Workflow:
-  validation → log → separate issue-resolution chat.
+- G1 and G14 walks are **tested**. Code for `g1-resolve` and
+  `show-keys-size` is in; a second walk of those fixes is
+  **untested**. Next validate sitting is **G2** —
+  [`validate-status.md`](validate-status.md) and
+  [`validate-unit.md`](validate-unit.md). Workflow: validation →
+  log → separate issue-resolution chat.
 - Phase 2 is landed. Daily driver: COMP + STAT + EQN (types 1–4).
 - Engine debt A–C is landed. Do not re-open unless a regression shows.
 - Do not pull LineIO, 99-byte, colon/Disp, or `hist-letters` into Now

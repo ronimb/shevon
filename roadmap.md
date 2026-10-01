@@ -15,6 +15,7 @@ Detailed plan for Shevon. This file is the
 | Triage / oversight (no implementation)            | `[docs/prompts/supervisor.md](docs/prompts/supervisor.md)`               |
 | Packaging slice (view)                            | `[canvases/packaging.canvas.tsx](canvases/packaging.canvas.tsx)`         |
 | Unit pairing (form + function, no code)           | `[docs/prompts/validate-unit.md](docs/prompts/validate-unit.md)`         |
+| Pairing cursor (tested / untested)                | `[docs/prompts/validate-status.md](docs/prompts/validate-status.md)`     |
 
 
 Canvases (`canvases/*.canvas.tsx`) are **views**. If a canvas disagrees with
