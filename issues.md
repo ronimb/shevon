@@ -97,8 +97,11 @@ Status: `[ ]` open · `[x]` fixed (move to **Closed** at the next wrap-up).
 
 ## Platform / extras
 
-- [ ] `comp-keys` — Unmapped letter keys steal typing into the overlay; Shift
-      on the PC keyboard is hold, while the overlay SHIFT is a toggle.
+- [ ] `comp-keys` — Unmapped letter keys steal typing into the overlay.
+      SHIFT and ALPHA are **hold**: active only while pressed, release
+      clears them. That is the desired behavior and the current
+      Shevon behavior (G14.1, 30 Sep 2026). Do not change it to a
+      latch.
       Letter shortcuts (L/R/Q/C/T/S/D/A/X/Y; S is sine, ` is S⇔D, D is frac) and keys that do not need Shift
       to type (`.`, `-`, `/`, `0`, `1`, `9`) now call the same handlers as
       the faceplate. `+` `*` `(` `)` `^` still insert the unshifted symbol
@@ -117,19 +120,24 @@ Status: `[ ]` open · `[x]` fixed (move to **Closed** at the next wrap-up).
       `ALPHA`, `)` / `ALPHA`, `S⇔D`. `L` now matches the log key (`log10`),
       not log□ / Sum.
       **Associated:** Emulator extras (`hist-letters`).
-- [ ] `show-keys-size` — Show keys / Current history chips (and History
-      pane Show Keys) paint oversized glyphs on a small laptop (~13").
-      Fine on a large monitor (~23"). Same Vite UI in Electron and
-      Tauri — not a host-only bug. Chips should scale with the window /
-      DPI so the strip stays usable without dominating the face.
-      **Associated:** Emulator extras `show-keys-size` (queued after
-      `p4-tauri`, before Phase 3). Pairing: validate-unit **G14** after
-      G1. Kickoff:
-      [`docs/prompts/show-keys-size.md`](docs/prompts/show-keys-size.md).
 
 ---
 
 ## Closed
+
+G14 resolution 30 Sep 2026. Do not re-file unless they regress.
+
+- [x] `show-keys-size` — Show keys chips scale with the window on the
+      live strip and the History pane. The strip has no “CURRENT KEYS”
+      label, a short gap above the chips, and **Hide keys** / **More**
+      stay hidden until hover while the strip is open.
+      **Associated:** Emulator extras `show-keys-size`.
+- [x] `show-keys-face` — Numpad chips are a darker cap, tighter radius,
+      light legend in the upper part, on both Show keys surfaces.
+      **Associated:** Emulator extras `show-keys-size`.
+- [x] `hist-scroll` — History entry text is smaller. Overflow uses a
+      thin overlay thumb. History Load (`R26`) is unchanged.
+      **Associated:** Emulator extras `show-keys-size`.
 
 Wrap-up 26 Sep 2026 after `p2-edit` + sanity. Do not re-file unless they
 regress. Landed behavior is also in [`roadmap.md`](roadmap.md) **Landed**.

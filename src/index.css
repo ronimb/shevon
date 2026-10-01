@@ -28,6 +28,19 @@ body {
     -webkit-app-region: drag;
 }
 
+/* While the live strip is open, Hide keys and More stay out of the
+   way until the chrome or the strip is hovered. */
+.app-top.keys-open .keys-toggle,
+.app-top.keys-open .more-toggle {
+    opacity: 0;
+    pointer-events: none;
+}
+.app-top.keys-open:hover .keys-toggle,
+.app-top.keys-open:hover .more-toggle {
+    opacity: 1;
+    pointer-events: auto;
+}
+
 .app-no-drag {
     -webkit-app-region: no-drag;
 }
@@ -449,12 +462,11 @@ body {
 .lcd-screen-mini {
     font-family: 'Courier New', monospace;
     border-radius: 4px;
-    padding: 12px 0;
-    min-height: 3.5em;
+    padding: 1px 0;
+    min-height: 0;
     display: flex;
     align-items: center;
     background: transparent !important;
-    overflow-x: auto;
 }
 
 .lcd-screen-mini .frac-container {
@@ -465,8 +477,8 @@ body {
 .lcd-screen-mini {
     color: #fff;
     font-family: var(--font-mono);
-    font-size: 1.1em;
-    line-height: normal;
+    font-size: 0.75rem;
+    line-height: 1.25;
 }
 
 .lcd-screen-mini .sup {
@@ -507,12 +519,45 @@ body {
 }
 
 .history-row {
-    padding: 24px 16px;
-    margin-bottom: 12px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
     background: transparent;
-    border-radius: 24px;
+    border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.05);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.history-scroll {
+    overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.35) transparent;
+}
+.history-expr-host {
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+.history-expr {
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    scrollbar-width: none;
+}
+.history-expr::-webkit-scrollbar {
+    display: none;
+    width: 0;
+    height: 0;
+}
+.history-expr-thumb {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 2px;
+    width: 0;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.45);
+    opacity: 0;
+    pointer-events: none;
 }
 .history-row:hover {
     border-color: rgba(255, 255, 255, 0.12);
@@ -559,10 +604,11 @@ body {
     font-size: 7px;
 }
 .mini-btn.num {
-    background: linear-gradient(180deg, #b6b6ba 0%, #8e9094 58%, #7c7e82 100%);
-    color: #1a1a1a;
-    border-color: #5c5e62;
-    box-shadow: inset 0 1px 0 #d0d0d4, 0 1px 0 #4a4c50;
+    background: linear-gradient(180deg, #9a9ca0 0%, #808288 42%, #686a6e 100%);
+    color: #f4f5f6;
+    border-color: #3a3c40;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), 0 1px 0 #222426;
+    font-weight: 600;
 }
 .mini-btn.del {
     background: linear-gradient(180deg, #e8f6c4 0%, #c4dc88 55%, #b0d06c 100%);
@@ -635,8 +681,12 @@ body {
     width: 68px;
     min-width: 68px;
     height: 46px;
-    border-radius: 7px;
-    font-size: 22px;
+    border-radius: 4px;
+    font-size: 18px;
+    font-weight: 600;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 7px;
 }
 .mini-btn.del.shape-numpad,
 .mini-btn.ac.shape-numpad {
@@ -644,7 +694,8 @@ body {
     min-width: 66px;
 }
 .mini-btn.shape-numpad.legend {
-    font-size: 13px;
+    font-size: 11px;
+    padding-top: 7px;
 }
 
 .mini-x-power {

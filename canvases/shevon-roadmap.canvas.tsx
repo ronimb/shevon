@@ -14,7 +14,7 @@ import {
 
 const TRIAGE = `Follow docs/prompts/supervisor.md exactly. You are the Shevon supervisor (triage and oversight). Do not implement leftovers. Start with one briefing from the files as they are now.`;
 
-const SHOW_KEYS = `Follow docs/prompts/show-keys-size.md exactly. One slice. Do not start Phase 3 leftovers, LineIO, or p4-exact. Do not change COMP / STAT / EQN beyond Show keys sizing.`;
+const PHASE3 = `Follow roadmap.md Phase 3. One slice: p3-cmplx. Do not start LineIO, comp-keys, hist-letters, or p4-exact. Do not change COMP / STAT / EQN EVAL.`;
 
 const VALIDATE = `Follow docs/prompts/validate-unit.md exactly. Pairing / verification only. Workflow: walk + log only; fixes are a separate chat. Default: guide and scribe. Do NOT drive the browser unless Ron asks.`;
 
@@ -55,14 +55,14 @@ export default function ShevonRoadmap() {
       </Row>
 
       <Row gap={24} align="end">
-        <Stat value="show-keys-size" label="Next slice" />
+        <Stat value="p3-cmplx" label="Next slice" />
         <Stat value="g1-resolve" label="Landed" tone="success" />
         <Stat value="46/76" label="Coverage done" />
       </Row>
 
-      <Callout tone="info" title="show-keys-size is Now">
-        G1 caret / AC / history / ×10ˣ / π / prompt-prev closed.
-        Then Phase 3. Pairing stays walk-and-log only.
+      <Callout tone="info" title="p3-cmplx is Now">
+        show-keys-size is in (chip scale, face, strip chrome, History
+        scroll). Pairing stays walk-and-log only. Next sitting is G2.
       </Callout>
 
       <H2>Now</H2>
@@ -70,22 +70,22 @@ export default function ShevonRoadmap() {
         striped
         headers={["#", "Id", "What", "Kickoff"]}
         rows={[
-          ["1", "show-keys-size", "Scale Show keys chips (small laptop)", "show-keys-size.md"],
+          ["1", "p3-cmplx", "CMPLX mode", "roadmap Phase 3"],
         ]}
       />
 
       <Row gap={8} wrap>
-        <Button variant="primary" onClick={() => start(SHOW_KEYS)}>
-          Start show-keys-size
+        <Button variant="primary" onClick={() => start(PHASE3)}>
+          Start p3-cmplx
         </Button>
         <Button variant="ghost" onClick={() => start(VALIDATE)}>
           Start unit pairing
         </Button>
         <Button
           variant="ghost"
-          onClick={() => open("docs/prompts/show-keys-size.md")}
+          onClick={() => open("roadmap.md")}
         >
-          show-keys-size.md
+          Phase 3
         </Button>
         <Button
           variant="ghost"
@@ -100,10 +100,10 @@ export default function ShevonRoadmap() {
 
       <H2>Gates</H2>
       <Text>
-        Packaging + Tauri + `g1-resolve` are in. Next:
-        `show-keys-size` → Phase 3. No LineIO / 99-byte / `:` /
-        `hist-letters` in this queue. Lying MODE rows wait on the
-        matching feature. Debt A–C stays landed. EQN 1–4 run.
+        Packaging + Tauri + `g1-resolve` + `show-keys-size` are in.
+        Next: `p3-cmplx`. No LineIO / 99-byte / `:` / `hist-letters`
+        in this queue. Lying MODE rows wait on the matching feature.
+        Debt A–C stays landed. EQN 1–4 run.
       </Text>
 
       <Row gap={8} wrap>
@@ -111,8 +111,8 @@ export default function ShevonRoadmap() {
           supervisor.md
         </Pill>
         <Pill onClick={() => start(TRIAGE)}>Start supervisor</Pill>
-        <Pill onClick={() => open("docs/prompts/show-keys-size.md")}>
-          show-keys-size.md
+        <Pill onClick={() => open("roadmap.md")}>
+          Phase 3
         </Pill>
         <Pill onClick={() => open("docs/prompts/validate-unit.md")}>
           validate-unit.md

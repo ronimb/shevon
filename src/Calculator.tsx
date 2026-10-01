@@ -46,6 +46,8 @@ const Calculator: React.FC = () => {
   const { flashKey, unflashKey } = useKeyFlash(keysRootRef);
 
   const [scale, setScale] = useState(1);
+  const [chipScale, setChipScale] = useState(1);
+  const stripRef = useRef<HTMLDivElement>(null);
   const [showPane, setShowPane] = useState<boolean>(false);
   const [pinned, setPinned] = useState(false);
   const [showCurrentKeys, setShowCurrentKeys] = useState<boolean>(() => localStorage.getItem('calc_show_current_keys_on') === '1');
@@ -59,19 +61,29 @@ const Calculator: React.FC = () => {
   const isDesktop = isDesktopApp();
 
   useEffect(() => {
-    const handleResize = () => {
+    const fit = () => {
       const chromeH = document.querySelector('.app-chrome')?.getBoundingClientRect().height ?? 40;
-      const stripH = showCurrentKeys ? 110 : 0;
+      const stripH = showCurrentKeys ? (stripRef.current?.getBoundingClientRect().height ?? 0) : 0;
       const paneW = showPane && (isDesktop || window.innerWidth >= 768) ? 382 : 0;
       const availH = Math.max(280, window.innerHeight - chromeH - stripH);
       const availW = Math.max(240, window.innerWidth - paneW);
-      setScale(Math.min(1, availH / 1000, availW / 504));
+      const next = Math.min(1, availH / 1000, availW / 504);
+      // Same scale as the unit, clamped so a large window stays at the
+      // current chip size and a tiny window keeps glyphs readable.
+      const nextChip = Math.min(1, Math.max(0.52, next));
+      setScale((prev) => (Math.abs(prev - next) < 0.004 ? prev : next));
+      setChipScale((prev) => (Math.abs(prev - nextChip) < 0.004 ? prev : nextChip));
     };
 
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [showCurrentKeys, showPane, isDesktop]);
+    fit();
+    window.addEventListener('resize', fit);
+    const ro = new ResizeObserver(fit);
+    if (stripRef.current) ro.observe(stripRef.current);
+    return () => {
+      window.removeEventListener('resize', fit);
+      ro.disconnect();
+    };
+  }, [showCurrentKeys, showPane, isDesktop, chipScale]);
 
   useEffect(() => {
     localStorage.setItem('calc_show_current_keys_on', showCurrentKeys ? '1' : '0');
@@ -205,7 +217,7 @@ const Calculator: React.FC = () => {
   });
 
   const renderKeyRow = (seq: string[], keyPrefix: string) => (
-    <div className="flex flex-wrap gap-1.5 items-center">
+    <div className="key-chip-row flex flex-wrap items-center" style={{ zoom: chipScale }}>
       {seq.map((label, i) => (
         <React.Fragment key={`${keyPrefix}-${i}`}>
           {renderMiniButton(label, `${keyPrefix}-${i}`)}
@@ -219,13 +231,29 @@ const Calculator: React.FC = () => {
     navigator.clipboard.writeText(text);
   };
 
+  const syncExprThumb = (el: HTMLDivElement) => {
+    const thumb = el.nextElementSibling as HTMLElement | null;
+    if (!thumb) return;
+    const max = el.scrollWidth - el.clientWidth;
+    if (max <= 1) {
+      thumb.style.opacity = '0';
+      return;
+    }
+    const w = Math.max(18, (el.clientWidth / el.scrollWidth) * el.clientWidth);
+    const x = (el.scrollLeft / max) * (el.clientWidth - w);
+    thumb.style.opacity = '1';
+    thumb.style.width = `${w}px`;
+    thumb.style.transform = `translateX(${x}px)`;
+  };
+
   return (
     <div className="app-shell flex flex-col bg-[#121212] m-0 overflow-hidden font-sans">
+      <div className={showCurrentKeys ? 'app-top keys-open' : 'app-top'}>
       <div className="app-chrome flex items-center gap-2 px-3 py-2 shrink-0" data-tauri-drag-region>
         <button
           type="button"
           onClick={() => setShowCurrentKeys(v => !v)}
-          className="app-no-drag px-3 py-1.5 bg-[#1c1c1c] text-[10px] font-black tracking-widest uppercase text-blue-400/80 rounded-full border border-white/10 hover:bg-[#2a2a2a]"
+          className="keys-toggle app-no-drag px-3 py-1.5 bg-[#1c1c1c] text-[10px] font-black tracking-widest uppercase text-blue-400/80 rounded-full border border-white/10 hover:bg-[#2a2a2a]"
         >
           {showCurrentKeys ? 'Hide keys' : 'Show keys'}
         </button>
@@ -233,7 +261,7 @@ const Calculator: React.FC = () => {
         <button
           type="button"
           onClick={() => setShowPane(!showPane)}
-          className="app-no-drag px-3 py-1.5 bg-[#1c1c1c] text-[10px] font-black tracking-widest uppercase text-white/70 rounded-full border border-white/10 hover:bg-[#2a2a2a]"
+          className="more-toggle app-no-drag px-3 py-1.5 bg-[#1c1c1c] text-[10px] font-black tracking-widest uppercase text-white/70 rounded-full border border-white/10 hover:bg-[#2a2a2a]"
         >
           More
         </button>
@@ -269,15 +297,15 @@ const Calculator: React.FC = () => {
         ) : null}
       </div>
       {showCurrentKeys && (
-        <div className="app-no-drag current-keys-strip w-full border-b border-white/10 px-4 py-3">
-          <span className="block text-[10px] font-black tracking-widest uppercase text-white/25 mb-1.5">Current keys</span>
+        <div ref={stripRef} className="app-no-drag current-keys-strip w-full border-b border-white/10 px-3 py-0.5">
           {liveKeys.length === 0 ? (
-            <div className="text-[11px] text-white/20 italic">No current operation</div>
+            <div className="text-[11px] text-white/20 italic py-1">No current operation</div>
           ) : (
             renderKeyRow(liveKeys, 'live')
           )}
         </div>
       )}
+      </div>
     <div className={`flex justify-center items-stretch flex-1 min-h-0 overflow-hidden gap-8 ${showPane ? 'flex-row' : 'flex-col md:flex-row'}`}>
 
       <div className="flex-1 min-h-0 min-w-0 flex items-center justify-center">
@@ -438,9 +466,9 @@ const Calculator: React.FC = () => {
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 custom-scrollbar">
+          <div className="history-scroll flex-1 min-h-0 p-3">
             {paneView === 'history' ? (
-              <div className="space-y-3">
+              <div className="space-y-1.5">
                 <div className="flex justify-between items-center px-2 pb-2">
                    <span className="text-[10px] font-black tracking-widest uppercase text-white/20">All time</span>
                    <button
@@ -456,7 +484,7 @@ const Calculator: React.FC = () => {
                   </div>
                 ) : (
                   store.history.map((item, idx) => (
-                        <div key={item.id} className="history-row group flex flex-col bg-white/[0.02] p-3 rounded-xl border border-white/5 hover:border-white/10 transition-all mb-2 last:mb-0">
+                        <div key={item.id} className="history-row group flex flex-col bg-white/[0.02] rounded-xl border border-white/5 hover:border-white/10 transition-all last:mb-0">
                           <div className="flex justify-between items-center mb-1">
                              <div className="text-[9px] text-white/10 font-black tracking-widest uppercase">#{store.history.length - idx}</div>
                              <div className="flex gap-3">
@@ -482,15 +510,20 @@ const Calculator: React.FC = () => {
                       </div>
                       <div className="flex items-center justify-between overflow-hidden gap-3">
                         {item.kind === 'action' && !item.rawInput.includes('→') ? (
-                          <div className="flex-shrink min-w-0 text-white/90 text-sm">{item.rawInput}</div>
+                          <div className="flex-shrink min-w-0 text-white/90 text-xs">{item.rawInput}</div>
                         ) : (
+                        <div className="history-expr-host">
                         <div
-                          className="flex-shrink min-w-0 text-white/90 text-sm overflow-x-auto overflow-y-hidden whitespace-nowrap custom-scrollbar pb-1 lcd-screen-mini"
+                          className="history-expr text-white/90 lcd-screen-mini"
+                          ref={(el) => { if (el) syncExprThumb(el); }}
+                          onScroll={(e) => syncExprThumb(e.currentTarget)}
                           dangerouslySetInnerHTML={{ __html: formatMath(item.rawInput) }}
                         />
+                        <div className="history-expr-thumb" />
+                        </div>
                         )}
                         {item.result !== null && (
-                        <div className="flex-shrink-0 text-white text-xl font-black tracking-tighter tabular-nums opacity-90 border-l border-white/10 pl-3">
+                        <div className="flex-shrink-0 text-white text-sm font-bold tracking-tight tabular-nums opacity-90 border-l border-white/10 pl-2">
                           {formatCalcPlain(item.result)}
                         </div>
                         )}

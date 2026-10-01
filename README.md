@@ -104,6 +104,6 @@ are menu chrome only.
 
 Phase 2 is landed. `p4-packaging` and `p4-tauri` are in
 (WebView2 daily exe ~10 MB; Electron kept as
-`build:exe:electron`). Next id is [`roadmap.md`](roadmap.md)
-**Now** (`show-keys-size`). Coverage:
+`build:exe:electron`). `show-keys-size` is in. Next id is
+[`roadmap.md`](roadmap.md) **Now** (`p3-cmplx`). Coverage:
 [`docs/coverage.md`](docs/coverage.md).

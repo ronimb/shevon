@@ -15,7 +15,7 @@ import {
   useCanvasAction,
 } from "cursor/canvas";
 
-const SHOW_KEYS = `Follow docs/prompts/show-keys-size.md exactly. One slice. Do not start Phase 3 leftovers, LineIO, or p4-exact. Do not change COMP / STAT / EQN beyond Show keys sizing.`;
+const PHASE3 = `Follow roadmap.md Phase 3. One slice: p3-cmplx. Do not start LineIO, hist-letters, or p4-exact. Do not change COMP / STAT / EQN beyond what that mode requires.`;
 
 const SANITY = `Follow docs/prompts/sanity-landed.md exactly. Smoke COMP / STAT / EQN only. Do not implement leftovers or start Phase 3.`;
 
@@ -35,19 +35,19 @@ export default function Packaging() {
         <H1>Packaging</H1>
         <Text tone="secondary">
           Historical view of landed `p4-packaging` + `p4-tauri`.
-          Markdown wins. **Now** is `show-keys-size`.
+          Markdown wins. **Now** is `p3-cmplx`.
         </Text>
       </Stack>
 
       <Row gap={8} wrap>
-        <Button variant="primary" onClick={() => start(SHOW_KEYS)}>
-          Start show-keys-size
+        <Button variant="primary" onClick={() => start(PHASE3)}>
+          Start p3-cmplx
         </Button>
         <Button
           variant="secondary"
-          onClick={() => open("docs/prompts/show-keys-size.md")}
+          onClick={() => open("roadmap.md")}
         >
-          Open show-keys-size kickoff
+          Open roadmap
         </Button>
         <Button variant="ghost" onClick={() => start(VALIDATE)}>
           Start unit pairing
@@ -60,7 +60,7 @@ export default function Packaging() {
       <Row gap={24} align="end">
         <Stat value="landed" label="p4-packaging" tone="success" />
         <Stat value="landed" label="p4-tauri" tone="success" />
-        <Stat value="show-keys-size" label="Now slice" />
+        <Stat value="p3-cmplx" label="Now slice" />
       </Row>
 
       <Callout tone="success" title="p4-tauri landed (29 Sep 2026)">
@@ -103,8 +103,8 @@ export default function Packaging() {
           <CardHeader>Next</CardHeader>
           <CardBody>
             <Stack gap={8}>
-              <Text>`show-keys-size` — chip scale on small screens</Text>
-              <Text>Phase 3 unblocked but not Now</Text>
+              <Text>`p3-cmplx` — CMPLX mode</Text>
+              <Text>`show-keys-size` landed</Text>
               <Text>Unit pairing at G2 (separate chat)</Text>
             </Stack>
           </CardBody>
@@ -113,8 +113,8 @@ export default function Packaging() {
 
       <H2>Launch</H2>
       <Row gap={8} wrap>
-        <Button variant="primary" onClick={() => start(SHOW_KEYS)}>
-          Start show-keys-size
+        <Button variant="primary" onClick={() => start(PHASE3)}>
+          Start p3-cmplx
         </Button>
         <Button variant="secondary" onClick={() => start(SANITY)}>
           Smoke sanity-landed

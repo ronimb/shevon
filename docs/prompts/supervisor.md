@@ -80,17 +80,15 @@ Each session, do only this:
 Re-read `roadmap.md` **Now** each session. If this snapshot disagrees
 with that file, the **roadmap wins** — then refresh this snapshot.
 
-Snapshot 29 Sep 2026:
+Snapshot 30 Sep 2026:
 
-- Next implementation is **`g1-resolve`**, then **`show-keys-size`**,
-  then Phase 3. Queue: `roadmap.md` **Now**.
-  `p4-packaging` and `p4-tauri` are landed.
-- `g1-resolve` closes G1 `R31` `R32` `R34`–`R37` plus
-  `prompt-prev-size`. Kickoff: [`g1-resolve.md`](g1-resolve.md).
-- After G1 pairing, next validate sitting is still **G14** (Show
-  keys size) before G2–G13 — [`validate-unit.md`](validate-unit.md).
-  Workflow: **validation session → log → separate issue-resolution
-  chat** (never fix inside pairing).
+- Next implementation is **`p3-cmplx`** (Phase 3). Queue: `roadmap.md`
+  **Now**. `show-keys-size` (with `show-keys-face` and `hist-scroll`)
+  is closed. `p4-packaging`, `p4-tauri`, and `g1-resolve` are landed.
+- SHIFT/ALPHA hold is desired and current — do not change it.
+- G14 pairing and its resolution are done. Next validate sitting is
+  **G2** — [`validate-unit.md`](validate-unit.md). Workflow:
+  validation → log → separate issue-resolution chat.
 - Phase 2 is landed. Daily driver: COMP + STAT + EQN (types 1–4).
 - Engine debt A–C is landed. Do not re-open unless a regression shows.
 - Do not pull LineIO, 99-byte, colon/Disp, or `hist-letters` into Now
@@ -104,8 +102,7 @@ Snapshot 29 Sep 2026:
   `roadmap.md` / `docs/tech-issues.md` / `issues.md`.
 - Mark a phase or id done from chat memory. Re-read the files.
 - Disable lying MODE rows as a standalone pass (`vis-menus` policy).
-- Start Phase 3 because it looks more fun while `g1-resolve` /
-  `show-keys-size` are **Now**.
+- Start a leftover because it looks smaller than `p3-cmplx`.
 - `Read` overlay photos or icon PNGs into chat (provider 400 risk).
 
 ## Reply shape

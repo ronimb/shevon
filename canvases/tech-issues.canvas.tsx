@@ -42,7 +42,7 @@ export default function TechIssues() {
 
       <Row gap={24} align="end">
         <Stat value="0" label="Open R-ids" tone="success" />
-        <Stat value="show-keys-size" label="Next" />
+        <Stat value="p3-cmplx" label="Next" />
       </Row>
 
       <Callout tone="info" title="G1 closed">
@@ -72,7 +72,7 @@ export default function TechIssues() {
       <Text tone="secondary">
         `ti-stat` … `ti-edges`, `R17`, `R27`–`R35`, `R37`, and
         `prompt-prev-size` are closed. `R36` dropped. Next slice is
-        `show-keys-size`.
+        `p3-cmplx`.
       </Text>
 
       <Row gap={8} wrap>

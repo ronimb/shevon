@@ -1,6 +1,6 @@
 import React from 'react';
 
-/** Light-gray number-pad keycaps (same 68×46 family as 0–9, +, Ans, =). */
+/** Number-pad keycaps (same 68×46 family as 0–9, +, Ans, =). */
 const NUMPAD_GRAY = new Set([
   '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
   '.', '+', '-', '×', '÷', 'Ans', '×10ˣ', '=',

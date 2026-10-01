@@ -32,10 +32,9 @@ wrap-up, then move them to **Landed**).
 
 Daily-driver bar: COMP + STAT + EQN. One slice per chat. Phase 2
 slices are closed. `p4-packaging` and `p4-tauri` are in (Pages
-skipped; WebView2 daily exe verified). Phase 3 is unblocked but
-not Now — `show-keys-size` before Phase 3.
-Lying MODE rows wait for the matching feature. LineIO / 99-byte /
-`:` / `hist-letters` stay parked.
+skipped; WebView2 daily exe verified). `show-keys-size` is in.
+Phase 3 is **Now**. Lying MODE rows wait for the matching feature.
+LineIO / 99-byte / `:` / `hist-letters` stay parked.
 
 Catalog of landed-correctness ids: `[docs/tech-issues.md](docs/tech-issues.md)`.
 Honesty leftovers: `[issues.md](issues.md)`. After every slice: `[sanity-landed.md](docs/prompts/sanity-landed.md)`.
@@ -49,9 +48,9 @@ Triage (no code): `[supervisor.md](docs/prompts/supervisor.md)`
 ### Queue
 
 
-| Order | Id               | What                                              | Kickoff                                       |
-| ----- | ---------------- | ------------------------------------------------- | --------------------------------------------- |
-| 1     | `show-keys-size` | Scale Show keys / Current history chips for small screens | [`show-keys-size.md`](docs/prompts/show-keys-size.md) |
+| Order | Id          | What                                                                 | Kickoff |
+| ----- | ----------- | -------------------------------------------------------------------- | ------- |
+| 1     | `p3-cmplx`  | CMPLX: i, ∠, a+bi / r∠θ, arg, Conjg                                  | this file, Phase 3 |
 
 
 `ti-stat` … `ti-edges`, `R17` (`r17-percent`), `R28` (`r28-exp`),
@@ -207,8 +206,8 @@ See **Landed**. Remaining COMP gaps that did not block Phase 1 are listed under
 ## Phase 3 — Remaining hardware modes
 
 **Status: not started.** One mode per slice, with manual sample operations as
-tests before done. Packaging gate is clear; Phase 3 waits until
-`show-keys-size` leaves **Now**.
+tests before done. Packaging gate is clear. `show-keys-size` has left
+**Now**; first slice is `p3-cmplx`.
 
 - [ ] `p3-cmplx` — CMPLX: i, ∠, a+bi / r∠θ, arg, Conjg, `'r∠θ` / `'a+bi`.
 - [ ] `p3-basen` — BASE-N: bases, d/h/b/o prefixes, logic ops, 16/32-bit ranges.
@@ -284,13 +283,13 @@ recipe, same as `reconstructSequence`.
   Opening the strip or History pane rescales the unit so it stays fully
   visible. AC clears the LCD and the strip. Records calculations **and**
   non-calc operations (STO letter, MODE, SETUP, CLR, M+/M−).
-- [ ] `show-keys-size` — Chip glyphs too large on ~13" laptops (fine on
-  ```
-  ~23"). Same UI in Electron and Tauri. Scale with window / DPI.
-  **Before Phase 3.** Pairing confirms in validate-unit **G14** after
-  G1 wraps. Issue: `show-keys-size`.
-  Kickoff: `[docs/prompts/show-keys-size.md](docs/prompts/show-keys-size.md)`.
-  ```
+- [x] `show-keys-size` — G14 resolution (30 Sep 2026). Chips scale
+  with the window on the Show keys strip and the History pane.
+  Numpad chips follow the face (darker cap, tighter radius, light
+  legend high on the cap). The live strip drops “CURRENT KEYS”,
+  tightens the gap, and hides **Hide keys** / **More** until hover.
+  History entry text is smaller; overflow is a thin overlay thumb.
+  **Associated issues closed:** `show-keys-face`, `hist-scroll`.
 - [ ] Remaining letter shortcuts (and SHIFT/ALPHA overlays for A–F / M)
   audited against this contract.
 - [ ] `shift-ac-mem` — SHIFT AC clears memory with a visible
@@ -298,7 +297,8 @@ recipe, same as `reconstructSequence`.
   2. Kickoff: `[docs/prompts/shift-ac-mem.md](docs/prompts/shift-ac-mem.md)`.
 
 Related defects: `[issues.md](issues.md)` `hist-letters`, `comp-keys`,
-`shift-ac-mem`, `show-keys-size`.
+`shift-ac-mem`. `show-keys-size`, `show-keys-face`, and `hist-scroll`
+are closed.
 
 ---
 
@@ -325,10 +325,11 @@ Coverage detail: `[docs/coverage.md](docs/coverage.md)`.
   ```
   Σ ±1e10 bounds; nested Pol/∫/d/dx/Σ ban.
   ```
-- [ ] `comp-keys` — PC keyboard: remaining letter keys steal typing; Shift is
+- [ ] `comp-keys` — PC keyboard: remaining letter keys steal typing.
   ```
-  hold vs overlay toggle. `x`/`y` now insert X/Y (see History sequence
-  contract).
+  SHIFT / ALPHA hold (release clears) is desired and current — do
+  not turn them into a latch. `x`/`y` now insert X/Y (see History
+  sequence contract).
   ```
 
 ---

@@ -25,10 +25,9 @@ Do **not** collapse these into one chat.
    rows that failed, or continue the next group. Do not start fixing
    mid-group because a fail showed up.
 
-Order for the current program: finish **G1** → resolution chat
-[`g1-resolve.md`](g1-resolve.md) (`R31` `R32` `R34`–`R37` +
-`prompt-prev-size`) → validation sitting **G14** /
-implementation `show-keys-size` → resume **G2**–G13. Pairing never
+Order for the current program: **G1** and **G14** are done
+(resolutions landed). Resume at **G2**. Cursor:
+[`validate-status.md`](validate-status.md). Pairing never
 jumps the queue; fixes never land inside pairing.
 
 ---
@@ -45,9 +44,9 @@ name the next row, tell Ron exactly what to press and what to
 compare, wait for his reports, log pass/fail. `manual.pdf` is
 gitignored — Ron must have a local copy. G1 already logged `R30` / `R31`; start at **G2** unless re-checking
 G1. (`R30` closed on re-check — unit also paints 25/2.) After **G1
-wraps**, the next pairing sitting walks **G14** (Show keys size —
-`show-keys-size`) before continuing G2–G13. That chrome fix is
-scheduled after `p4-tauri` and **before Phase 3**.
+wraps**, the next pairing sitting walks **G14** (done 30 Sep 2026;
+resolution landed as `show-keys-size`) before continuing G2–G13.
+That chrome fix is in. Next implementation is Phase 3.
 
 ### Default: guide only (no browser driving)
 
@@ -389,18 +388,18 @@ leave the lie until the feature ships, unless you see a **new** lie.
 | 9 | SHIFT 8 CONV | No conversions |
 | 10 | SHIFT DRG | No ° r g menu (`comp-drg`) |
 
-## G14 — Emulator extras (optional vs the unit; do this sitting after G1)
+## G14 — Emulator extras (optional vs the unit; sitting done)
 
-Not scored against the hardware face. **After G1 wraps, walk this
-group next** (before G2) so `show-keys-size` is confirmed on the
-laptop; the fix slice is queued before Phase 3.
+Not scored against the hardware face. Walked after G1. Resolution
+landed 30 Sep 2026 (`show-keys-size`, `show-keys-face`,
+`hist-scroll`). Do not refile.
 
 | # | What | Check |
 |---|------|--------|
 | 1 | Overlay hitboxes | Keys land on the art |
-| 2 | Show keys strip | Physical-key chips; X is ALPHA `)` |
-| 3 | Show keys size | On ~13" (or a narrow window): chips readable but not huge; strip does not dominate the face. Issue `show-keys-size`. Pass if already scaled; fail + keep issue open if oversized |
-| 4 | History pane Load | Loads COMP; clears overlays (`R26`) |
+| 2 | Show keys strip | Physical-key chips; X is ALPHA `)`. Numpad chip vs face art is `show-keys-face` — do not refile |
+| 3 | Show keys size | Strip chrome (`show-keys-size`, do not refile): less space above chips; no “CURRENT KEYS”; Hide keys / More hidden until hover while the strip is open |
+| 4 | History pane Load | Loads COMP; clears overlays (`R26`). Entry text size + scrollbar elegance is `hist-scroll` — do not refile |
 | 5 | Exe chrome | Frameless; Show keys / History off the face; Pin; `sin(30)` → 0.5 |
 
 ---
@@ -408,9 +407,8 @@ laptop; the fix slice is queued before Phase 3.
 ## How to run the evening
 
 1. Open this file, the **unit**, and Shevon (exe or `:3000`).
-2. Pick **one** group. After G1 is done, next sitting is **G14**
-   (Show keys size), then resume **G2**–G13. Tell the agent the
-   group id.
+2. Pick **one** group. G1 and G14 are done. Next sitting is **G2**,
+   then G3–G13. Tell the agent the group id.
 3. For each row, follow **Cadence**: agent coaches; you report unit
    then Shevon (G14 is Shevon-only — still one row at a time). Agent
    records item, form pass/fail, function (unit → Shevon). Keep the

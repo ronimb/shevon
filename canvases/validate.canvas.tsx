@@ -53,15 +53,16 @@ export default function Validate() {
 
       <Row gap={24} align="end">
         <Stat value="14" label="Groups" />
-        <Stat value="G14" label="After G1" tone="warning" />
+        <Stat value="G2" label="Next sitting" tone="warning" />
         <Stat value="G13" label="Honesty only" />
       </Row>
 
       <Callout tone="warning" title="Validate → log → resolve later">
         Pairing only: walk one group, log `R*` / issues, stop. Fixes
         are a separate kickoff after the sitting. You press the unit
-        and Shevon; agent coaches. Form includes visuals. After G1:
-        G14 (`show-keys-size`), then G2+. Do not implement here.
+        and Shevon; agent coaches. G1 and G14 are done. Next sitting
+        is G2.1. Cursor: `docs/prompts/validate-status.md`. Do not
+        implement here.
       </Callout>
 
       <H2>Groups (no overlap)</H2>
@@ -82,7 +83,7 @@ export default function Validate() {
           ["G11", "STAT", "Types, FREQ, Dist, stay-in-STAT"],
           ["G12", "EQN", "Types 1–4 editors and solves"],
           ["G13", "Honesty", "MODE 2/4/6/7/8, SETUP 2, CONST/CONV"],
-          ["G14", "Extras (after G1)", "Show keys size (show-keys-size), overlay, exe"],
+          ["G14", "Extras (after G1)", "Sitting and resolution done"],
         ]}
       />
       <Text tone="secondary">

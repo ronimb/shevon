@@ -15,9 +15,9 @@ Status is about **behavior**, not whether a menu label exists.
 Scheduled work: [`roadmap.md`](../roadmap.md). Honesty leftovers:
 [`issues.md`](../issues.md). Landed-correctness review:
 [`docs/tech-issues.md`](tech-issues.md).
-Refreshed 29 Sep 2026. Test count: 175. Queue: `roadmap.md` **Now**
-(`show-keys-size`). Percent is Done (`R17`). Phase 2 slices,
-`p4-packaging`, and `p4-tauri` are landed.
+Refreshed 30 Sep 2026. Test count: 180. Queue: `roadmap.md` **Now**
+(`p3-cmplx`). Percent is Done (`R17`). Phase 2 slices,
+`p4-packaging`, `p4-tauri`, and `show-keys-size` are landed.
 
 ---
 
@@ -161,7 +161,7 @@ MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
 | Feature | Manual | Status | In the emulator | Gap |
 |---------|--------|--------|-----------------|-----|
 | Photo overlay + hitboxes | — | Done | Absolute keys; triple-click calibration; `calculator_new.png` | — |
-| PC keyboard | — | Partial | Enter, arrows, Shift/Alt, comma (SHIFT )), S/C/T/L/R/Q/D/A, ` = S⇔D, X/Y vars | Letter keys steal typing; Shift hold vs overlay toggle |
+| PC keyboard | — | Partial | Enter, arrows, Shift/Alt, comma (SHIFT )), S/C/T/L/R/Q/D/A, ` = S⇔D, X/Y vars | Letter keys steal typing. SHIFT/ALPHA hold is correct |
 | History / LaTeX pane | — | Done | More pane: 50 items, Load, physical-key Show Keys; STO / MODE / SETUP actions | Not hardware behavior; keep as extra. Live Current keys strip is on top |
 | Tauri / WebView2 + Electron fallback | — | Done | Daily `build:exe` → frameless `Shevon.exe` (~10 MB WebView2); Pin; History widen; Keyboard show/hide; Electron `build:exe:electron` → `Shevon-electron.exe`; Pages/PWA install skipped | — |
 | Tests | E-16 examples | Partial | Golden + parser + CalcValue + STAT Edit + E-19 CALC + E-25 Dist + stay-in-STAT + E-28 linear + E-28 cubic (171) | Remaining numbered sample operations in the PDF |

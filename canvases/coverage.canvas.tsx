@@ -131,7 +131,7 @@ const FEATURES: Feature[] = [
   { area: "Errors", name: "Calculation range ±1×10^99", manual: "E-38", status: "partial", inCode: "Overflow beyond ±10¹⁰⁰ raises Math ERROR", gap: "Per-function ranges from E-38–39; factorial 69" },
 
   { area: "Platform", name: "Photo overlay + hitboxes", manual: "—", status: "done", inCode: "Absolute keys; triple-click calibration; calculator_new.png", gap: "" },
-  { area: "Platform", name: "PC keyboard", manual: "—", status: "partial", inCode: "Enter, arrows, Shift/Alt, comma (SHIFT )), S/C/T/L/R/Q/D/A, ` = S⇔D, X/Y vars", gap: "Letter keys steal typing; Shift hold vs overlay toggle" },
+  { area: "Platform", name: "PC keyboard", manual: "—", status: "partial", inCode: "Enter, arrows, Shift/Alt, comma (SHIFT )), S/C/T/L/R/Q/D/A, ` = S⇔D, X/Y vars", gap: "Letter keys steal typing. SHIFT/ALPHA hold is correct" },
   { area: "Platform", name: "History / LaTeX pane", manual: "—", status: "done", inCode: "More pane: 50 items, Load, physical-key Show Keys; STO/MODE/SETUP actions", gap: "Not hardware behavior; keep as extra. Live Current keys strip is on top" },
   { area: "Platform", name: "Tauri / WebView2 + Electron fallback", manual: "—", status: "done", inCode: "Daily build:exe → Shevon.exe (~10 MB WebView2); Pin; History widen; Keyboard show/hide; Electron build:exe:electron → Shevon-electron.exe; Pages/PWA skipped", gap: "" },
   { area: "Platform", name: "Tests", manual: "E-16 examples", status: "partial", inCode: "Golden + parser + CalcValue + STAT Edit + E-19 CALC + E-25 Dist + stay-in-STAT + E-28 linear + E-28 cubic (171)", gap: "Remaining numbered sample operations in the PDF" },
