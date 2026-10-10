@@ -280,7 +280,6 @@ export function LcdScreen(p: LcdProps) {
             <div className="mode-item"><span className="mode-num">6:</span>Fix</div>
             <div className="mode-item"><span className="mode-num">7:</span>Sci</div>
             <div className="mode-item"><span className="mode-num">8:</span>Norm</div>
-            <div className="mode-item col-span-2 text-black/40 text-[0.75rem]">▼ Disp</div>
         </div>
       );
     }

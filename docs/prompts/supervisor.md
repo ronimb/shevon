@@ -84,15 +84,17 @@ Snapshot 10 Oct 2026:
 
 - **Goal:** polish the daily exe on the existing featureset
   (COMP + STAT + EQN); later Phase 3 with the same pairing
-  treatment. **Now** queue empty (pairing-driven). All Phase 3
-  is **very low priority** (parked). Queue: `roadmap.md` **Now**.
-- `g2-resolve` landed; re-check passed `R39`–`R43` /
-  `setup-page2` (Ron confirmed `R39` size). `p4-packaging` /
+  treatment. **Now** queue empty — next is G4 pairing. All
+  Phase 3 is **very low priority** (parked). Queue:
+  `roadmap.md` **Now**.
+- `g2-resolve` / `g3-resolve` landed. `p4-packaging` /
   `p4-tauri` / `g1-resolve` / Show-keys landed.
 - SHIFT/ALPHA hold is desired (not latch); `R42` closed.
-- G1, G14, G2 walks **tested**. Next: G3 pairing
-  [`g3-pair.md`](g3-pair.md). Cursor:
-  [`validate-status.md`](validate-status.md). Workflow:
+- G1–G3 and G14 walks **tested**; `R44`–`R48` +
+  `setup-page1-disp` closed. Nested COMP cases are **G15**
+  (`g15-nested.md`), not G2/G3 addenda. Next pairing: **G4**
+  (`g4-pair.md`); G15 when nesting is scheduled.
+  Cursor: [`validate-status.md`](validate-status.md). Workflow:
   validation → log → separate issue-resolution chat.
 - Phase 2 is landed. Daily driver: COMP + STAT + EQN (types 1–4).
 - Engine debt A–C is landed. Do not re-open unless a regression shows.
@@ -102,7 +104,9 @@ Snapshot 10 Oct 2026:
 ## Do not
 
 - Implement calculator behavior, add keys, or “quickly land” a leftover
-  in this chat.
+  in this chat. If an implementation chat must revert, it uses
+  **git restore / revert** (`.cursor/rules/git-revert.mdc`) — not
+  hand undo.
 - Recreate a task list in the README, a canvas, or the reply. Point at
   `roadmap.md` / `docs/tech-issues.md` / `issues.md`.
 - Mark a phase or id done from chat memory. Re-read the files.
@@ -116,8 +120,15 @@ Short. Lead with the next scheduled id and whether anything is blocked.
 Then: file drift, if any. Then: the one question Ron must answer, if any.
 No status theatre.
 
-If Ron asks “what should I paste next?”, give only the kickoff path for
-the current **Now** slice (or the pairing / validate file he named).
+If Ron asks for a **setup prompt** / “what should I paste next?” /
+follow-up agent: put a **pastable block in this chat** (the text to
+copy into a new agent). Use **real line breaks** inside the block
+so it is readable (not one long wrapped sentence). Keep it short —
+path + start instruction + any recovery notes. Point at the `.md`
+kickoff for detail (`Follow docs/prompts/….md`) instead of pasting
+long unicode-heavy tables into the first message (avoids mojibake).
+Still write/update the kickoff `.md` when the slice needs a durable
+file.
 
 Start with one briefing from the files as they are now. Do not propose
 a new program.

@@ -74,6 +74,13 @@ Never batch rows, never “pre-drive” Shevon, never score a row from
 Shevon alone or from memory of the manual. No unit report → do not
 ask for (or drive) Shevon for that row.
 
+### Coach clearly
+
+Name keys so a human can read them (`x²` / `xⁿ` / `√`, or
+`x^2` / `sqrt` if symbols break). Never dump mojibake or cryptic
+stacked questions. Describing LCD form (“superscript 2”, “radical
+template”) is fine.
+
 For **every** item: check **form** (elements, placement/role,
 glyphs/templates, chrome) **and** **function** (same key sequence →
 same result or error as the unit, to displayed precision).
@@ -121,6 +128,13 @@ hyp, …), also verify edit hygiene — not only a happy-path `=`:
    template.
 4. **Partial fill then DEL** — delete the last digit of a slot, then
    DEL again on the empty slot; still no leak.
+5. **Nested templates** — when the unit allows a template *inside*
+   another (fraction under √, √ under a fraction, fraction in an
+   exponent, fraction inside log / ∫, …): form must stay nested
+   glyphs (not IR), caret ▲▼ / ◀▶ move through the *inner* slots
+   first the way the unit does, and DEL on an empty inner slot must
+   not leak IR or strand a broken outer template. Happy-path `=`
+   alone is not enough for these.
 
 If a happy-path row already passed but edit hygiene fails, log a new
 `R*` (landed-correctness). Do not call it “known” under closed
@@ -191,7 +205,8 @@ Digits, operators, Ans, scientific entry, replay. Not fractions.
 ## G2 — Fractions and display
 
 Templates and result formats. Not powers. Apply **Template editing
-QA** on rows 1–4 (and Rnd if you open a template).
+QA** on rows 1–4 (and Rnd if you open a template). Nested frac /
+continue-after-`=` cases live in **G15** (do not re-walk here).
 
 | # | Function | Form | Function |
 |---|---------|------|----------|
@@ -212,7 +227,8 @@ QA** on rows 1–4 (and Rnd if you open a template).
 ## G3 — Powers and roots
 
 Apply **Template editing QA** on √ / xⁿ / ⁿ√ (DEL empty box, no
-`sqrt(` / `pwr(` / `root(` leak).
+`sqrt(` / `pwr(` / `root(` leak). Nested frac×root/power cases
+live in **G15** (do not re-walk here).
 
 | # | Function | Form | Function |
 |---|---------|------|----------|
@@ -231,7 +247,7 @@ Apply **Template editing QA** on √ / xⁿ / ⁿ√ (DEL empty box, no
 
 π / e already walked in G1. log(a,b) LineIO comma form is `comp-lineio` — skip.
 Apply **Template editing QA** (DEL empty arg / base box; no `log10(`
-/ `ln(` / `log_b(` leak).
+/ `ln(` / `log_b(` leak), including nested frac where noted.
 
 | # | Function | Form | Function |
 |---|---------|------|----------|
@@ -240,6 +256,8 @@ Apply **Template editing QA** (DEL empty arg / base box; no `log10(`
 | 3 | log□ | log_b template (base box) | log base 2 of 8 `=` → 3 |
 | 4 | 10^ | SHIFT log; 10^ template | 10^ `3` `=` → 1000 |
 | 5 | e^ | SHIFT ln; e^ template | e^ `0` `=` → 1 |
+| 6 | log of fraction | Stacked frac inside log | log of `1`/`100` → −2 (or unit) |
+| 7 | 10^ of fraction | Frac in 10^ arg | 10^ (`−` `2`) or unit’s frac path → 0.01 |
 
 ## G5 — Trigonometry and hyperbolic
 
@@ -260,6 +278,8 @@ no `sin(` / `abs(` / `hyp` letter dump).
 | 8 | sinh cosh tanh | After hyp pick, templates | Pick one pair and match the unit |
 | 9 | sinh⁻¹ cosh⁻¹ tanh⁻¹ | Inverse hyp templates | One inverse vs the unit |
 | 10 | Abs | `| |` template, not `abs(` | Abs `(−)7` `=` → 7 |
+| 11 | sin of fraction | Frac inside sin template (Deg) | Unit’s natural path (e.g. sin of `30`/`2`) → match form + value |
+| 12 | Abs of fraction | Frac inside Abs | Abs of `(−)` `3`/`4` → `3`/`4` |
 
 ## G6 — Combinatorics and random
 
@@ -279,7 +299,7 @@ errors on the unit, log only if not already open.
 ## G7 — Calculus templates
 
 Apply **Template editing QA** (DEL empty integrand / limit; no
-`int(` / `diff(` / `Σ(` leak).
+`int(` / `diff(` / `Σ(` leak), including nested frac in integrand.
 
 | # | Function | Form | Function |
 |---|---------|------|----------|
@@ -288,6 +308,8 @@ Apply **Template editing QA** (DEL empty integrand / limit; no
 | 3 | ∫ value | Same sample as the unit (manual E-15 style) | Match displayed result or Time Out |
 | 4 | d/dx | Derivative template, not `diff(` | d/dx of X² at 3 → 6 |
 | 5 | Σ | Σ template | Σ of X from 1 to 5 → 15 |
+| 6 | ∫ fraction integrand | Stacked frac in integrand (simple) | Form nested; value vs unit sample |
+| 7 | d/dx of quotient | Frac or ÷ inside d/dx if unit allows | Form + value vs unit |
 
 Σ ±1e10 / nest bans are `sigma-bounds` — do not refile.
 
@@ -403,13 +425,35 @@ landed 30 Sep 2026 (`show-keys-size`, `show-keys-face`,
 | 4 | History pane Load | Loads COMP; clears overlays (`R26`). Entry text size + scrollbar elegance is `hist-scroll` — do not refile |
 | 5 | Exe chrome | Frameless; Show keys / History off the face; Pin; `sin(30)` → 0.5 |
 
+## G15 — Nested COMP templates
+
+Cross-template nests that G2/G3 happy-paths did not cover. Apply
+**Template editing QA** (including nested templates). Kickoff:
+[`g15-nested.md`](g15-nested.md). Do not fold these back into G2/G3.
+
+| # | Function | Form | Function |
+|---|---------|------|----------|
+| 1 | Nested fraction | Inner stacked frac inside outer | e.g. `1` / (`2`/`3`) vs unit; no IR leak |
+| 2 | Frac after `=` continue | Result usable; caret / Ans match unit | Fraction `=` then `+` `1` `=` |
+| 3 | Fraction under √ | Stacked frac inside radical | √ of `4`/`9` → `2`/`3` or unit form |
+| 4 | √ under fraction | Radical in num or den | e.g. √`9` / `4` → form + value |
+| 5 | Fraction exponent | Frac in `xⁿ` exponent | e.g. `8` ^ (`1`/`3`) → 2 |
+| 6 | Fraction base ^ n | Frac as power base | e.g. (`2`/`3`)² → `4`/`9` |
+| 7 | √ of sum | Radical over a sum | √(`9`+`16`) → 5 |
+| 8 | Even root of − | Math ERROR (not complex) | √ `(−)` `4` `=` |
+| 9 | Nested DEL | √ then `a b/c` inside; DEL empty inner | No IR leak; outer matches unit |
+| 10 | Ans as radicand | After a result, √ then Ans | Ans one caret object; value OK |
+
+Mode-specific nests (log/sin/∫ of frac) stay in G4 / G5 / G7.
+
 ---
 
 ## How to run the evening
 
 1. Open this file, the **unit**, and Shevon (exe or `:3000`).
-2. Pick **one** group. G1 and G14 are done. Next sitting is **G2**,
-   then G3–G13. Tell the agent the group id.
+2. Pick **one** group. G1–G3 and G14 are done. Next is **G4**,
+   then G5–G13; schedule **G15** when nesting is next. Tell the
+   agent the group id.
 3. For each row, follow **Cadence**: agent coaches; you report unit
    then Shevon (G14 is Shevon-only — still one row at a time). Agent
    records item, form pass/fail, function (unit → Shevon). Keep the

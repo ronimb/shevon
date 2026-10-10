@@ -1,0 +1,30 @@
+---
+description: When Ron asks to revert, use clean git restore — not hand rewrite
+alwaysApply: true
+---
+
+# Revert means git
+
+When Ron asks to **revert**, **undo**, or **cleanly revert** a change,
+he means a **clean git-based restore** of the files (or commit) in
+question — not a manual rewrite that approximates the old content.
+
+## Do
+
+- Identify the last good tree (prior commit, `HEAD`, or the commit
+  before the bad change).
+- Restore with git, e.g. `git checkout <good> -- <paths>`,
+  `git restore --source=<good> -- <paths>`, or `git revert <commit>`
+  when undoing a committed change on the branch.
+- Then re-check status / diff so the working tree matches that
+  source for those paths.
+- Update issue / roadmap notes only if the revert reopens work
+  (e.g. leave `R*` open again).
+
+## Do not
+
+- Hand-edit files to “look like” the old version (`StrReplace` /
+  rewrite as a fake undo).
+- Leave partial leftovers from the bad change.
+- Use destructive git (`reset --hard`, force push) unless Ron
+  explicitly asks for that form of revert.

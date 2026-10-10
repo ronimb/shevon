@@ -629,7 +629,8 @@ export const evaluateExpression = (
               afterWithoutExponent = after;
             }
           } else {
-            let match = after.match(/^([a-zA-Z0-9_]+|\([^)]*\))/);
+            // Reciprocal key inserts `^-1` (unary minus, no parens). R47.
+            let match = after.match(/^(-?\d+(?:\.\d*)?|[a-zA-Z_][a-zA-Z0-9_]*|\([^)]*\))/);
             if (match) {
               exponent = match[0];
               afterWithoutExponent = after.substring(match[0].length);
@@ -946,7 +947,8 @@ export const evaluateExpression = (
             exponent = 'NaN';
           }
         } else {
-          const match = afterText.match(/^([a-zA-Z0-9_]+|\([^)]*\))/);
+          // Reciprocal key inserts `^-1` (unary minus, no parens). R47.
+          const match = afterText.match(/^(-?\d+(?:\.\d*)?|[a-zA-Z_][a-zA-Z0-9_]*|\([^)]*\))/);
           if (match) {
             exponent = match[0];
             afterEnd = maxIdx + 1 + match[0].length;

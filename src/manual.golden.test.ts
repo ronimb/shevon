@@ -6,7 +6,7 @@ import { CURSOR_PATS } from './keys.ts';
 import { chipFamily, renderMiniButton } from './historyKeys.tsx';
 import { isLcdMenu, lcdPaintInput, lcdShowsCompCaret, LcdScreen, resultLineWhileEditing } from './lcd.tsx';
 import { liveOperationSequence, nextHistoryReplayDown, nextHistoryReplayUp, setupCommitSequence } from './historyOps.ts';
-import { evaluateExpression, mergePolRecVars, toFraction } from './evaluator.ts';
+import { evaluateExpression, mergePolRecVars, resultDisplayMode, toFraction } from './evaluator.ts';
 import { loadPersistedAngle, loadPersistedAns, loadPersistedVars } from './useCalculatorState.ts';
 import type { HistoryItem } from './types.ts';
 import {
@@ -467,9 +467,40 @@ describe('vis-no-literal / ir-leak — IR stems never reach the LCD', () => {
   it('unclosed sqrt(24^(2-2)‸ shows a radical, not the letters sqrt', () => {
     const html = formatMath('sqrt(24^(2-2)‸');
     expect(html).not.toContain('sqrt');
-    expect(html).toContain('root-symbol'); // √
+    expect(html).toContain('root-symbol');
+    expect(html).toContain('root-symbol-svg');
     expect(html).toContain('sup'); // ^(2-2) still superscripts inside the body
     expect(html).toContain('cursor');
+  });
+
+  it('nested frac / root keep stretchy radical chrome (vinculum join)', () => {
+    const fracInRoot = formatMath('sqrt(frac(1,2))');
+    expect(fracInRoot).toContain('root-symbol-svg');
+    expect(fracInRoot).toContain('root-body');
+    expect(fracInRoot).toContain('frac-container');
+    expect(fracInRoot).not.toMatch(/>√</);
+
+    const rootInFrac = formatMath('frac(sqrt(4),sqrt(9))');
+    expect(rootInFrac.match(/root-symbol-svg/g)?.length).toBe(2);
+    expect(rootInFrac).toContain('frac-container');
+
+    const rootInRoot = formatMath('sqrt(sqrt(16))');
+    expect(rootInRoot.match(/root-symbol-svg/g)?.length).toBe(2);
+
+    const nthFrac = formatMath('root(3,frac(8,1))');
+    expect(nthFrac).toContain('root-symbol-svg');
+    expect(nthFrac).toContain('frac-container');
+    expect(nthFrac).toContain('class="sup"');
+  });
+
+  it('empty radical radicand is a direct empty-slot under root-body (R45)', () => {
+    const html = formatMath('sqrt(‸)');
+    expect(html).toMatch(/root-body[^>]*>[\s\S]*class="empty-slot"/);
+    expect(html).toContain('cursor');
+    // Nested frac empties stay frac-scoped, not the radicand writing-line box.
+    const fracSlot = formatMath('sqrt(frac(‸,))');
+    expect(fracSlot).toContain('frac-num');
+    expect(fracSlot).toContain('empty-slot');
   });
 
   it('a second open template (frac) also renders instead of leaking frac(', () => {
@@ -599,6 +630,86 @@ describe('fraction ▲/▼ and DEL on an empty numerator', () => {
     expect(html).not.toContain(',2)');
     expect(html).not.toContain('frac(');
     expect(deleteCompAtCursor('frac(1‸,2)')).toBe('frac(‸,2)');
+  });
+});
+
+describe('g3-resolve — R44–R47 + setup-page1-disp', () => {
+  it('DEL on empty xⁿ / nth-root clears the template without a `,)` leak (R44)', () => {
+    expect(deleteCompAtCursor('pwr(‸,)')).toBe('‸');
+    expect(deleteCompAtCursor('root(‸,)')).toBe('‸');
+    expect(deleteCompAtCursor('1+pwr(‸,)+2')).toBe('1+‸+2');
+    expect(deleteCompAtCursor('pwr(‸,2)')).toBe('2‸');
+    const leaked = deleteCompAtCursor('pwr(‸,)');
+    expect(leaked).not.toContain(',');
+    expect(leaked).not.toContain(')');
+    expect(formatMath(leaked ?? '')).not.toContain(',)');
+  });
+
+  it('arrow navigation treats Ans as one token (R46)', () => {
+    expect(CURSOR_PATS).toEqual(expect.arrayContaining(['Ans']));
+    expect(moveCompCursorLeft('root(Ans,‸)')).toBe('root(Ans‸,)');
+    expect(moveCompCursorLeft('root(Ans‸,)')).toBe('root(‸Ans,)');
+    expect(moveCompCursorRight('root(‸Ans,)')).toBe('root(Ans‸,)');
+    expect(moveCompCursorRight('root(Ans‸,)')).toBe('root(Ans,‸)');
+    expect(moveCompCursorLeft('Ans+2‸')).toBe('Ans+‸2');
+    expect(moveCompCursorLeft('Ans+‸2')).toBe('Ans‸+2');
+    expect(moveCompCursorLeft('Ans‸+2')).toBe('‸Ans+2');
+    expect(moveCompCursorRight('‸Ans+2')).toBe('Ans‸+2');
+  });
+
+  it('reciprocal x⁻¹ evaluates to stacked 1/4 (R47)', () => {
+    const v = evalComp('4^-1');
+    expect(v).toBe(0.25);
+    expect(toFraction(v)).toEqual({ n: 1, d: 4 });
+    expect(resultDisplayMode(v)).toBe('fraction');
+    expect(formatMath('4^-1‸')).toContain('class="sup"');
+    expect(formatMath('4^-1‸')).toMatch(/sup[^>]*>-1</);
+  });
+
+  it('SETUP page 1 has no bottom ▼ Disp cue (setup-page1-disp)', () => {
+    const html = renderToStaticMarkup(React.createElement(LcdScreen, {
+      isShift: false,
+      isAlpha: false,
+      isSto: false,
+      isRcl: false,
+      vars: EMPTY_VARS,
+      statType: null,
+      angleMode: 'DEG',
+      displayFormat: { kind: 'norm', n: 1 },
+      displayMode: 'decimal',
+      mixedFraction: false,
+      calcMode: 'SETUP',
+      showingResult: false,
+      lcdError: null,
+      solveScreen: null,
+      solveResidual: 0,
+      promptVar: null,
+      promptValue: '',
+      prevPromptValue: '0',
+      currentInput: '‸',
+      ans: 0,
+      result: calcReal(0),
+      history: [],
+      replayIndex: -1,
+      eqnCoeffs: [],
+      eqnIndex: 0,
+      eqnResults: [],
+      eqnResultIdx: 0,
+      showHypMenu: false,
+      setupPrompt: null,
+      setupPage: 0,
+      statFrequencyEnabled: false,
+      statData: [],
+      statCursor: { row: 0, col: 0 },
+      statSubMenu: null,
+      engMode: null,
+      dmsResult: false,
+    }));
+    expect(html).toContain('MthIO');
+    expect(html).toContain('LineIO');
+    expect(html).toContain('Norm');
+    expect(html).not.toContain('▼ Disp');
+    expect(html).not.toMatch(/▼\s*Disp/);
   });
 });
 

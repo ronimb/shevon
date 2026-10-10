@@ -12,7 +12,17 @@ import {
   useCanvasAction,
 } from "cursor/canvas";
 
-const PRE = `Follow docs/prompts/validate-unit.md exactly. Pairing / verification only. Workflow: validation session (walk + log) then separate issue-resolution chat — never fix in this chat. Do not implement leftovers, Phase 3, p4-tauri, LineIO, or packaging. Default: guide and scribe only — name one row, tell Ron what to press on the unit then on Shevon, wait for his reports, compare and log. Do NOT open/lock/CDP/click the browser or drive Shevon unless Ron explicitly asks. Form includes visuals: log R* for glyph/shape/window-chrome mismatches Ron notices (π serif vs straight, ×10ˣ paint, caret, AC blank vs 0). Do NOT dismiss those as pixel-perfect font out of scope. Template editing QA mandatory (DEL empty, ▲▼, no IR leak). End sitting with a list of new R*/issue ids. Do not refile known leftovers. Update docs/prompts/validate-status.md when the sitting ends.`;
+const PRE = `Follow docs/prompts/validate-unit.md exactly. Pairing / verification only. Workflow: validation session (walk + log) then separate issue-resolution chat — never fix in this chat. Do not implement leftovers, Phase 3, p4-tauri, LineIO, or packaging. Default: guide and scribe only — name one row, tell Ron what to press on the unit then on Shevon, wait for his reports, compare and log. Do NOT open/lock/CDP/click the browser or drive Shevon unless Ron explicitly asks. Form includes visuals: log R* for glyph/shape/window-chrome mismatches Ron notices (π serif vs straight, ×10ˣ paint, caret, AC blank vs 0). Do NOT dismiss those as pixel-perfect font out of scope. Template editing QA mandatory (DEL empty, ▲▼, nested templates, no IR leak). End sitting with a list of new R*/issue ids. Do not refile known leftovers. Update docs/prompts/validate-status.md when the sitting ends.`;
+
+const G4 = `Follow docs/prompts/g4-pair.md exactly.
+Pairing only: G4 logs and exponentials.
+Guide and scribe. Do not implement. Do not start Phase 3.
+Update validate-status.md when done.`;
+
+const G15 = `Follow docs/prompts/g15-nested.md exactly.
+Pairing only: G15 nested COMP templates.
+Guide and scribe. Do not implement. Do not re-walk G2/G3.
+Do not start Phase 3. Update validate-status.md when done.`;
 
 const group = (id: string) =>
   `${PRE} Start with ${id} only. Finish that group, then stop. Summarize new R*/issue ids; do not start fixes.`;
@@ -34,14 +44,17 @@ export default function Validate() {
       </Stack>
 
       <Row gap={8} wrap>
+        <Button variant="primary" onClick={() => start(G4)}>
+          Start G4 logs
+        </Button>
+        <Button variant="secondary" onClick={() => start(G15)}>
+          Start G15 nested
+        </Button>
         <Button
-          variant="primary"
+          variant="ghost"
           onClick={() => open("canvases/g2-recheck.canvas.tsx")}
         >
           G2 re-check checklist
-        </Button>
-        <Button variant="secondary" onClick={() => start(group("G3"))}>
-          Start G3 powers
         </Button>
         <Button
           variant="ghost"
@@ -58,16 +71,16 @@ export default function Validate() {
       </Row>
 
       <Row gap={24} align="end">
-        <Stat value="14" label="Groups" />
-        <Stat value="G3" label="Next sitting" tone="warning" />
-        <Stat value="G13" label="Honesty only" />
+        <Stat value="15" label="Groups" />
+        <Stat value="G4" label="Next sitting" tone="warning" />
+        <Stat value="G15" label="Nested (later)" />
       </Row>
 
       <Callout tone="warning" title="Validate → log → resolve later">
         Pairing only: walk one group, log `R*` / issues, stop. Fixes
-        are a separate kickoff after the sitting. G1/G14/G2 walked;
-        `g2-resolve` re-check pass (R39–R43). Next: G3. Cursor:
-        `docs/prompts/validate-status.md`. Do not implement here.
+        are a separate kickoff after the sitting. G2/G3 closed.
+        Nested COMP cases are **G15**. Next: G4.
+        Cursor: `docs/prompts/validate-status.md`. Do not implement here.
       </Callout>
 
       <H2>Groups (no overlap)</H2>
@@ -76,12 +89,12 @@ export default function Validate() {
         headers={["Id", "Group", "What is in here"]}
         rows={[
           ["G1", "Arithmetic and entry", "Sitting done — R36 ×10ˣ glyph dropped"],
-          ["G2", "Fractions and display", "Sitting + re-check pass — R39–R43"],
-          ["G3", "Powers and roots", "Next — x² x³ xⁿ √ ³√ ⁿ√ x⁻¹; DEL empty / no leak"],
-          ["G4", "Logs and exponentials", "log ln log□ 10^ e^"],
-          ["G5", "Trigonometry and hyperbolic", "D/R/G, sin family, hyp, Abs"],
+          ["G2", "Fractions and display", "Sitting done"],
+          ["G3", "Powers and roots", "Sitting + resolve — R44–R48"],
+          ["G4", "Logs and exponentials", "Next — incl. log/10^ of fraction"],
+          ["G5", "Trigonometry and hyperbolic", "incl. sin/Abs of fraction"],
           ["G6", "Combinatorics and random", "x! nPr nCr Ran# RanInt#"],
-          ["G7", "Calculus templates", "∫ caret, d/dx, Σ; DEL empty / no leak"],
+          ["G7", "Calculus templates", "incl. frac in ∫ / d/dx"],
           ["G8", "Polar and rectangular", "Pol Rec + X,Y"],
           ["G9", "Memory", "STO RCL A–F X Y M CLR"],
           ["G10", "CALC and SOLVE", "Prompts, errors, Continue"],
@@ -89,10 +102,11 @@ export default function Validate() {
           ["G12", "EQN", "Types 1–4 editors and solves"],
           ["G13", "Honesty", "MODE 2/4/6/7/8, SETUP 2, CONST/CONV"],
           ["G14", "Extras (after G1)", "Sitting and resolution done"],
+          ["G15", "Nested COMP templates", "Untested — frac under √, etc."],
         ]}
       />
       <Text tone="secondary">
-        Source: `docs/prompts/validate-unit.md` · G2 done 10 Oct 2026.
+        Source: `docs/prompts/validate-unit.md` · g3-resolve 10 Oct 2026.
       </Text>
 
       <H2>Launch a group</H2>

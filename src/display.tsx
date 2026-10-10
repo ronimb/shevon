@@ -93,6 +93,18 @@ const namedFn = (label: string) => (a: string[], closed: boolean) =>
 const lx = (v: string | undefined) => v ?? '';
 
 /**
+ * Stretchy radical check (not a Unicode √ glyph). Height follows `.root`
+ * via flex stretch so nested frac / root keep the tip on the vinculum.
+ */
+const ROOT_SYMBOL_HTML =
+  '<span class="root-symbol" aria-hidden="true">' +
+  '<svg class="root-symbol-svg" viewBox="0 0 10 20" preserveAspectRatio="none" focusable="false">' +
+  '<path d="M1.2 10 L3.4 18.2 L8.6 1.4" fill="none" stroke="currentColor" ' +
+  'stroke-width="1.4" stroke-linecap="square" stroke-linejoin="miter" ' +
+  'vector-effect="non-scaling-stroke"/>' +
+  '</svg></span>';
+
+/**
  * Every `PATS` function stem, longest-first so the earliest/greediest match
  * wins. Trig / hyp / `ln` are here too: on the LCD they paint a styled function
  * name, never the ASCII stem.
@@ -164,12 +176,12 @@ const TEMPLATE_SPECS: TemplateSpec[] = [
   },
   {
     stem: 'root',
-    html: a => `<span class="root"><span class="sup">${slot(a[0])}</span><span class="root-symbol">√</span><span class="root-body">${slot(a[1] || '')}</span></span>`,
+    html: a => `<span class="root"><span class="sup">${slot(a[0])}</span>${ROOT_SYMBOL_HTML}<span class="root-body">${slot(a[1] || '')}</span></span>`,
     latex: a => `\\sqrt[${lx(a[0])}]{${lx(a[1])}}`,
   },
   {
     stem: 'sqrt',
-    html: a => `<span class="root"><span class="root-symbol">√</span><span class="root-body">${slot(a[0])}</span></span>`,
+    html: a => `<span class="root">${ROOT_SYMBOL_HTML}<span class="root-body">${slot(a[0])}</span></span>`,
     latex: a => `\\sqrt{${lx(a[0])}}`,
   },
   { stem: 'sqr', html: a => `${slot(a[0])}<span class="sup">2</span>`, latex: a => `{${lx(a[0])}}^2` },

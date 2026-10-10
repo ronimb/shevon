@@ -125,21 +125,51 @@ body {
     line-height: 1;
     vertical-align: middle;
 }
+/* nth-root index rides the top-left; body/symbol stretch with content. */
+.root > .sup {
+    align-self: flex-start;
+    margin-top: 0.02em;
+    margin-right: 0.02em;
+}
+/* Stretchy check: SVG height follows the radicand (nested frac / root). */
 .root-symbol {
-    font-size: 1.55em;
-    line-height: 0.82;
-    display: flex;
-    align-items: flex-end;
-    padding-bottom: 0.02em;
+    display: block;
+    flex: 0 0 auto;
+    width: 0.62em;
+    align-self: stretch;
+    margin-right: -0.06em;
+    position: relative;
+    z-index: 1;
+    line-height: 0;
+}
+.root-symbol-svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
 }
 .root-body {
+    /* Vinculum at the top edge so it meets the stretched tip at any height.
+       Content sits on the writing line (flex-end) — same as entered digits. */
     border-top: 1.5px solid currentColor;
-    margin-top: 0.2em;
-    padding: 0.28em 0.08em 0.02em 0.12em;
+    margin-top: 0;
+    padding: 0.14em 0.1em 0.04em 0.14em;
     display: inline-flex;
     align-items: flex-end;
-    min-height: 1.55em;
+    min-height: 1.35em;
     box-sizing: border-box;
+}
+/* Empty radicand box (R45): caret-tall, same width; bottom on the writing line. */
+.root-body > .empty-slot {
+    width: 0.62em;
+    min-width: 0.62em;
+    height: 1.2em;
+    min-height: 1.2em;
+    line-height: 1.2em;
+}
+.root-body > .empty-slot .cursor {
+    height: 1.05em;
+    vertical-align: bottom;
 }
 .root-body .sup {
     /* Sit inside the body box — never use a lift that can hit the vinculum. */
@@ -535,14 +565,11 @@ body {
 }
 
 .lcd-screen-mini .root-symbol {
-    font-size: 1.1em;
-    vertical-align: middle;
-    display: inline-block;
-    transform: translateY(-0.05em);
+    width: 0.5em;
 }
-
-.lcd-screen-mini .root-symbol {
-    font-size: 1em;
+.lcd-screen-mini .root-body {
+    min-height: 1.1em;
+    padding: 0.1em 0.08em 0.02em 0.1em;
 }
 
 .history-row {

@@ -40,6 +40,10 @@ Status: `[ ]` open · `[x]` fixed (move to **Closed** at the next wrap-up).
       `g2-resolve` (10 Oct 2026). CMPLX format waits `p3-cmplx`;
       Disp is `comp-sep`; CONT behavior stays stubbed.
       **Associated:** `vis-menus`.
+- [x] `setup-page1-disp` — SETUP page 1 no longer paints a bottom
+      `▼ Disp` cue (`g3-resolve`; 10 Oct 2026). Page-2 `5:Disp`
+      stays stubbed (`setup-page2` / `comp-sep`).
+      **Associated:** `vis-menus`.
 
 ---
 

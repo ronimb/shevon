@@ -742,6 +742,12 @@ export function deleteCompAtCursor(currentInput: string): string | null {
       const hoisted = readTopArg(after.slice(1));
       return before.slice(0, -found.length) + hoisted.arg + '‸' + hoisted.rest;
     }
+    // Empty power / nth-root first slot: unit clears the whole template (R44).
+    // Swallowing only `pwr(` / `root(` would leave a `,)` IR leak on the LCD.
+    if ((found === 'pwr(' || found === 'root(') && after.startsWith(',')) {
+      const hoisted = readTopArg(after.slice(1));
+      return before.slice(0, -found.length) + hoisted.arg + '‸' + hoisted.rest;
+    }
     if (found === 'frac(' || found === 'mix(') {
       return before.slice(0, -found.length) + '‸' + skipBalancedTail(after);
     }

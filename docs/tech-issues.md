@@ -1,6 +1,6 @@
 # Tech issues — landed correctness
 
-Source of truth for review ids `R1`–`R43` and slices `ti-*`.
+Source of truth for review ids `R1`–`R48` and slices `ti-*`.
 Not Phase 2 leftovers and not honesty-policy lies. Do not copy an
 R-id into [`issues.md`](../issues.md).
 
@@ -16,7 +16,7 @@ Status: `[ ]` open · `[x]` done.
 
 ## Open
 
-_(none.)_
+(none)
 
 ---
 
@@ -31,6 +31,19 @@ _(none.)_
 
 ## Closed this sitting
 
+- [x] `R45` — Empty radical radicand box: bottom on the writing line,
+      height matches the COMP caret (`1.2em`), width unchanged
+      (√ / ³√ / ⁿ√). 10 Oct 2026.
+- [x] `R48` — Radical vinculum stays joined under nested frac / root
+      (stretchy SVG check + top-edge bar; arbitrary nesting).
+      Unicode √ could not grow with radicand height. 10 Oct 2026.
+- [x] `R44` — Empty `xⁿ` then DEL clears the power template (no
+      `,)` IR leak). Same for empty nth-root first slot
+      (`g3-resolve`; logged G3.3 pairing 10 Oct 2026).
+- [x] `R46` — Arrow navigation treats `Ans` as one token on COMP
+      (`CURSOR_PATS`; `g3-resolve`; logged G3.7).
+- [x] `R47` — `x⁻¹` (`4^-1`) evaluates to 0.25 / stacked `1/4`
+      (unary-minus exponent; `g3-resolve`; logged G3.8).
 - [x] `R39` — Single empty-slot box (no concentric ⬚); size
       shrunk so boxes clear the fraction bar (`g2-resolve`; Ron
       confirmed 10 Oct 2026 — redundant `r39-slot` kickoff dropped).

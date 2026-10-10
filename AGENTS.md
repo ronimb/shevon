@@ -5,7 +5,10 @@ the markdown sources of truth. Do not invent a competing plan in chat or on a
 canvas. Do not name the hardware vendor or the original calculator model
 (see [`docs/principles.md`](docs/principles.md) **Naming**). Do not
 delete, move, or rename `manual.pdf` or any file Ron did not ask to
-change (`.cursor/rules/protected-files.mdc`).
+change (`.cursor/rules/protected-files.mdc`). When Ron asks to
+**revert** a change, use a **clean git restore** of the paths (or
+`git revert` of a commit) — do not hand-rewrite to approximate the
+old content (`.cursor/rules/git-revert.mdc`).
 
 ## Design principles (always)
 
