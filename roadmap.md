@@ -48,16 +48,16 @@ TABLE / CONST into **Now** on agent initiative. Lying MODE rows
 wait for the matching feature. LineIO / 99-byte / `:` /
 `hist-letters` stay parked.
 
-Active focus: continue unit pairing (G3+). `g2-resolve` is in
-**Landed**. Phase 3 stays parked.
+Active focus: continue unit pairing (G3+). `g2-resolve` (including
+`R39` size) is in **Landed**. Phase 3 stays parked.
 
 Catalog of landed-correctness ids: `[docs/tech-issues.md](docs/tech-issues.md)`.
 Honesty leftovers: `[issues.md](issues.md)`. After every slice: `[sanity-landed.md](docs/prompts/sanity-landed.md)`.
 STAT / EQN pairing (no code): `[sanity-stat.md](docs/prompts/sanity-stat.md)`.
 Unit pairing (no code): `[validate-unit.md](docs/prompts/validate-unit.md)`
 — walk and log only; fixes are separate resolution chats after the
-sitting. Next pairing group after resolve: G3 via
-`[validate-unit.md](docs/prompts/validate-unit.md)`.
+sitting. Next pairing: G3 via
+`[g3-pair.md](docs/prompts/g3-pair.md)`.
 Triage (no code): `[supervisor.md](docs/prompts/supervisor.md)`
 ([`triage.md`](docs/prompts/triage.md) is an alias).
 
@@ -68,8 +68,8 @@ _(empty — next work is pairing-driven after a G3 sitting.)_
 `ti-stat` … `ti-edges`, `R17` (`r17-percent`), `R28` (`r28-exp`),
 `R29` (`r29-int`), `g1-resolve`, and `g2-resolve` (`R39`–`R43` +
 `setup-page2` menu paint) are in **Landed**. `R36` (`×10ˣ` glyph)
-is unresolved and dropped — not in the queue. `R27` closed (PC `3` works).
-`R30` / `R33` closed earlier (not bugs / frac ▲▼).
+dropped — not in the queue. `R27` closed. `R30` / `R33` closed
+earlier (not bugs / frac ▲▼).
 
 Engine debt A–C historical: `[tech-debt.md](docs/prompts/tech-debt.md)`.
 
@@ -468,12 +468,12 @@ CALC/SOLVE prev value normal size (`prompt-prev-size`); typed prompt
 digits replace `A?` on the left (`R38`). `R36` ×10ˣ glyph dropped
 (unresolved, not prioritized; paint stays `R28`).
 
-**g2-resolve** — Empty template slot is one box (`R39`); mixed whole
-empty box with caret (`R40`); ab/c mixed result whole-beside-stack
-(`R41`); SHIFT hold across shifted keys (`R42`); DMS-first after
-sexagesimal `=` with S⇔D DMS → p/q → decimal (`R43`); SETUP page 2
-six-row paint (`setup-page2`). Pairing re-check untested until a
-later validate sitting.
+**g2-resolve** — Empty template slot is one box, sized clear of the
+frac bar (`R39`); mixed whole empty box with caret (`R40`); ab/c
+mixed result whole-beside-stack (`R41`); SHIFT hold across shifted
+keys (`R42`); DMS-first after sexagesimal `=` with S⇔D DMS → p/q →
+decimal (`R43`); SETUP page 2 six-row paint (`setup-page2`).
+Re-check pass 10 Oct 2026 (Ron confirmed `R39` size).
 
 **debt-source-map** — IR rewrite carries original offsets onto AST nodes and
 `CalcError.offset`. Syntax / Math ERROR ◀▶ jumps to the fault token. Implicit

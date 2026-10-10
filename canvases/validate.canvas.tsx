@@ -66,9 +66,8 @@ export default function Validate() {
       <Callout tone="warning" title="Validate → log → resolve later">
         Pairing only: walk one group, log `R*` / issues, stop. Fixes
         are a separate kickoff after the sitting. G1/G14/G2 walked;
-        `g2-resolve` closed R39–R43 in code (re-check untested).
-        Next: G3. Cursor: `docs/prompts/validate-status.md`. Do not
-        implement here.
+        `g2-resolve` re-check pass (R39–R43). Next: G3. Cursor:
+        `docs/prompts/validate-status.md`. Do not implement here.
       </Callout>
 
       <H2>Groups (no overlap)</H2>
@@ -77,7 +76,7 @@ export default function Validate() {
         headers={["Id", "Group", "What is in here"]}
         rows={[
           ["G1", "Arithmetic and entry", "Sitting done — R36 ×10ˣ glyph dropped"],
-          ["G2", "Fractions and display", "Sitting done — R39–R43 closed in code"],
+          ["G2", "Fractions and display", "Sitting + re-check pass — R39–R43"],
           ["G3", "Powers and roots", "Next — x² x³ xⁿ √ ³√ ⁿ√ x⁻¹; DEL empty / no leak"],
           ["G4", "Logs and exponentials", "log ln log□ 10^ e^"],
           ["G5", "Trigonometry and hyperbolic", "D/R/G, sin family, hyp, Abs"],

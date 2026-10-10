@@ -84,17 +84,16 @@ Snapshot 10 Oct 2026:
 
 - **Goal:** polish the daily exe on the existing featureset
   (COMP + STAT + EQN); later Phase 3 with the same pairing
-  treatment. **Now** is `g2-resolve` (`R39`–`R43`). All Phase 3 is
-  **very low priority** (parked). Queue: `roadmap.md` **Now**.
-- `show-keys-size` / `show-keys-face` / `hist-scroll` / `g1-resolve`
-  / `R38` landed and re-checked where noted. `p4-packaging` and
-  `p4-tauri` landed.
-- SHIFT/ALPHA hold is desired — `R42` closed in `g2-resolve` (hold
-  stays until release); do not change hold into a latch.
-- G1, G14, G2 walks are **tested**. `g2-resolve` closed `R39`–`R43`
-  + `setup-page2` in code (re-check untested). **Now** queue empty.
-  Next pairing: G3. Cursor: [`validate-status.md`](validate-status.md).
-  Workflow: validation → log → separate issue-resolution chat.
+  treatment. **Now** queue empty (pairing-driven). All Phase 3
+  is **very low priority** (parked). Queue: `roadmap.md` **Now**.
+- `g2-resolve` landed; re-check passed `R39`–`R43` /
+  `setup-page2` (Ron confirmed `R39` size). `p4-packaging` /
+  `p4-tauri` / `g1-resolve` / Show-keys landed.
+- SHIFT/ALPHA hold is desired (not latch); `R42` closed.
+- G1, G14, G2 walks **tested**. Next: G3 pairing
+  [`g3-pair.md`](g3-pair.md). Cursor:
+  [`validate-status.md`](validate-status.md). Workflow:
+  validation → log → separate issue-resolution chat.
 - Phase 2 is landed. Daily driver: COMP + STAT + EQN (types 1–4).
 - Engine debt A–C is landed. Do not re-open unless a regression shows.
 - Do not pull LineIO, 99-byte, colon/Disp, `hist-letters`, or

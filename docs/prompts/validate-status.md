@@ -17,18 +17,16 @@ in a pairing chat.
 ## Cursor
 
 **G2 sitting done** (10 Oct 2026). `g2-resolve` closed `R39`–`R43`
-and `setup-page2` in code. Re-check (10 Oct 2026): **pass** R40,
-R41, setup-page2, R42, R43, smoke. **R39** still open — empty
-boxes too large / overlap the fraction bar (size tweak pending
-re-verify).
++ `setup-page2`. Re-check **pass** (including `R39` size after
+shrink; Ron confirmed 10 Oct 2026). Redundant `r39-slot` kickoff
+dropped.
 
-**Next pairing sitting:** G3 — powers and roots — **new** chat from
-[`validate-unit.md`](validate-unit.md). Do not start Phase 3.
-**Now** queue empty (pairing-driven only). Closed chats:
+**Next pairing sitting:** G3 — [`g3-pair.md`](g3-pair.md).
+**Now** queue empty. Do not start Phase 3. Closed chats:
 [re-check](4fbb9cb3-f9d5-4048-a8bd-e98650315fcc),
 [R38 resolve](9aacae11-a4cf-46ce-a525-879a23bf52f2),
-[G2 pair](f2cb3982-4abe-4a32-9ec3-3a2966947df0).
-`g2-resolve` closed in code 10 Oct 2026.
+[G2 pair](f2cb3982-4abe-4a32-9ec3-3a2966947df0),
+[g2-resolve](4d4bba9a-944f-40b3-ab42-79ece793603f).
 
 ## Re-check results (10 Oct 2026)
 
@@ -70,7 +68,7 @@ Walked. `g1-resolve` re-check **passed** 10 Oct 2026. Layout find
 
 | # | Walk | Notes |
 |---|------|-------|
-| 1 `a b/c` | function **pass**. Form **fail** `R39` → **closed in code** (`g2-resolve`; re-check untested) | was concentric squares |
+| 1 `a b/c` | function **pass**. Form `R39` → **re-check pass** (single box, clear of frac bar) | was concentric / oversized |
 | 2 Mixed | function **pass**. Form **fail** `R40` → **closed in code** | was caret, no whole box |
 | 3 Frac ▲/▼ | **pass** | num ↔ den |
 | 4 Frac DEL empty num | **pass** | both → integer `2`; no leak |
@@ -84,7 +82,7 @@ Walked. `g1-resolve` re-check **passed** 10 Oct 2026. Layout find
 | 12 Rnd | **pass** | Fix 3: `Rnd(10÷3)×3` → 9.999; empty DEL clean |
 | 13 ° ′ ″ | `R43` → **closed in code** | was decimal-first after `=` |
 
-Open `R*` after `g2-resolve`: none. Re-check of G2 form rows still untested.
+Open `R*` after `g2-resolve` re-check: none.
 
 ### G14 — emulator extras (30 Sep 2026)
 

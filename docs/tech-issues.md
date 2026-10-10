@@ -16,9 +16,7 @@ Status: `[ ]` open · `[x]` done.
 
 ## Open
 
-- [ ] `R39` — Empty template slot size: single box is correct, but
-      boxes are too large and overlap the fraction bar. Logged
-      re-check 10 Oct 2026 after `g2-resolve`. Shrink and re-verify.
+_(none.)_
 
 ---
 
@@ -33,9 +31,9 @@ Status: `[ ]` open · `[x]` done.
 
 ## Closed this sitting
 
-- [x] `R39` *(partial)* — Concentric ⬚-in-border removed
-      (`g2-resolve`); re-check found boxes still too large vs the
-      frac bar — left **Open** for size polish.
+- [x] `R39` — Single empty-slot box (no concentric ⬚); size
+      shrunk so boxes clear the fraction bar (`g2-resolve`; Ron
+      confirmed 10 Oct 2026 — redundant `r39-slot` kickoff dropped).
 - [x] `R40` — Empty mixed whole (`a`) paints the empty box with the
       caret inside (`g2-resolve`; re-check pass 10 Oct 2026).
 - [x] `R41` — SETUP ab/c improper result paints mixed whole beside

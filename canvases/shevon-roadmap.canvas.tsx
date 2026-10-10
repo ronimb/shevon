@@ -14,7 +14,7 @@ import {
 
 const TRIAGE = `Follow docs/prompts/supervisor.md exactly. You are the Shevon supervisor (triage and oversight). Do not implement leftovers. Start with one briefing from the files as they are now.`;
 
-const VALIDATE = `Follow docs/prompts/validate-unit.md exactly. Pairing only — start at G3. Guide and scribe; Ron presses unit and Shevon. Do not drive the browser unless Ron asks. Do not implement. Finish G3, update validate-status.md, stop.`;
+const VALIDATE = `Follow docs/prompts/g3-pair.md exactly (and validate-unit.md for cadence). Pairing only — start at G3.1 x². Guide and scribe; Ron presses unit and Shevon. Do not drive the browser unless Ron asks. Do not implement. Finish G3, update validate-status.md, stop.`;
 
 export default function ShevonRoadmap() {
   const dispatch = useCanvasAction();
@@ -59,8 +59,8 @@ export default function ShevonRoadmap() {
       </Row>
 
       <Callout tone="info" title="Polish exe first">
-        Current goal: polish the daily exe on COMP + STAT + EQN
-        (pairing → fix → re-check). `g2-resolve` landed. Next: G3
+        Current goal: polish the daily exe on COMP + STAT + EQN.
+        `g2-resolve` landed (R39–R43 re-check pass). Next: G3
         pairing. Phase 3 stays parked.
       </Callout>
 
@@ -69,7 +69,7 @@ export default function ShevonRoadmap() {
         striped
         headers={["#", "Id", "What", "Kickoff"]}
         rows={[
-          ["—", "(empty)", "Pairing-driven after next G3 sitting", "validate-unit.md"],
+          ["—", "(empty)", "Pairing-driven after next G3 sitting", "g3-pair.md"],
         ]}
       />
 
@@ -79,21 +79,15 @@ export default function ShevonRoadmap() {
         </Button>
         <Button
           variant="ghost"
-          onClick={() => open("docs/prompts/validate-unit.md")}
+          onClick={() => open("docs/prompts/g3-pair.md")}
         >
-          validate-unit.md
+          g3-pair.md
         </Button>
         <Button
           variant="ghost"
           onClick={() => open("roadmap.md")}
         >
           Phase 3 (parked)
-        </Button>
-        <Button
-          variant="ghost"
-          onClick={() => open("docs/tech-issues.md")}
-        >
-          Open tech-issues.md
         </Button>
         <Button variant="ghost" onClick={() => start(TRIAGE)}>
           Start supervisor
@@ -102,10 +96,9 @@ export default function ShevonRoadmap() {
 
       <H2>Gates</H2>
       <Text>
-        Packaging + Tauri + `g1-resolve` + `g2-resolve` +
-        `show-keys-size` are in. Now queue empty. Phase 3 stays
-        parked. No LineIO / 99-byte / `:` / `hist-letters`. Debt
-        A–C landed. EQN 1–4 run.
+        `g2-resolve` landed (R39 size confirmed). Now queue empty.
+        Next: G3 pairing. Phase 3 parked. No LineIO / 99-byte /
+        `:` / `hist-letters`. Debt A–C landed. EQN 1–4 run.
       </Text>
 
       <Row gap={8} wrap>
@@ -113,11 +106,11 @@ export default function ShevonRoadmap() {
           supervisor.md
         </Pill>
         <Pill onClick={() => start(TRIAGE)}>Start supervisor</Pill>
+        <Pill onClick={() => open("docs/prompts/g3-pair.md")}>
+          g3-pair.md
+        </Pill>
         <Pill onClick={() => open("docs/prompts/validate-unit.md")}>
           validate-unit.md
-        </Pill>
-        <Pill onClick={() => open("docs/prompts/g2-resolve.md")}>
-          g2-resolve.md (landed)
         </Pill>
       </Row>
     </Stack>

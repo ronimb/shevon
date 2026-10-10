@@ -23,15 +23,14 @@ const ROWS: {
   title: string;
   press: string;
   expect: string;
-  /** Seeded from Ron's 10 Oct re-check; R39 still open (box size). */
   seed?: TodoStatus;
 }[] = [
   {
     id: "r39",
     title: "R39 — empty frac slot",
     press: "AC → a b/c (leave empty)",
-    expect: "One empty box per slot; clear of the fraction bar (size tweak)",
-    seed: "in_progress",
+    expect: "One empty box per slot; clear of the fraction bar",
+    seed: "completed",
   },
   {
     id: "r40",
@@ -97,7 +96,7 @@ const SEED: DoneMap = Object.fromEntries(
 
 export default function G2Recheck() {
   const dispatch = useCanvasAction();
-  const [done, setDone] = useCanvasState<DoneMap>("g2-recheck-done-v2", SEED);
+  const [done, setDone] = useCanvasState<DoneMap>("g2-recheck-done-v3", SEED);
   const open = (path: string) => dispatch({ type: "openFile", path });
 
   const todos: TodoItem[] = ROWS.map((r) => ({
@@ -122,8 +121,8 @@ export default function G2Recheck() {
       <Stack gap={8}>
         <H1>G2 re-check</H1>
         <Text tone="secondary">
-          Walk unit first, then Shevon. Click a row to mark done.
-          Pairing only — do not fix mid-sitting.
+          Historical checklist — all rows passed 10 Oct 2026.
+          Next pairing: G3.
         </Text>
       </Stack>
 
@@ -133,12 +132,12 @@ export default function G2Recheck() {
           label="Checked"
           tone={completed === ROWS.length ? "success" : "warning"}
         />
-        <Stat value="g2-resolve" label="Closed in code" />
+        <Stat value="pass" label="Re-check" tone="success" />
       </Row>
 
-      <Callout tone="warning" title="R39 size tweak">
-        Other rows passed re-check. Re-verify R39 only: empty boxes
-        should clear the fraction bar. Vite UI preferred.
+      <Callout tone="success" title="G2 form fails closed">
+        R39–R43 + setup-page2 re-check pass. Do not start a new
+        r39-slot slice. Continue at G3 pairing.
       </Callout>
 
       <TodoListCard
@@ -147,7 +146,7 @@ export default function G2Recheck() {
         onTodoClick={toggle}
       />
 
-      <H2>What to press / expect</H2>
+      <H2>What was pressed / expected</H2>
       <Table
         striped
         headers={["Id", "Press", "Expect (match unit)"]}
@@ -159,16 +158,16 @@ export default function G2Recheck() {
           Reset checks
         </Button>
         <Button
+          variant="primary"
+          onClick={() => open("docs/prompts/g3-pair.md")}
+        >
+          g3-pair.md
+        </Button>
+        <Button
           variant="ghost"
           onClick={() => open("docs/prompts/validate-status.md")}
         >
           validate-status.md
-        </Button>
-        <Button
-          variant="ghost"
-          onClick={() => open("docs/tech-issues.md")}
-        >
-          tech-issues.md
         </Button>
       </Row>
 
