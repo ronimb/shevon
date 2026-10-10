@@ -110,7 +110,7 @@ MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
 
 | Feature | Manual | Status | In the emulator | Gap |
 |---------|--------|--------|-----------------|-----|
-| CALC | E-19 | Done | Memory letters only (not stems); `A?` + previous value; CALC after `=` re-prompts; `Y=X²+X+3` stores Y | Not SETUP LineIO; colon / Disp is `comp-colon` |
+| CALC | E-19 | Done | Memory letters only (not stems); `A?` + previous bottom-right; typed digits replace prompt on left (`R38`); CALC after `=` re-prompts; `Y=X²+X+3` stores Y | Not SETUP LineIO; colon / Disp is `comp-colon` |
 | SOLVE | E-20 SHIFT CALC | Done | Prompts other letters (not letters inside `Ans` / `nCr` / stems); “solve for x”; Newton 40 steps; equation + x= + L-R=; Continue; Variable ERROR / Can’t Solve | Shared letter scan with CALC |
 
 ## STAT

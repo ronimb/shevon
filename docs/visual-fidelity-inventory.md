@@ -90,7 +90,9 @@ Ids match [`issues.md`](../issues.md) and [`roadmap.md`](../roadmap.md).
 
 Closed with `g1-resolve`: `prompt-prev-size` (prev value normal size);
 caret after `=` / Ans+ / history; AC blank result; serif `.math-pi`.
-`R36` (`×10ˣ` glyph) dropped — unresolved, not prioritized.
+`R38`: CALC/SOLVE typed digits replace `A?` on the left; previous
+stays bottom-right only. `R36` (`×10ˣ` glyph) dropped — unresolved,
+not prioritized.
 
 ---
 
@@ -222,8 +224,8 @@ overlay size** as the faceplate keycap (`keys.ts`):
 
 ## Summary
 
-Open visual holes on shipped COMP: none from `prompt-prev-size`
-(closed with `g1-resolve`).
+Open visual holes on shipped COMP: none from `prompt-prev-size` /
+`R38` (closed).
 STAT ▲▼ and dim CMPLX/MAT/VCT/Disp stay on `vis-indicators`. Menu
 lies wait on the matching feature (`vis-menus`).
 

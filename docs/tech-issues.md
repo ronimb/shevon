@@ -1,6 +1,6 @@
 # Tech issues — landed correctness
 
-Source of truth for review ids `R1`–`R37` and slices `ti-*`.
+Source of truth for review ids `R1`–`R38` and slices `ti-*`.
 Not Phase 2 leftovers and not honesty-policy lies. Do not copy an
 R-id into [`issues.md`](../issues.md).
 
@@ -16,7 +16,7 @@ Status: `[ ]` open · `[x]` done.
 
 ## Open
 
-_(none.)_
+_(none)_
 
 ---
 
@@ -31,6 +31,11 @@ _(none.)_
 
 ## Closed this sitting
 
+- [x] `R38` — CALC/SOLVE prompt entry: typed digits replace `A?` /
+      `B?` on the left; previous value stays bottom-right only
+      (not also under the prev on the right). Value path already
+      OK (`3A+B` → 25). Closed `prompt-prev-size` was size only.
+      Logged re-check 10 Oct 2026; fixed 10 Oct 2026.
 - [x] `R30` — Not a bug. Re-check 29 Sep 2026: unit and Shevon both
       paint stacked 25/2 after `12.5` `=`. Earlier filing used the
       checklist’s “12.5” as the unit value; that row was wrong.

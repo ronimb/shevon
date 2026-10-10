@@ -26,8 +26,9 @@ Do **not** collapse these into one chat.
    mid-group because a fail showed up.
 
 Order for the current program: **G1** and **G14** are done
-(resolutions landed). Resume at **G2**. Cursor:
-[`validate-status.md`](validate-status.md). Pairing never
+(resolutions landed; G14 face/size re-check passed 10 Oct 2026).
+Resume at **G2** in a **new** chat from [`g2-pair.md`](g2-pair.md).
+Cursor: [`validate-status.md`](validate-status.md). Pairing never
 jumps the queue; fixes never land inside pairing.
 
 ---
@@ -46,7 +47,7 @@ gitignored — Ron must have a local copy. G1 already logged `R30` / `R31`; star
 G1. (`R30` closed on re-check — unit also paints 25/2.) After **G1
 wraps**, the next pairing sitting walks **G14** (done 30 Sep 2026;
 resolution landed as `show-keys-size`) before continuing G2–G13.
-That chrome fix is in. Next implementation is Phase 3.
+That Show-keys fix is in. Phase 3 stays parked (low priority).
 
 ### Default: guide only (no browser driving)
 
@@ -321,7 +322,7 @@ is present and the **value** matches.
 
 | # | Function | Form | Function |
 |---|---------|------|----------|
-| 1 | CALC letters | `A?` (and friends); previous value bottom-right | `3A+B` CALC; A=5 B=10 → 25 |
+| 1 | CALC letters | `A?` (and friends); previous bottom-right; typed digits replace `A?` on the left (`R38` closed) | `3A+B` CALC; A=5 B=10 → 25 |
 | 2 | CALC not stems | cos(30) CALC does **not** prompt C? | |
 | 3 | CALC re-prompt | CALC after `=` asks again | Same 3A+B |
 | 4 | CALC assignment | `Y=X²+X+3` stores Y, not Newton | Matches E-19 |

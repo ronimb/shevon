@@ -193,11 +193,13 @@ export function LcdScreen(p: LcdProps) {
       );
     }
     if (calcOverlay && p.promptVar) {
+      // R38: typed digits replace A?/B? on the left; previous stays bottom-right.
+      const entry = p.promptValue !== '' ? p.promptValue : `${p.promptVar}?`;
       return (
         <div className="flex flex-col">
           <div className="text-[0.9rem] opacity-70 mb-1" dangerouslySetInnerHTML={{ __html: formatMath(p.currentInput.replace('‸', '')) }} />
           <div className="flex items-center">
-            <span className="mr-2">{p.promptVar}?</span>
+            <span className="mr-2">{entry}</span>
           </div>
         </div>
       );
@@ -324,8 +326,7 @@ export function LcdScreen(p: LcdProps) {
     if (allowsCalcSolveHyp(p.calcMode) && p.promptVar) {
       return (
         <div className="decimal-result flex flex-col items-end">
-          <div className="prompt-prev-value mb-[-4px]">{p.prevPromptValue}</div>
-          <div>{p.promptValue}</div>
+          <div className="prompt-prev-value">{p.prevPromptValue}</div>
         </div>
       );
     }

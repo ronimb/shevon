@@ -31,27 +31,42 @@ wrap-up, then move them to **Landed**).
 
 ## Now
 
-Daily-driver bar: COMP + STAT + EQN. One slice per chat. Phase 2
-slices are closed. `p4-packaging` and `p4-tauri` are in (Pages
-skipped; WebView2 daily exe verified). `show-keys-size` is in.
-Phase 3 is **Now**. Lying MODE rows wait for the matching feature.
-LineIO / 99-byte / `:` / `hist-letters` stay parked.
+**Goal (current):** polish the daily exe on the **existing**
+featureset (COMP + STAT + EQN, plus emulator extras already in).
+Unit pairing → log → resolve → re-check. One slice per chat.
+
+**Later:** implement Phase 3 modes and give each the same
+treatment (manual samples, honesty, form + function pairing).
+
+Phase 2 slices are closed. `p4-packaging` and `p4-tauri` are in
+(Pages skipped; WebView2 daily exe verified). `show-keys-size`
+is in.
+
+**Phase 3 (`p3-*`) is very low priority** — parked until Ron
+schedules a slice. Do not pull CMPLX / BASE-N / MATRIX / VECTOR /
+TABLE / CONST into **Now** on agent initiative. Lying MODE rows
+wait for the matching feature. LineIO / 99-byte / `:` /
+`hist-letters` stay parked.
+
+Active focus: unit pairing (G2+) and resolution chats for fails
+logged from those sittings. No open implementation id in the queue
+until a pairing fail is routed here.
 
 Catalog of landed-correctness ids: `[docs/tech-issues.md](docs/tech-issues.md)`.
 Honesty leftovers: `[issues.md](issues.md)`. After every slice: `[sanity-landed.md](docs/prompts/sanity-landed.md)`.
 STAT / EQN pairing (no code): `[sanity-stat.md](docs/prompts/sanity-stat.md)`.
 Unit pairing (no code): `[validate-unit.md](docs/prompts/validate-unit.md)`
 — walk and log only; fixes are separate resolution chats after the
-sitting.
+sitting. Next group: `[g2-pair.md](docs/prompts/g2-pair.md)`.
 Triage (no code): `[supervisor.md](docs/prompts/supervisor.md)`
 ([`triage.md`](docs/prompts/triage.md) is an alias).
 
 ### Queue
 
 
-| Order | Id          | What                                                                 | Kickoff |
-| ----- | ----------- | -------------------------------------------------------------------- | ------- |
-| 1     | `p3-cmplx`  | CMPLX: i, ∠, a+bi / r∠θ, arg, Conjg                                  | this file, Phase 3 |
+| Order | Id | What | Kickoff |
+| ----- | -- | ---- | ------- |
+| —     | _(empty)_ | Pairing-driven resolutions only; Phase 3 parked | — |
 
 
 `ti-stat` … `ti-edges`, `R17` (`r17-percent`), `R28` (`r28-exp`),
@@ -144,8 +159,8 @@ See **Landed**. Remaining COMP gaps that did not block Phase 1 are listed under
 
 **Status: landed.** Ron’s 27 Sep 2026 walk was clear except
 `setup-page2` (already on `issues.md` / `vis-menus`).
-`p4-packaging` and `p4-tauri` are in; Phase 3 is unblocked. **Now** is
-`show-keys-size`.
+`p4-packaging` and `p4-tauri` are in. Phase 3 stays **low priority**
+(parked). Pairing / daily-driver fidelity owns **Now**.
 
 - [x] `p2-freq` — SETUP STAT FREQ ON/OFF; editor row limits 80 / 40 / 26.
 - [x] `p2-solve` — SOLVE: prompt remaining variables, “solve for x”, then
@@ -206,9 +221,11 @@ See **Landed**. Remaining COMP gaps that did not block Phase 1 are listed under
 
 ## Phase 3 — Remaining hardware modes
 
-**Status: not started.** One mode per slice, with manual sample operations as
-tests before done. Packaging gate is clear. `show-keys-size` has left
-**Now**; first slice is `p3-cmplx`.
+**Status: not started. Very low priority — parked.** Not in **Now**.
+Do this only after the current exe featureset is polished via
+pairing. When unparked: one mode per slice, manual samples as
+tests, then the same form + function pairing treatment as COMP /
+STAT / EQN. Packaging gate is clear. First slice: `p3-cmplx`.
 
 - [ ] `p3-cmplx` — CMPLX: i, ∠, a+bi / r∠θ, arg, Conjg, `'r∠θ` / `'a+bi`.
 - [ ] `p3-basen` — BASE-N: bases, d/h/b/o prefixes, logic ops, 16/32-bit ranges.
@@ -227,8 +244,8 @@ policy). Do not add a separate not-implemented pass.
 ## Phase 4 — Fidelity and packaging
 
 **Status: packaging + Tauri landed.** `p4-exact` /
-`p4-samples` wait. Phase 3 is unblocked and does not wait on
-packaging.
+`p4-samples` wait. Phase 3 is low priority (parked) and does not
+block or get blocked by packaging.
 
 - [ ] `p4-exact` — Natural result forms: n√m, p/q π, mixed fractions — not just
   ```
@@ -387,7 +404,8 @@ X= result, L−R residual, Continue (`p2-solve`). LCD errors are one
 `lcdError` (`CalcError`), not Syntax/Math booleans.
 
 **CALC** — E-19 unshifted CALC (`p2-calc`): memory letters only (not
-stems / IR); `A?` + previous value; CALC after `=` re-prompts; assignment
+stems / IR); `A?` + previous bottom-right; typed digits replace the
+prompt on the left (`R38`); CALC after `=` re-prompts; assignment
 `Y=X²+X+3` evaluates the right side and stores Y. Not SOLVE / Newton.
 Not SETUP LineIO.
 
@@ -450,8 +468,9 @@ integrand/upper → lower and stops. `int(sqr(x),0,1)` is still 1/3.
 **g1-resolve** — COMP caret hidden after `=` / Ans-operator continue /
 history replay (`R32` / `R35` / `R31`); first history ▲ skips the
 on-screen latest; ▼ restores matching result; serif π (`R37`);
-CALC/SOLVE prev value normal size (`prompt-prev-size`). `R36` ×10ˣ
-glyph dropped (unresolved, not prioritized; paint stays `R28`).
+CALC/SOLVE prev value normal size (`prompt-prev-size`); typed prompt
+digits replace `A?` on the left (`R38`). `R36` ×10ˣ glyph dropped
+(unresolved, not prioritized; paint stays `R28`).
 
 **debt-source-map** — IR rewrite carries original offsets onto AST nodes and
 `CalcError.offset`. Syntax / Math ERROR ◀▶ jumps to the fault token. Implicit

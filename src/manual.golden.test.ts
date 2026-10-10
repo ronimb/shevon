@@ -1440,6 +1440,96 @@ describe('g1-resolve — caret / AC / history / ×10ˣ / π / prompt prev', () =
     expect(html).not.toContain('0.7rem');
     expect(html).not.toContain('opacity-50');
   });
+
+  it('CALC/SOLVE typed digits replace A? on the left; previous stays right (R38)', () => {
+    const idle = renderToStaticMarkup(React.createElement(LcdScreen, {
+      isShift: false,
+      isAlpha: false,
+      isSto: false,
+      isRcl: false,
+      vars: EMPTY_VARS,
+      statType: null,
+      angleMode: 'DEG',
+      displayFormat: { kind: 'norm', n: 1 },
+      displayMode: 'decimal',
+      mixedFraction: false,
+      calcMode: 'COMP',
+      showingResult: false,
+      lcdError: null,
+      solveScreen: null,
+      solveResidual: 0,
+      promptVar: 'A',
+      promptValue: '',
+      prevPromptValue: '0',
+      currentInput: '3A+B‸',
+      ans: 0,
+      result: calcReal(0),
+      history: [],
+      replayIndex: -1,
+      eqnCoeffs: [],
+      eqnIndex: 0,
+      eqnResults: [],
+      eqnResultIdx: 0,
+      showHypMenu: false,
+      setupPrompt: null,
+      setupPage: 0,
+      statFrequencyEnabled: false,
+      statData: [],
+      statCursor: { row: 0, col: 0 },
+      statSubMenu: null,
+      engMode: null,
+      dmsResult: false,
+    }));
+    expect(idle).toContain('A?');
+    expect(idle).toContain('prompt-prev-value');
+    expect(idle).toContain('>0<');
+
+    const typing = renderToStaticMarkup(React.createElement(LcdScreen, {
+      isShift: false,
+      isAlpha: false,
+      isSto: false,
+      isRcl: false,
+      vars: EMPTY_VARS,
+      statType: null,
+      angleMode: 'DEG',
+      displayFormat: { kind: 'norm', n: 1 },
+      displayMode: 'decimal',
+      mixedFraction: false,
+      calcMode: 'COMP',
+      showingResult: false,
+      lcdError: null,
+      solveScreen: null,
+      solveResidual: 0,
+      promptVar: 'A',
+      promptValue: '5',
+      prevPromptValue: '0',
+      currentInput: '3A+B‸',
+      ans: 0,
+      result: calcReal(0),
+      history: [],
+      replayIndex: -1,
+      eqnCoeffs: [],
+      eqnIndex: 0,
+      eqnResults: [],
+      eqnResultIdx: 0,
+      showHypMenu: false,
+      setupPrompt: null,
+      setupPage: 0,
+      statFrequencyEnabled: false,
+      statData: [],
+      statCursor: { row: 0, col: 0 },
+      statSubMenu: null,
+      engMode: null,
+      dmsResult: false,
+    }));
+    expect(typing).toContain('>5<');
+    expect(typing).not.toContain('A?');
+    expect(typing).toContain('prompt-prev-value');
+    expect(typing).toContain('>0<');
+    // Typed entry must not also paint under the previous value on the right.
+    const afterPrev = typing.split('prompt-prev-value')[1] ?? '';
+    expect(afterPrev).not.toMatch(/<div[^>]*>5<\/div>/);
+  });
 });
 
 describe('Phase 1 — hardware-accurate numerics', () => {

@@ -42,12 +42,13 @@ export default function TechIssues() {
 
       <Row gap={24} align="end">
         <Stat value="0" label="Open R-ids" tone="success" />
-        <Stat value="p3-cmplx" label="Next" />
+        <Stat value="G2" label="Pairing next" />
       </Row>
 
       <Callout tone="info" title="G1 closed">
         `R31`–`R35` and `R37` are checked. `R36` (`×10ˣ` glyph) is
         unresolved and dropped. Honesty leftovers stay on `issues.md`.
+        Phase 3 is parked (low priority).
       </Callout>
 
       <Row gap={8} wrap>
@@ -70,9 +71,9 @@ export default function TechIssues() {
       </Row>
 
       <Text tone="secondary">
-        `ti-stat` … `ti-edges`, `R17`, `R27`–`R35`, `R37`, and
-        `prompt-prev-size` are closed. `R36` dropped. Next slice is
-        `p3-cmplx`.
+        `ti-stat` … `ti-edges`, `R17`, `R27`–`R35`, `R37`–`R38`, and
+        `prompt-prev-size` are closed. `R36` dropped. Next focus is
+        unit pairing (G2+); Phase 3 stays parked.
       </Text>
 
       <Row gap={8} wrap>
