@@ -45,7 +45,16 @@ import {
 } from './modes/stat.tsx';
 import { EqnLinearScreen, EqnQuadEntry, EqnQuadScreen, EqnResultValue, eqnMenuSelect, moveEqnIndex, solveCubic, solveEqn, solveLinear2, solveLinear3, solveQuadratic, zeroEqnCoeffs } from './modes/eqn.tsx';
 import { formatMath, toLaTeX } from './display.tsx';
-import { formatForDisplay, formatEngineering, formatDMS, formatDMSText, roundToFormat, type DisplayFormat } from './format.ts';
+import {
+  formatForDisplay,
+  formatEngineering,
+  formatDMS,
+  formatDMSText,
+  keepModifierAfterAction,
+  resultStartsAsDms,
+  roundToFormat,
+  type DisplayFormat,
+} from './format.ts';
 import type { AngleMode, Vars } from './types.ts';
 
 /** Empty A–F/M/X/Y memory, matching calculator power-on defaults. */
@@ -207,6 +216,223 @@ describe('Phase 1 — display formatting', () => {
     expect(formatDMSText(2.5)).toBe('2°30′0″');
     expect(formatDMSText(1.508333333)).toBe('1°30′30″');
     expect(formatDMSText(2.5)).not.toMatch(/°.*°/);
+  });
+
+  it('sexagesimal = starts in DMS form, not decimal (R43)', () => {
+    expect(resultStartsAsDms('2°30°0°')).toBe(true);
+    expect(resultStartsAsDms('2+3')).toBe(false);
+    expect(formatDMSText(evalComp('2°30°0°'))).toBe('2°30′0″');
+  });
+});
+
+describe('g2-resolve — template paint / SHIFT hold / SETUP page 2', () => {
+  it('empty template slot is one box, not ⬚ inside a border (R39)', () => {
+    const html = formatMath('frac(‸,)');
+    expect(html).toContain('empty-slot');
+    expect(html).not.toContain('⬚');
+    // Caret lives inside the empty num box; den is a second empty box.
+    expect(html).toMatch(/empty-slot[^>]*>[\s\S]*cursor/);
+    const slots = html.match(/class="empty-slot"/g) ?? [];
+    expect(slots.length).toBe(2);
+  });
+
+  it('empty mixed whole paints a box around the caret (R40)', () => {
+    const html = formatMath('mix(‸,,)');
+    expect(html).toContain('mix-container');
+    expect(html).toContain('mix-whole');
+    expect(html).not.toContain('⬚');
+    expect(html).toMatch(/mix-whole[^>]*>[\s\S]*empty-slot[^>]*>[\s\S]*cursor/);
+    const slots = html.match(/class="empty-slot"/g) ?? [];
+    expect(slots.length).toBe(3);
+  });
+
+  it('SETUP ab/c paints mixed 1⅔ beside the stack, not a 3-level column (R41)', () => {
+    const html = renderToStaticMarkup(React.createElement(LcdScreen, {
+      isShift: false,
+      isAlpha: false,
+      isSto: false,
+      isRcl: false,
+      vars: EMPTY_VARS,
+      statType: null,
+      angleMode: 'DEG',
+      displayFormat: { kind: 'norm', n: 1 },
+      displayMode: 'fraction',
+      mixedFraction: true,
+      calcMode: 'COMP',
+      showingResult: true,
+      lcdError: null,
+      solveScreen: null,
+      solveResidual: 0,
+      promptVar: null,
+      promptValue: '',
+      prevPromptValue: '0',
+      currentInput: 'frac(5,3)‸',
+      ans: 5 / 3,
+      result: calcReal(5 / 3),
+      history: [],
+      replayIndex: -1,
+      eqnCoeffs: [],
+      eqnIndex: 0,
+      eqnResults: [],
+      eqnResultIdx: 0,
+      showHypMenu: false,
+      setupPrompt: null,
+      setupPage: 0,
+      statFrequencyEnabled: false,
+      statData: [],
+      statCursor: { row: 0, col: 0 },
+      statSubMenu: null,
+      engMode: null,
+      dmsResult: false,
+    }));
+    expect(html).toContain('mix-result');
+    expect(html).toContain('mix-whole');
+    expect(html).toMatch(/mix-whole[^>]*>1</);
+    expect(html).toContain('fraction-result');
+    // Improper d/c path stays a plain stack (no mix-result) — covered elsewhere.
+    const dOverC = renderToStaticMarkup(React.createElement(LcdScreen, {
+      isShift: false,
+      isAlpha: false,
+      isSto: false,
+      isRcl: false,
+      vars: EMPTY_VARS,
+      statType: null,
+      angleMode: 'DEG',
+      displayFormat: { kind: 'norm', n: 1 },
+      displayMode: 'fraction',
+      mixedFraction: false,
+      calcMode: 'COMP',
+      showingResult: true,
+      lcdError: null,
+      solveScreen: null,
+      solveResidual: 0,
+      promptVar: null,
+      promptValue: '',
+      prevPromptValue: '0',
+      currentInput: 'frac(5,3)‸',
+      ans: 5 / 3,
+      result: calcReal(5 / 3),
+      history: [],
+      replayIndex: -1,
+      eqnCoeffs: [],
+      eqnIndex: 0,
+      eqnResults: [],
+      eqnResultIdx: 0,
+      showHypMenu: false,
+      setupPrompt: null,
+      setupPage: 0,
+      statFrequencyEnabled: false,
+      statData: [],
+      statCursor: { row: 0, col: 0 },
+      statSubMenu: null,
+      engMode: null,
+      dmsResult: false,
+    }));
+    expect(dOverC).not.toContain('mix-result');
+    expect(dOverC).toContain('fraction-result');
+  });
+
+  it('SHIFT stays active across two shifted keys while held (R42)', () => {
+    expect(keepModifierAfterAction(true)).toBe(true);
+    expect(keepModifierAfterAction(false)).toBe(false);
+  });
+
+  it('DMS-first after = paints sexagesimal before decimal (R43)', () => {
+    const html = renderToStaticMarkup(React.createElement(LcdScreen, {
+      isShift: false,
+      isAlpha: false,
+      isSto: false,
+      isRcl: false,
+      vars: EMPTY_VARS,
+      statType: null,
+      angleMode: 'DEG',
+      displayFormat: { kind: 'norm', n: 1 },
+      displayMode: 'fraction',
+      mixedFraction: false,
+      calcMode: 'COMP',
+      showingResult: true,
+      lcdError: null,
+      solveScreen: null,
+      solveResidual: 0,
+      promptVar: null,
+      promptValue: '',
+      prevPromptValue: '0',
+      currentInput: '2°30°0°‸',
+      ans: 2.5,
+      result: calcReal(2.5),
+      history: [],
+      replayIndex: -1,
+      eqnCoeffs: [],
+      eqnIndex: 0,
+      eqnResults: [],
+      eqnResultIdx: 0,
+      showHypMenu: false,
+      setupPrompt: null,
+      setupPage: 0,
+      statFrequencyEnabled: false,
+      statData: [],
+      statCursor: { row: 0, col: 0 },
+      statSubMenu: null,
+      engMode: null,
+      dmsResult: true,
+    }));
+    expect(html).toContain('°');
+    expect(html).toContain('′');
+    expect(html).toContain('″');
+    expect(html).toMatch(/>2</);
+    expect(html).toMatch(/>30</);
+    // Must not be the bare decimal 2.5 as the primary result.
+    expect(html).not.toMatch(/>2\.5</);
+  });
+
+  it('SETUP page 2 paints six unit rows; STAT FREQ is key 4 (setup-page2)', () => {
+    const html = renderToStaticMarkup(React.createElement(LcdScreen, {
+      isShift: false,
+      isAlpha: false,
+      isSto: false,
+      isRcl: false,
+      vars: EMPTY_VARS,
+      statType: null,
+      angleMode: 'DEG',
+      displayFormat: { kind: 'norm', n: 1 },
+      displayMode: 'decimal',
+      mixedFraction: false,
+      calcMode: 'SETUP',
+      showingResult: false,
+      lcdError: null,
+      solveScreen: null,
+      solveResidual: 0,
+      promptVar: null,
+      promptValue: '',
+      prevPromptValue: '0',
+      currentInput: '‸',
+      ans: 0,
+      result: calcReal(0),
+      history: [],
+      replayIndex: -1,
+      eqnCoeffs: [],
+      eqnIndex: 0,
+      eqnResults: [],
+      eqnResultIdx: 0,
+      showHypMenu: false,
+      setupPrompt: null,
+      setupPage: 1,
+      statFrequencyEnabled: false,
+      statData: [],
+      statCursor: { row: 0, col: 0 },
+      statSubMenu: null,
+      engMode: null,
+      dmsResult: false,
+    }));
+    expect(html).toContain('ab/c');
+    expect(html).toContain('d/c');
+    expect(html).toContain('CMPLX');
+    expect(html).toContain('STAT');
+    expect(html).toContain('Disp');
+    expect(html).toContain('CONT');
+    expect(html).toMatch(/1:[\s\S]*ab\/c/);
+    expect(html).toMatch(/4:[\s\S]*STAT/);
+    expect(setupCommitSequence('freq', '1')).toEqual(['SHIFT', 'MODE', 'DOWN', '4', '1']);
   });
 });
 

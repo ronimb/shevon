@@ -258,12 +258,15 @@ export function LcdScreen(p: LcdProps) {
         return <div className="mode-menu"><div className="mode-item">{label}</div></div>;
       }
       if (p.setupPage === 1) {
+        // Unit page-2 rows (setup-page2). CMPLX / Disp / CONT stay stubbed.
         return (
           <div className="mode-menu">
             <div className="mode-item"><span className="mode-num">1:</span>ab/c</div>
             <div className="mode-item"><span className="mode-num">2:</span>d/c</div>
-            <div className="mode-item"><span className="mode-num">3:</span>STAT</div>
-            <div className="mode-item col-span-2 text-black/40 text-[0.75rem]">▲ back</div>
+            <div className="mode-item"><span className="mode-num">3:</span>CMPLX</div>
+            <div className="mode-item"><span className="mode-num">4:</span>STAT</div>
+            <div className="mode-item"><span className="mode-num">5:</span>Disp</div>
+            <div className="mode-item"><span className="mode-num">6:</span>CONT</div>
           </div>
         );
       }
@@ -394,11 +397,14 @@ export function LcdScreen(p: LcdProps) {
           const an = Math.abs(f.n);
           const whole = sign * Math.floor(an / f.d);
           const rem = an % f.d;
+          // Whole beside stacked frac (R41) — not whole/rem/den in one column.
           return (
-            <div className="fraction-result">
-              <span className="res-num mr-1">{whole}</span>
-              <span className="res-num">{rem}</span>
-              <span className="res-den">{f.d}</span>
+            <div className="mix-result">
+              <span className="mix-whole">{whole}</span>
+              <div className="fraction-result">
+                <span className="res-num">{rem}</span>
+                <span className="res-den">{f.d}</span>
+              </div>
             </div>
           );
         }

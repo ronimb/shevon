@@ -3,7 +3,7 @@ import { CalcError, calcPrimary, calcReal } from './types.ts';
 import type { CalcValue, Vars } from './types.ts';
 import { evaluateExpression, findPrecedingOperand, mergePolRecVars, resultDisplayMode, type PolRecWrite } from './evaluator.ts';
 import { formatMath, toLaTeX } from './display.tsx';
-import { DEFAULT_FORMAT } from './format.ts';
+import { DEFAULT_FORMAT, resultStartsAsDms } from './format.ts';
 import {
   deleteCompAtCursor,
   insertCompValue,
@@ -130,7 +130,7 @@ export function useModeRouter(s: CalculatorStore) {
     if (s.isShiftRef.current && val === '1') {
       const nextMode = statMenuAfterShift1(s.calcModeRef.current, s.statTypeRef.current);
       if (nextMode) {
-        s.setIsShift(false);
+        s.consumeShift();
         s.setCalcMode(nextMode);
         return;
       }
@@ -261,8 +261,8 @@ export function useModeRouter(s: CalculatorStore) {
         s.prependHistory({ rawInput: 'd/c', displayInput: 'd/c', result: null, latex: '', sequence: setupCommitSequence('improper'), kind: 'action' });
         s.setMixedFraction(false); s.setSetupPage(0); s.setCalcMode('COMP');
       }
-      else if (val === '3') s.setSetupPrompt('freq');
-      else { s.setSetupPage(0); s.setCalcMode('COMP'); }
+      else if (val === '4') s.setSetupPrompt('freq');
+      // 3:CMPLX 5:Disp 6:CONT — painted, not implemented; stay on SETUP.
       return;
     }
     if (s.calcMode === 'CLR_MENU') {
@@ -342,7 +342,7 @@ export function useModeRouter(s: CalculatorStore) {
       s.setCalcMode('SETUP');
       s.setSetupPage(0);
       s.setSetupPrompt(null);
-      s.setIsShift(false);
+      s.consumeShift();
     } else {
       s.setCalcMode('MENU');
     }
@@ -411,7 +411,8 @@ export function useModeRouter(s: CalculatorStore) {
     s.setLastValue(val);
     s.setShowingResult(true);
     s.setEngMode(null);
-    s.setDmsResult(false);
+    // Sexagesimal input shows DMS first after = (R43).
+    s.setDmsResult(resultStartsAsDms(raw));
     s.setReplayIndex(-1);
     s.setDisplayMode(resultDisplayMode(n));
   }, [s]);
@@ -444,12 +445,12 @@ export function useModeRouter(s: CalculatorStore) {
 
   const handleCalc = useCallback(() => {
     if (!allowsCalcSolveHyp(s.calcMode)) {
-      if (s.isShift) s.setIsShift(false);
-      if (s.isAlpha) s.setIsAlpha(false);
+      if (s.isShift) s.consumeShift();
+      if (s.isAlpha) s.consumeAlpha();
       return;
     }
     if (s.isShift) {
-      s.setIsShift(false);
+      s.consumeShift();
       s.setLcdError(null);
       s.setSolveScreen(null);
       s.setShowingResult(false);
@@ -476,7 +477,7 @@ export function useModeRouter(s: CalculatorStore) {
     }
     if (s.isAlpha) {
       handleInput('=');
-      s.setIsAlpha(false);
+      s.consumeAlpha();
       return;
     }
 
@@ -607,7 +608,7 @@ export function useModeRouter(s: CalculatorStore) {
     s.setReplayIndex(-1);
     if (s.calcMode === 'STAT_DATA') {
       if (s.isShift) {
-        s.setIsShift(false);
+        s.consumeShift();
         const next = applyStatInsert(s.statData, s.statCursor.row, s.statType, s.statFrequencyEnabled);
         s.setStatData(next.data);
         s.setStatCursor(prev => ({ ...prev, row: next.row }));
@@ -664,8 +665,10 @@ export function useModeRouter(s: CalculatorStore) {
     s.setCurrentInput("‸");
     s.setCurrentSequence([]);
     s.setShowingResult(false);
-    s.setIsShift(false);
-    s.setIsAlpha(false);
+    s.shiftHeldRef.current = false;
+    s.alphaHeldRef.current = false;
+    s.consumeShift();
+    s.consumeAlpha();
     s.setIsSto(false);
     s.setIsRcl(false);
     s.setSetupPrompt(null);
@@ -686,8 +689,10 @@ export function useModeRouter(s: CalculatorStore) {
     s.setCalcMode(patch.calcMode);
     if (patch.clearStatType) s.setStatType(null);
     applyOverlayClear();
-    s.setIsShift(false);
-    s.setIsAlpha(false);
+    s.shiftHeldRef.current = false;
+    s.alphaHeldRef.current = false;
+    s.consumeShift();
+    s.consumeAlpha();
     s.setIsSto(false);
     s.setIsRcl(false);
   }, [s, applyOverlayClear]);
@@ -761,7 +766,7 @@ export function useModeRouter(s: CalculatorStore) {
           s.setDisplayMode(resultDisplayMode(n));
           s.setLcdError(null);
           s.setEngMode(null);
-          s.setDmsResult(false);
+          s.setDmsResult(resultStartsAsDms(item.rawInput));
         }
       }
       return;
@@ -809,7 +814,7 @@ export function useModeRouter(s: CalculatorStore) {
           s.setDisplayMode(resultDisplayMode(n));
           s.setLcdError(null);
           s.setEngMode(null);
-          s.setDmsResult(false);
+          s.setDmsResult(resultStartsAsDms(item.rawInput));
           s.setCurrentInput(item.rawInput + '‸');
           s.setCurrentSequence([...item.sequence]);
         }
@@ -836,6 +841,12 @@ export function useModeRouter(s: CalculatorStore) {
 
   const toggleSD = useCallback(() => {
     if (!s.showingResult) return;
+    // Unit path under Norm 1: DMS → p/q → decimal (R43).
+    if (s.dmsResult) {
+      s.setDmsResult(false);
+      s.setDisplayMode(resultDisplayMode(s.ans) === 'fraction' ? 'fraction' : 'decimal');
+      return;
+    }
     s.setDisplayMode(prev => {
       if (prev === 'fraction') return 'decimal';
       return resultDisplayMode(s.ans) === 'fraction' ? 'fraction' : 'decimal';
@@ -849,8 +860,8 @@ export function useModeRouter(s: CalculatorStore) {
   const handleMemory = useCallback((action: string, v?: string) => {
     if (v === 'M' && s.isAlpha) {
       handleInput('M');
-      s.setIsAlpha(false);
-      s.setIsShift(false);
+      s.consumeAlpha();
+      s.consumeShift();
       return;
     }
 
@@ -894,8 +905,8 @@ export function useModeRouter(s: CalculatorStore) {
       if (s.isShift) { s.setIsSto(true); s.setIsRcl(false); }
       else { s.setIsRcl(true); s.setIsSto(false); }
     }
-    s.setIsShift(false);
-    s.setIsAlpha(false);
+    s.consumeShift();
+    s.consumeAlpha();
   }, [s, handleInput, performEvaluation]);
 
   const handleAlphaVar = useCallback((v: string) => {
@@ -916,8 +927,8 @@ export function useModeRouter(s: CalculatorStore) {
         if (attempt.ok === false) {
           s.setLcdError(attempt.error);
           s.setIsSto(false);
-          s.setIsShift(false);
-          s.setIsAlpha(false);
+          s.consumeShift();
+          s.consumeAlpha();
           return;
         }
         storedResult = attempt.value;
@@ -939,17 +950,17 @@ export function useModeRouter(s: CalculatorStore) {
       });
       s.setShowingResult(true);
       s.setIsSto(false);
-      s.setIsShift(false);
-      s.setIsAlpha(false);
+      s.consumeShift();
+      s.consumeAlpha();
     } else if (s.isRcl) {
       handleInput(v);
       s.setIsRcl(false);
-      s.setIsShift(false);
-      s.setIsAlpha(false);
+      s.consumeShift();
+      s.consumeAlpha();
     } else if (s.isAlpha) {
       handleInput(v);
-      s.setIsAlpha(false);
-      s.setIsShift(false);
+      s.consumeAlpha();
+      s.consumeShift();
     } else {
       if (v === 'A') handleInput('-');
       if (v === 'B') {
@@ -959,7 +970,7 @@ export function useModeRouter(s: CalculatorStore) {
       if (v === 'C') {
         if (s.isShift) {
           if (allowsCalcSolveHyp(s.calcMode)) handleInput('abs(‸');
-          s.setIsShift(false);
+          s.consumeShift();
         } else if (allowsCalcSolveHyp(s.calcMode)) {
           s.setShowHypMenu(true);
         }
@@ -980,7 +991,7 @@ export function useModeRouter(s: CalculatorStore) {
       handleAlphaVar(v);
     } else {
       handleInput(type + (s.isShift ? '⁻¹(‸' : '(‸'));
-      s.setIsShift(false);
+      s.consumeShift();
     }
   }, [s, handleInput, handleAlphaVar]);
 
@@ -992,7 +1003,7 @@ export function useModeRouter(s: CalculatorStore) {
     }
     else if (s.isShift && !forceNormal) {
       handleInput(type === '(' ? '%' : ',');
-      s.setIsShift(false);
+      s.consumeShift();
     }
     else {
       handleInput(type);
@@ -1003,7 +1014,7 @@ export function useModeRouter(s: CalculatorStore) {
 
   const handleFracKey = useCallback(() => {
     const shifted = s.isShift;
-    s.setIsShift(false);
+    s.consumeShift();
     if (!allowsCompLineEdit(s.calcMode)) return;
     if (shifted) {
       handleInput("mix(‸,,)");
@@ -1023,7 +1034,7 @@ export function useModeRouter(s: CalculatorStore) {
       handleInput(type === 'P' ? '×' : '÷');
       return;
     }
-    s.setIsShift(false);
+    s.consumeShift();
     if (!allowsCompLineEdit(s.calcMode)) return;
     const wrapped = wrapPrecedingBinary(s.currentInput, s.showingResult, type === 'P' ? 'nPr' : 'nCr');
     s.setCurrentInput(wrapped.input);
@@ -1033,12 +1044,12 @@ export function useModeRouter(s: CalculatorStore) {
   const handleIntegralKey = useCallback(() => {
     if (s.isShift) handleInput("diff(‸,x,)");
     else handleInput("int(‸,,,x)");
-    s.setIsShift(false);
+    s.consumeShift();
   }, [s, handleInput]);
 
   const handleSquareKey = useCallback(() => {
     const shifted = s.isShift;
-    s.setIsShift(false);
+    s.consumeShift();
     if (!allowsCompLineEdit(s.calcMode)) return;
     const next = applySquareKey(s.currentInput, s.showingResult, shifted);
     s.setCurrentInput(next.input);
@@ -1049,28 +1060,28 @@ export function useModeRouter(s: CalculatorStore) {
     if (s.isShift) handleInput('π');
     else if (s.isAlpha) handleInput('e');
     else handleInput('×10^(‸)');
-    s.setIsShift(false); s.setIsAlpha(false);
+    s.consumeShift(); s.consumeAlpha();
   }, [s, handleInput]);
 
   const handleEng = useCallback(() => {
-    if (!s.showingResult) { s.setIsShift(false); return; }
+    if (!s.showingResult) { s.consumeShift(); return; }
     const shiftUp = s.isShift;
     s.setEngMode(prev => {
       if (prev === null) return 0;
       return shiftUp ? prev + 1 : prev - 1;
     });
-    s.setIsShift(false);
+    s.consumeShift();
   }, [s]);
 
   const handleDotKey = useCallback(() => {
-    if (s.isShift) { handleInput('Ran#'); s.setIsShift(false); }
-    else if (s.isAlpha) { handleInput('RanInt(‸,'); s.setIsAlpha(false); }
+    if (s.isShift) { handleInput('Ran#'); s.consumeShift(); }
+    else if (s.isAlpha) { handleInput('RanInt(‸,'); s.consumeAlpha(); }
     else handleInput('.');
   }, [s, handleInput]);
 
   const handlePowerKey = useCallback((arg?: unknown) => {
     const shifted = s.isShift;
-    s.setIsShift(false);
+    s.consumeShift();
     if (!allowsCompLineEdit(s.calcMode)) return;
     const next = applyPowerKey(s.currentInput, s.showingResult, shifted, arg === true);
     s.setCurrentInput(next.input);
@@ -1079,17 +1090,17 @@ export function useModeRouter(s: CalculatorStore) {
 
   const handleFactorialKey = useCallback(() => {
     if (s.isShift) handleInput('!'); else handleInput('^-1');
-    s.setIsShift(false);
+    s.consumeShift();
   }, [s, handleInput]);
 
   const handleSquareRootKey = useCallback(() => {
     if (s.isShift) handleInput('root(3,‸)'); else handleInput('sqrt(‸)');
-    s.setIsShift(false);
+    s.consumeShift();
   }, [s, handleInput]);
 
   const handleLogKey = useCallback(() => {
     if (s.isShift) handleInput('Σ(‸,x,0,10)'); else handleInput('log_b(‸,');
-    s.setIsShift(false);
+    s.consumeShift();
   }, [s, handleInput]);
 
   const handleOpKey = useCallback((normal: string, shift: string) => {
@@ -1102,7 +1113,7 @@ export function useModeRouter(s: CalculatorStore) {
     } else {
       handleInput(normal);
     }
-    s.setIsShift(false);
+    s.consumeShift();
   }, [s, handleInput, handlePermComb]);
 
   const handleLog10Key = useCallback(() => {
@@ -1115,7 +1126,7 @@ export function useModeRouter(s: CalculatorStore) {
   const handleDivKey = useCallback(() => { handleOpKey('÷', 'nCr'); }, [handleOpKey]);
 
   const handleDigit0 = useCallback(() => {
-    if (s.isShift) { handleInput('Rnd(‸'); s.setIsShift(false); }
+    if (s.isShift) { handleInput('Rnd(‸'); s.consumeShift(); }
     else handleInput('0');
   }, [s, handleInput]);
 
@@ -1124,7 +1135,7 @@ export function useModeRouter(s: CalculatorStore) {
       ? statMenuAfterShift1(s.calcModeRef.current, s.statTypeRef.current)
       : null;
     if (nextMode) {
-      s.setIsShift(false);
+      s.consumeShift();
       s.setCalcMode(nextMode);
     } else {
       handleInput('1');
@@ -1132,7 +1143,7 @@ export function useModeRouter(s: CalculatorStore) {
   }, [s, handleInput]);
 
   const handleDigit9 = useCallback(() => {
-    if (s.isShift) { s.setCalcMode('CLR_MENU'); s.setIsShift(false); }
+    if (s.isShift) { s.setCalcMode('CLR_MENU'); s.consumeShift(); }
     else handleInput('9');
   }, [s, handleInput]);
 
@@ -1141,13 +1152,21 @@ export function useModeRouter(s: CalculatorStore) {
   }, [handleParentheses]);
 
   const setShiftMomentary = useCallback((val: boolean) => {
+    s.shiftHeldRef.current = val;
     s.setIsShift(val);
-    if (val) s.setIsAlpha(false);
+    if (val) {
+      s.alphaHeldRef.current = false;
+      s.setIsAlpha(false);
+    }
   }, [s]);
 
   const setAlphaMomentary = useCallback((val: boolean) => {
+    s.alphaHeldRef.current = val;
     s.setIsAlpha(val);
-    if (val) s.setIsShift(false);
+    if (val) {
+      s.shiftHeldRef.current = false;
+      s.setIsShift(false);
+    }
   }, [s]);
 
   return {

@@ -15,13 +15,11 @@ import {
   useCanvasAction,
 } from "cursor/canvas";
 
-const PHASE3 = `Follow roadmap.md Phase 3. One slice: p3-cmplx. Do not start LineIO, hist-letters, or p4-exact. Do not change COMP / STAT / EQN beyond what that mode requires.`;
-
 const SANITY = `Follow docs/prompts/sanity-landed.md exactly. Smoke COMP / STAT / EQN only. Do not implement leftovers or start Phase 3.`;
 
 const TRIAGE = `Follow docs/prompts/supervisor.md exactly. You are the Shevon supervisor (triage and oversight). Do not implement leftovers. Start with one briefing from the files as they are now.`;
 
-const VALIDATE = `Follow docs/prompts/validate-unit.md exactly. Pairing / verification only. Start at G2. Default: guide and scribe — tell Ron what to press on the unit then Shevon; wait for his reports. Do NOT drive the browser unless Ron asks. Do not implement leftovers, Phase 3, LineIO, or packaging.`;
+const VALIDATE = `Follow docs/prompts/g2-pair.md exactly (and validate-unit.md for cadence). New G2 pairing sitting only. Guide and scribe. Do NOT drive the browser unless Ron asks. Do not implement leftovers, Phase 3, LineIO, or packaging.`;
 
 export default function Packaging() {
   const dispatch = useCanvasAction();
@@ -35,22 +33,19 @@ export default function Packaging() {
         <H1>Packaging</H1>
         <Text tone="secondary">
           Historical view of landed `p4-packaging` + `p4-tauri`.
-          Markdown wins. **Now** is `p3-cmplx`.
+          Markdown wins. Phase 3 is parked (low priority).
         </Text>
       </Stack>
 
       <Row gap={8} wrap>
-        <Button variant="primary" onClick={() => start(PHASE3)}>
-          Start p3-cmplx
+        <Button variant="primary" onClick={() => start(VALIDATE)}>
+          Start G2 pairing
         </Button>
         <Button
           variant="secondary"
           onClick={() => open("roadmap.md")}
         >
           Open roadmap
-        </Button>
-        <Button variant="ghost" onClick={() => start(VALIDATE)}>
-          Start unit pairing
         </Button>
         <Button variant="ghost" onClick={() => start(TRIAGE)}>
           Start supervisor
@@ -60,7 +55,7 @@ export default function Packaging() {
       <Row gap={24} align="end">
         <Stat value="landed" label="p4-packaging" tone="success" />
         <Stat value="landed" label="p4-tauri" tone="success" />
-        <Stat value="p3-cmplx" label="Now slice" />
+        <Stat value="p3-*" label="Parked (low)" />
       </Row>
 
       <Callout tone="success" title="p4-tauri landed (29 Sep 2026)">
@@ -103,9 +98,9 @@ export default function Packaging() {
           <CardHeader>Next</CardHeader>
           <CardBody>
             <Stack gap={8}>
-              <Text>`p3-cmplx` — CMPLX mode</Text>
-              <Text>`show-keys-size` landed</Text>
               <Text>Unit pairing at G2 (separate chat)</Text>
+              <Text>`show-keys-size` landed</Text>
+              <Text>Phase 3 parked — low priority</Text>
             </Stack>
           </CardBody>
         </Card>
@@ -113,14 +108,11 @@ export default function Packaging() {
 
       <H2>Launch</H2>
       <Row gap={8} wrap>
-        <Button variant="primary" onClick={() => start(PHASE3)}>
-          Start p3-cmplx
+        <Button variant="primary" onClick={() => start(VALIDATE)}>
+          Unit pairing (G2)
         </Button>
         <Button variant="secondary" onClick={() => start(SANITY)}>
           Smoke sanity-landed
-        </Button>
-        <Button variant="ghost" onClick={() => start(VALIDATE)}>
-          Unit pairing (G2)
         </Button>
         <Button
           variant="ghost"

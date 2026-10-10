@@ -48,32 +48,28 @@ TABLE / CONST into **Now** on agent initiative. Lying MODE rows
 wait for the matching feature. LineIO / 99-byte / `:` /
 `hist-letters` stay parked.
 
-Active focus: unit pairing (G2+) and resolution chats for fails
-logged from those sittings. No open implementation id in the queue
-until a pairing fail is routed here.
+Active focus: continue unit pairing (G3+). `g2-resolve` is in
+**Landed**. Phase 3 stays parked.
 
 Catalog of landed-correctness ids: `[docs/tech-issues.md](docs/tech-issues.md)`.
 Honesty leftovers: `[issues.md](issues.md)`. After every slice: `[sanity-landed.md](docs/prompts/sanity-landed.md)`.
 STAT / EQN pairing (no code): `[sanity-stat.md](docs/prompts/sanity-stat.md)`.
 Unit pairing (no code): `[validate-unit.md](docs/prompts/validate-unit.md)`
 — walk and log only; fixes are separate resolution chats after the
-sitting. Next group: `[g2-pair.md](docs/prompts/g2-pair.md)`.
+sitting. Next pairing group after resolve: G3 via
+`[validate-unit.md](docs/prompts/validate-unit.md)`.
 Triage (no code): `[supervisor.md](docs/prompts/supervisor.md)`
 ([`triage.md`](docs/prompts/triage.md) is an alias).
 
 ### Queue
 
-
-| Order | Id | What | Kickoff |
-| ----- | -- | ---- | ------- |
-| —     | _(empty)_ | Pairing-driven resolutions only; Phase 3 parked | — |
-
+_(empty — next work is pairing-driven after a G3 sitting.)_
 
 `ti-stat` … `ti-edges`, `R17` (`r17-percent`), `R28` (`r28-exp`),
-`R29` (`r29-int`), and `g1-resolve` (`R31`–`R32`, `R34`–`R35`,
-`R37` + `prompt-prev-size`) are in **Landed**. `R36` (`×10ˣ` glyph)
+`R29` (`r29-int`), `g1-resolve`, and `g2-resolve` (`R39`–`R43` +
+`setup-page2` menu paint) are in **Landed**. `R36` (`×10ˣ` glyph)
 is unresolved and dropped — not in the queue. `R27` closed (PC `3` works).
-`R30` / `R33` closed earlier this sitting (not bugs / frac ▲▼).
+`R30` / `R33` closed earlier (not bugs / frac ▲▼).
 
 Engine debt A–C historical: `[tech-debt.md](docs/prompts/tech-debt.md)`.
 
@@ -421,8 +417,8 @@ lit; `=` uses the current STAT data. CALC / SOLVE / hyp do not overlay
 **Tests** — golden (manual samples + Phase 1/2 + vis-no-literal +
 history/keys + SOLVE + E-19 CALC + E-40 offset/jump + STAT Edit + E-25 Dist + stay-in-STAT + `ti-stat` +
 `ti-numerics` + `ti-store` + `ti-parse` + `ti-keys` + `ti-escape` +
-`ti-edges` + `r17-percent` + `r28-exp` + `r29-int` + `g1-resolve` + E-28 linear + E-28 cubic) + parser (implicit
-multiply) = 180 (30 Sep 2026).
+`ti-edges` + `r17-percent` + `r28-exp` + `r29-int` + `g1-resolve` + `g2-resolve` + E-28 linear + E-28 cubic) + parser (implicit
+multiply) = 188 (10 Oct 2026).
 
 **ti-stat** — STAT editor first keystroke replaces the cell (FREQ `1` → `5`);
 `evaluateExpression` does not overlay A/B/C/R/N on user memory; invalid
@@ -471,6 +467,13 @@ on-screen latest; ▼ restores matching result; serif π (`R37`);
 CALC/SOLVE prev value normal size (`prompt-prev-size`); typed prompt
 digits replace `A?` on the left (`R38`). `R36` ×10ˣ glyph dropped
 (unresolved, not prioritized; paint stays `R28`).
+
+**g2-resolve** — Empty template slot is one box (`R39`); mixed whole
+empty box with caret (`R40`); ab/c mixed result whole-beside-stack
+(`R41`); SHIFT hold across shifted keys (`R42`); DMS-first after
+sexagesimal `=` with S⇔D DMS → p/q → decimal (`R43`); SETUP page 2
+six-row paint (`setup-page2`). Pairing re-check untested until a
+later validate sitting.
 
 **debt-source-map** — IR rewrite carries original offsets onto AST nodes and
 `CalcError.offset`. Syntax / Math ERROR ◀▶ jumps to the fault token. Implicit

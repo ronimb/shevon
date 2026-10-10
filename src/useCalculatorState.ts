@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { CalcError, calcReal, type AngleMode, type CalcMode, type CalcValue, type DisplayMode, type EqnKind, type EqnResult, type HistoryItem, type StatEntry, type StatType, type Vars } from './types.ts';
-import { DEFAULT_FORMAT, type DisplayFormat } from './format.ts';
+import { DEFAULT_FORMAT, keepModifierAfterAction, type DisplayFormat } from './format.ts';
 import type { SetupPrompt, SolveScreen } from './lcd.tsx';
 
 const EMPTY_VARS: Vars = { A: 0, B: 0, C: 0, D: 0, E: 0, F: 0, X: 0, Y: 0, M: 0 };
@@ -67,6 +67,8 @@ export function useCalculatorState() {
   const [showingResult, setShowingResult] = useState<boolean>(false);
   const [isShift, setIsShiftState] = useState<boolean>(false);
   const isShiftRef = useRef(false);
+  /** True while the PC Shift key is held (momentary). Latch toggle leaves this false. */
+  const shiftHeldRef = useRef(false);
   const setIsShift = useCallback((val: boolean | ((prev: boolean) => boolean)) => {
     setIsShiftState(prev => {
       const next = typeof val === 'function' ? val(prev) : val;
@@ -74,7 +76,18 @@ export function useCalculatorState() {
       return next;
     });
   }, []);
-  const [isAlpha, setIsAlpha] = useState<boolean>(false);
+  /** Clear SHIFT after a shifted action unless the key is still held (R42). */
+  const consumeShift = useCallback(() => {
+    if (!keepModifierAfterAction(shiftHeldRef.current)) setIsShift(false);
+  }, [setIsShift]);
+  const [isAlpha, setIsAlphaState] = useState<boolean>(false);
+  const alphaHeldRef = useRef(false);
+  const setIsAlpha = useCallback((val: boolean | ((prev: boolean) => boolean)) => {
+    setIsAlphaState(prev => (typeof val === 'function' ? val(prev) : val));
+  }, []);
+  const consumeAlpha = useCallback(() => {
+    if (!keepModifierAfterAction(alphaHeldRef.current)) setIsAlpha(false);
+  }, [setIsAlpha]);
   const [isSto, setIsSto] = useState<boolean>(false);
   const [isRcl, setIsRcl] = useState<boolean>(false);
   const [displayMode, setDisplayMode] = useState<DisplayMode>('decimal');
@@ -155,8 +168,8 @@ export function useCalculatorState() {
     angleMode, setAngleMode,
     lastValue, setLastValue,
     showingResult, setShowingResult,
-    isShift, setIsShift,
-    isAlpha, setIsAlpha,
+    isShift, setIsShift, consumeShift, shiftHeldRef,
+    isAlpha, setIsAlpha, consumeAlpha, alphaHeldRef,
     isSto, setIsSto,
     isRcl, setIsRcl,
     displayMode, setDisplayMode,

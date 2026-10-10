@@ -30,7 +30,7 @@ export function liveOperationSequence(s: LiveOpState): string[] {
     case 'MENU':
       return ['MODE'];
     case 'SETUP': {
-      if (s.setupPrompt === 'freq') return ['SHIFT', 'MODE', 'DOWN', '3'];
+      if (s.setupPrompt === 'freq') return ['SHIFT', 'MODE', 'DOWN', '4'];
       const seq = ['SHIFT', 'MODE'];
       if (s.setupPage === 1) seq.push('DOWN');
       if (s.setupPrompt === 'fix') seq.push('6');
@@ -81,7 +81,7 @@ export function setupCommitSequence(
     case 'norm': return ['SHIFT', 'MODE', '8', digit ?? ''];
     case 'mix': return ['SHIFT', 'MODE', 'DOWN', '1'];
     case 'improper': return ['SHIFT', 'MODE', 'DOWN', '2'];
-    case 'freq': return ['SHIFT', 'MODE', 'DOWN', '3', digit ?? ''];
+    case 'freq': return ['SHIFT', 'MODE', 'DOWN', '4', digit ?? ''];
   }
 }
 

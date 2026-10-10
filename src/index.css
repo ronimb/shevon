@@ -163,10 +163,41 @@ body {
     margin: 0 2px; 
     line-height: 1;
 }
-.frac-num { border-bottom: 1.5px solid currentColor; padding: 0 2px; min-width: 10px; min-height: 1em; text-align: center; }
-.frac-den { padding: 0 2px; min-width: 10px; min-height: 1em; text-align: center; }
+.frac-num { border-bottom: 1.5px solid currentColor; padding: 1px 2px 2px; min-width: 10px; min-height: 0.7em; text-align: center; line-height: 1; }
+.frac-den { padding: 2px 2px 0; min-width: 10px; min-height: 0.7em; text-align: center; line-height: 1; }
 
-.empty-slot { color: rgba(0,0,0,0.3); font-size: 1.1em; font-weight: bold; vertical-align: middle; }
+/* Single empty input slot (R39) — one box, no inner ⬚ glyph.
+   Sized under the frac bar so num/den boxes do not collide with it. */
+.empty-slot {
+  display: inline-block;
+  box-sizing: border-box;
+  width: 0.62em;
+  height: 0.62em;
+  min-width: 0.62em;
+  min-height: 0.62em;
+  border: 1px solid rgba(0, 0, 0, 0.55);
+  margin: 0 0.5px;
+  vertical-align: middle;
+  line-height: 0.62em;
+  text-align: center;
+  background: transparent;
+  color: transparent;
+  font-size: 1em;
+}
+.frac-num .empty-slot,
+.frac-den .empty-slot {
+  width: 0.55em;
+  height: 0.55em;
+  min-width: 0.55em;
+  min-height: 0.55em;
+  line-height: 0.55em;
+}
+.empty-slot .cursor {
+  width: 1.5px;
+  height: 0.5em;
+  margin-left: 0;
+  vertical-align: top;
+}
 .mix-container { display: inline-flex; align-items: center; margin: 0 2px; }
 .mix-whole { margin-right: 2px; }
 
@@ -284,20 +315,6 @@ body {
   border-radius: 2px;
 }
 
-.empty-slot {
-  display: inline-block;
-  min-width: 0.8rem;
-  height: 0.9rem;
-  border: 1px dashed rgba(0,0,0,0.4);
-  margin: 0 1px;
-  vertical-align: middle;
-  line-height: 0.9rem;
-  text-align: center;
-  font-size: 0.6rem;
-  color: rgba(0,0,0,0.3);
-  background: rgba(0,0,0,0.05);
-}
-
 .stat-menu .mode-item, .stat-result-menu .mode-item, .stat-submenu .mode-item {
   font-size: 0.95rem;
   font-weight: 900;
@@ -356,6 +373,16 @@ body {
 .fraction-result { display: flex; flex-direction: column; align-items: center; font-size: 1.5rem; font-weight: bold; }
 .fraction-result .res-num { border-bottom: 2px solid #1a1a1a; padding: 0 4px; }
 .fraction-result .res-den { padding: 0 4px; }
+/* ab/c mixed result: whole beside stacked frac (R41), not a 3-level column. */
+.mix-result {
+  display: inline-flex;
+  align-items: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  gap: 0.12em;
+}
+.mix-result .mix-whole { margin-right: 0.08em; line-height: 1; }
+.mix-result .fraction-result { font-size: 1em; }
 
 .key { 
     position: absolute; 
@@ -477,7 +504,7 @@ body {
 .lcd-screen-mini {
     color: #fff;
     font-family: var(--font-mono);
-    font-size: 0.75rem;
+    font-size: 1rem;
     line-height: 1.25;
 }
 

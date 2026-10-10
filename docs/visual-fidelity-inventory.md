@@ -47,15 +47,15 @@ rebuild.
 |---------|----------|-------|
 | LCD shell + dual-line layout | `lcd.tsx` | Input top-left, result bottom-right |
 | Status annunciators (S, A, M, STO, RCL, STAT, D/R/G, FIX, SCI) | `lcd.tsx` | Rendered and wired to real state |
-| COMP caret + empty-slot boxes | `display.tsx` | `‸` → blinking bar; `⬚` dashed template slots |
+| COMP caret + empty-slot boxes | `display.tsx` | `‸` → blinking bar; single-border empty template slots (`R39`/`R40`) |
 | EQN / STAT editor carets | `eqn.tsx`, `stat.tsx` | Active cell shows a caret, not only a shaded box |
-| MODE / SETUP / CLR menus | `lcd.tsx`, `modeRouter.ts` | Both SETUP pages render; Deg/Rad/Gra/Fix/Sci/Norm/ab/c/d/c/FREQ work |
+| MODE / SETUP / CLR menus | `lcd.tsx`, `modeRouter.ts` | Both SETUP pages render; page 2 is ab/c d/c CMPLX STAT Disp CONT; Deg/Rad/Gra/Fix/Sci/Norm/ab/c/d/c/FREQ work; CMPLX/Disp/CONT stubbed |
 | STAT type menu | `stat.tsx` | All 8 types selectable |
 | STAT Edit menu | `stat.tsx` | From editor: SHIFT 1 → 1:Type 2:Data 3:Edit; Edit is 1:Ins 2:Del-A |
 | hyp menu | `lcd.tsx` | Overlays COMP input line; does not dump “hyp” text |
 | EQN quadratic editor | `eqn.tsx` | a/b/c labels, cell caret, bottom-left entry |
 | EQN 2-unk / 3-unk editors | `eqn.tsx` | an/bn/cn(/dn), row numbers, caret, bottom-left entry |
-| Result forms: fractions, mixed fractions | `display.tsx`, SETUP ab/c vs d/c | d/c and ab/c when applicable |
+| Result forms: fractions, mixed fractions | `lcd.tsx`, SETUP ab/c vs d/c | d/c improper; ab/c whole beside stack (`R41`) |
 | Sci ×10ⁿ, ENG, S⇔D toggle | `display.tsx`, `format.ts` | Engineering notation and decimal ↔ fraction |
 | Fix/Sci/Norm decimals | `format.ts` | Via `formatForDisplay` / `formatResultNumber` |
 | DMS °′″ | `format.ts` | Distinct degree / minute / second glyphs |
@@ -86,7 +86,7 @@ Ids match [`issues.md`](../issues.md) and [`roadmap.md`](../roadmap.md).
 | `surd-pi-form` / `vis-result` | Surd `n√m` result | Input template exists; no surd result form | `display.tsx` |
 | `vis-errors` | Stack / Argument ERROR | Syntax / Math jump landed; these screens still missing | `lcd.tsx` |
 | `lineio-display` / `comp-lineio` | MthIO / LineIO | SETUP shows options; not functional | `lcd.tsx`, `modeRouter.ts` |
-| `setup-page2` / `vis-menus` | SETUP page 2 | Unit: 1 ab/c 2 d/c 3 CMPLX 4 STAT 5 Disp 6 CONT. Shevon: 1–2 plus STAT as 3 | `lcd.tsx` |
+| `setup-page2` / `vis-menus` | SETUP page 2 | Six unit rows; STAT FREQ on 4; CMPLX/Disp/CONT stubbed (`g2-resolve`) | `lcd.tsx` |
 
 Closed with `g1-resolve`: `prompt-prev-size` (prev value normal size);
 caret after `=` / Ans+ / history; AC blank result; serif `.math-pi`.
@@ -143,7 +143,7 @@ Status bar CSS: `index.css`.
 | Context | Mechanism | Location |
 |---------|-----------|----------|
 | COMP | `‸` → blinking `.cursor` span | `display.tsx` |
-| Template slots | `⬚` dashed `.empty-slot` | `display.tsx` |
+| Template slots | single-border `.empty-slot` (caret inside when empty) | `display.tsx` |
 | EQN editor | `.active-cell` + caret; bottom-left entry | `eqn.tsx` |
 | STAT editor | Active cell caret | `stat.tsx` |
 

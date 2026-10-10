@@ -57,7 +57,7 @@ MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
 | Fix / Sci / Norm | E-6 6/7/8 | Done | Digit count, rounding, Norm 1 vs 2; FIX/SCI indicators | — |
 | Display digits | E-38 | Done | Driven by Fix/Sci/Norm (Norm 1 uses 1e-2) | — |
 | ab/c vs d/c | E-6 c1/c2 | Done | SETUP page 2; mixed vs improper results | — |
-| STAT FREQ ON/OFF | E-6 c4 | Done | SETUP page 2 item 3; 80/40/26 row caps | Unit page 2 puts STAT on 4 (`setup-page2`) |
+| STAT FREQ ON/OFF | E-6 c4 | Done | SETUP page 2 item 4; 80/40/26 row caps | — |
 | Dot / Comma | E-6 c5 | Missing | Always dot | Result decimal separator |
 | Contrast | E-3, E-6 c6 | Missing | Not applicable to photo LCD | Skip (roadmap out of scope) |
 
@@ -171,9 +171,9 @@ MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
 ## COMP key map (already wired)
 
 SHIFT and ALPHA are latched toggles on the overlay (momentary hold on the PC
-keyboard). After a shifted function the emulator usually clears SHIFT. Closing
-parentheses of sin/log-style functions can be omitted at `=` the same way the
-hardware does.
+keyboard). Latch clears after a shifted function; hold stays until release
+(`R42`). Closing parentheses of sin/log-style functions can be omitted at `=`
+the same way the hardware does.
 
 | Key | Normal | SHIFT | ALPHA |
 |-----|--------|-------|-------|

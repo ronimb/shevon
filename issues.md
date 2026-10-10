@@ -34,10 +34,11 @@ Status: `[ ]` open · `[x]` fixed (move to **Closed** at the next wrap-up).
 - [ ] `lineio-display` — SETUP lists MthIO / LineIO; choosing them returns to
       COMP with no input-mode change.
       **Associated:** `comp-lineio`.
-- [ ] `setup-page2` — SETUP ▼ (page 2) on the unit is 1:ab/c 2:d/c
-      3:CMPLX 4:STAT 5:Disp 6:CONT. Shevon shows 1:ab/c 2:d/c 3:STAT
-      only. STAT FREQ still works on **3**. CMPLX format waits
-      `p3-cmplx`; Disp is `comp-sep`; CONT is out of scope.
+- [x] `setup-page2` — SETUP ▼ (page 2) paints 1:ab/c 2:d/c 3:CMPLX
+      4:STAT 5:Disp 6:CONT. STAT FREQ is key **4**. CMPLX / Disp /
+      CONT stay stubbed (no silent COMP fallthrough). Closed with
+      `g2-resolve` (10 Oct 2026). CMPLX format waits `p3-cmplx`;
+      Disp is `comp-sep`; CONT behavior stays stubbed.
       **Associated:** `vis-menus`.
 
 ---

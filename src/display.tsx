@@ -22,11 +22,15 @@ const isEmpty = (text: string) => {
   return clean.trim() === '';
 };
 
-/** LCD slot: keep the caret, otherwise show an empty ⬚ box for a missing arg. */
+/** LCD slot: single empty box for a missing arg (R39); caret stays inside (R40). */
 const slot = (text: unknown): string => {
-  if (typeof text !== 'string') return '<span class="empty-slot">⬚</span>';
-  if (text.includes(CURSOR)) return text;
-  if (isEmpty(text)) return '<span class="empty-slot">⬚</span>';
+  if (typeof text !== 'string') return '<span class="empty-slot"></span>';
+  if (text.includes(CURSOR)) {
+    // Empty slot with caret: paint the box and keep the caret inside it.
+    if (isEmpty(text)) return `<span class="empty-slot">${text}</span>`;
+    return text;
+  }
+  if (isEmpty(text)) return '<span class="empty-slot"></span>';
   return text;
 };
 
@@ -304,9 +308,6 @@ export const formatMath = (input: string): string => {
 
   // Restore equals signs with proper styling
   h = h.replace(/___EQUALS___/g, '<span class="equal-symbol mx-1">=</span>');
-
-  h = h.replace(/<span class="empty-slot">⬚<\/span><span class="cursor"><\/span>/g, '<span class="cursor"></span>')
-       .replace(/<span class="cursor"><\/span><span class="empty-slot">⬚<\/span>/g, '<span class="cursor"></span>');
 
   // Custom absolute-positioned HTML spans for rendering overbars and hats beautifully inside monospace fonts
   h = h

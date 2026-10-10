@@ -12,7 +12,7 @@ import {
   useCanvasAction,
 } from "cursor/canvas";
 
-const PRE = `Follow docs/prompts/validate-unit.md exactly. Pairing / verification only. Workflow: validation session (walk + log) then separate issue-resolution chat — never fix in this chat. Do not implement leftovers, Phase 3, p4-tauri, LineIO, or packaging. Default: guide and scribe only — name one row, tell Ron what to press on the unit then on Shevon, wait for his reports, compare and log. Do NOT open/lock/CDP/click the browser or drive Shevon unless Ron explicitly asks. Form includes visuals: log R* for glyph/shape/chrome mismatches Ron notices (π serif vs straight, ×10ˣ paint, caret, AC blank vs 0). Do NOT dismiss those as pixel-perfect font out of scope. Template editing QA mandatory (DEL empty, ▲▼, no IR leak). End sitting with a list of new R*/issue ids. Do not refile known leftovers.`;
+const PRE = `Follow docs/prompts/validate-unit.md exactly. Pairing / verification only. Workflow: validation session (walk + log) then separate issue-resolution chat — never fix in this chat. Do not implement leftovers, Phase 3, p4-tauri, LineIO, or packaging. Default: guide and scribe only — name one row, tell Ron what to press on the unit then on Shevon, wait for his reports, compare and log. Do NOT open/lock/CDP/click the browser or drive Shevon unless Ron explicitly asks. Form includes visuals: log R* for glyph/shape/window-chrome mismatches Ron notices (π serif vs straight, ×10ˣ paint, caret, AC blank vs 0). Do NOT dismiss those as pixel-perfect font out of scope. Template editing QA mandatory (DEL empty, ▲▼, no IR leak). End sitting with a list of new R*/issue ids. Do not refile known leftovers. Update docs/prompts/validate-status.md when the sitting ends.`;
 
 const group = (id: string) =>
   `${PRE} Start with ${id} only. Finish that group, then stop. Summarize new R*/issue ids; do not start fixes.`;
@@ -34,11 +34,17 @@ export default function Validate() {
       </Stack>
 
       <Row gap={8} wrap>
-        <Button variant="primary" onClick={() => start(group("G2"))}>
-          Start G2 fractions
+        <Button
+          variant="primary"
+          onClick={() => open("canvases/g2-recheck.canvas.tsx")}
+        >
+          G2 re-check checklist
+        </Button>
+        <Button variant="secondary" onClick={() => start(group("G3"))}>
+          Start G3 powers
         </Button>
         <Button
-          variant="secondary"
+          variant="ghost"
           onClick={() => open("docs/prompts/validate-unit.md")}
         >
           Open kickoff
@@ -53,15 +59,15 @@ export default function Validate() {
 
       <Row gap={24} align="end">
         <Stat value="14" label="Groups" />
-        <Stat value="G2" label="Next sitting" tone="warning" />
+        <Stat value="G3" label="Next sitting" tone="warning" />
         <Stat value="G13" label="Honesty only" />
       </Row>
 
       <Callout tone="warning" title="Validate → log → resolve later">
         Pairing only: walk one group, log `R*` / issues, stop. Fixes
-        are a separate kickoff after the sitting. You press the unit
-        and Shevon; agent coaches. G1 and G14 are done. Next sitting
-        is G2.1. Cursor: `docs/prompts/validate-status.md`. Do not
+        are a separate kickoff after the sitting. G1/G14/G2 walked;
+        `g2-resolve` closed R39–R43 in code (re-check untested).
+        Next: G3. Cursor: `docs/prompts/validate-status.md`. Do not
         implement here.
       </Callout>
 
@@ -71,8 +77,8 @@ export default function Validate() {
         headers={["Id", "Group", "What is in here"]}
         rows={[
           ["G1", "Arithmetic and entry", "Sitting done — R36 ×10ˣ glyph dropped"],
-          ["G2", "Fractions and display", "Frac, ▲▼, DEL empty/no leak, S⇔D, Fix/Sci, ENG, %, DMS"],
-          ["G3", "Powers and roots", "x² x³ xⁿ √ ³√ ⁿ√ x⁻¹; DEL empty / no leak"],
+          ["G2", "Fractions and display", "Sitting done — R39–R43 closed in code"],
+          ["G3", "Powers and roots", "Next — x² x³ xⁿ √ ³√ ⁿ√ x⁻¹; DEL empty / no leak"],
           ["G4", "Logs and exponentials", "log ln log□ 10^ e^"],
           ["G5", "Trigonometry and hyperbolic", "D/R/G, sin family, hyp, Abs"],
           ["G6", "Combinatorics and random", "x! nPr nCr Ran# RanInt#"],
@@ -87,7 +93,7 @@ export default function Validate() {
         ]}
       />
       <Text tone="secondary">
-        Source: `docs/prompts/validate-unit.md` · 29 Sep 2026.
+        Source: `docs/prompts/validate-unit.md` · G2 done 10 Oct 2026.
       </Text>
 
       <H2>Launch a group</H2>

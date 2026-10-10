@@ -14,9 +14,7 @@ import {
 
 const TRIAGE = `Follow docs/prompts/supervisor.md exactly. You are the Shevon supervisor (triage and oversight). Do not implement leftovers. Start with one briefing from the files as they are now.`;
 
-const PHASE3 = `Follow roadmap.md Phase 3. One slice: p3-cmplx. Do not start LineIO, comp-keys, hist-letters, or p4-exact. Do not change COMP / STAT / EQN EVAL.`;
-
-const VALIDATE = `Follow docs/prompts/validate-unit.md exactly. Pairing / verification only. Workflow: walk + log only; fixes are a separate chat. Default: guide and scribe. Do NOT drive the browser unless Ron asks.`;
+const VALIDATE = `Follow docs/prompts/validate-unit.md exactly. Pairing only — start at G3. Guide and scribe; Ron presses unit and Shevon. Do not drive the browser unless Ron asks. Do not implement. Finish G3, update validate-status.md, stop.`;
 
 export default function ShevonRoadmap() {
   const dispatch = useCanvasAction();
@@ -55,14 +53,15 @@ export default function ShevonRoadmap() {
       </Row>
 
       <Row gap={24} align="end">
-        <Stat value="p3-cmplx" label="Next slice" />
-        <Stat value="g1-resolve" label="Landed" tone="success" />
-        <Stat value="46/76" label="Coverage done" />
+        <Stat value="(empty)" label="Now" />
+        <Stat value="G3" label="Next pairing" tone="warning" />
+        <Stat value="p3-*" label="Parked (low)" />
       </Row>
 
-      <Callout tone="info" title="p3-cmplx is Now">
-        show-keys-size is in (chip scale, face, strip chrome, History
-        scroll). Pairing stays walk-and-log only. Next sitting is G2.
+      <Callout tone="info" title="Polish exe first">
+        Current goal: polish the daily exe on COMP + STAT + EQN
+        (pairing → fix → re-check). `g2-resolve` landed. Next: G3
+        pairing. Phase 3 stays parked.
       </Callout>
 
       <H2>Now</H2>
@@ -70,22 +69,25 @@ export default function ShevonRoadmap() {
         striped
         headers={["#", "Id", "What", "Kickoff"]}
         rows={[
-          ["1", "p3-cmplx", "CMPLX mode", "roadmap Phase 3"],
+          ["—", "(empty)", "Pairing-driven after next G3 sitting", "validate-unit.md"],
         ]}
       />
 
       <Row gap={8} wrap>
-        <Button variant="primary" onClick={() => start(PHASE3)}>
-          Start p3-cmplx
+        <Button variant="primary" onClick={() => start(VALIDATE)}>
+          Start G3 pairing
         </Button>
-        <Button variant="ghost" onClick={() => start(VALIDATE)}>
-          Start unit pairing
+        <Button
+          variant="ghost"
+          onClick={() => open("docs/prompts/validate-unit.md")}
+        >
+          validate-unit.md
         </Button>
         <Button
           variant="ghost"
           onClick={() => open("roadmap.md")}
         >
-          Phase 3
+          Phase 3 (parked)
         </Button>
         <Button
           variant="ghost"
@@ -100,10 +102,10 @@ export default function ShevonRoadmap() {
 
       <H2>Gates</H2>
       <Text>
-        Packaging + Tauri + `g1-resolve` + `show-keys-size` are in.
-        Next: `p3-cmplx`. No LineIO / 99-byte / `:` / `hist-letters`
-        in this queue. Lying MODE rows wait on the matching feature.
-        Debt A–C stays landed. EQN 1–4 run.
+        Packaging + Tauri + `g1-resolve` + `g2-resolve` +
+        `show-keys-size` are in. Now queue empty. Phase 3 stays
+        parked. No LineIO / 99-byte / `:` / `hist-letters`. Debt
+        A–C landed. EQN 1–4 run.
       </Text>
 
       <Row gap={8} wrap>
@@ -111,11 +113,11 @@ export default function ShevonRoadmap() {
           supervisor.md
         </Pill>
         <Pill onClick={() => start(TRIAGE)}>Start supervisor</Pill>
-        <Pill onClick={() => open("roadmap.md")}>
-          Phase 3
-        </Pill>
         <Pill onClick={() => open("docs/prompts/validate-unit.md")}>
           validate-unit.md
+        </Pill>
+        <Pill onClick={() => open("docs/prompts/g2-resolve.md")}>
+          g2-resolve.md (landed)
         </Pill>
       </Row>
     </Stack>

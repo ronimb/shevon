@@ -151,6 +151,19 @@ export function formatDMSText(value: number): string {
   return `${deg}°${min}′${sec}″`;
 }
 
+/** After `=`, show DMS first when the expression used sexagesimal input (R43). */
+export function resultStartsAsDms(raw: string): boolean {
+  return raw.includes('°');
+}
+
+/**
+ * SHIFT/ALPHA after a shifted/alpha key (R42): stay on while the key is held;
+ * clear when it was only a latch toggle.
+ */
+export function keepModifierAfterAction(held: boolean): boolean {
+  return held;
+}
+
 export function describeFormat(fmt: DisplayFormat): string {
   if (fmt.kind === 'fix') return `Fix ${fmt.digits}`;
   if (fmt.kind === 'sci') return `Sci ${fmt.digits}`;
