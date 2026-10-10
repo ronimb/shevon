@@ -14,7 +14,10 @@ import {
 
 const TRIAGE = `Follow docs/prompts/supervisor.md exactly. You are the Shevon supervisor (triage and oversight). Do not implement leftovers. Start with one briefing from the files as they are now.`;
 
-const VALIDATE = `Follow docs/prompts/validate-unit.md for cadence, form rules, template editing QA, and logging. Cursor: docs/prompts/validate-status.md. Sources: docs/principles.md, manual.pdf, docs/coverage.md, docs/visual-fidelity-inventory.md, issues.md, docs/tech-issues.md. Program goal: polish the daily exe on COMP + STAT + EQN. Phase 3 parked — do not start it. You are a guide and scribe only. Ron presses the unit and Shevon. Do not drive the browser unless he asks. This sitting: Walk G4 only (logs and exponentials), starting at G4.1 log. Finish the group, then stop. Template editing QA on log/ln/log□/10^/e^. Do not start G5. No calculator code. Workflow: Name one row. Stop. Unit report, then Shevon report. Log new fails as R* or issues.md (never both). Update validate-status.md at end. AC both. Next row. End with new ids. No code. Do not refile known ids in validate-status.md.`;
+const G5 = `Follow docs/prompts/g5-pair.md exactly.
+Pairing only: G5 trig and hyperbolic.
+Guide and scribe. Do not implement. Do not start Phase 3.
+Update validate-status.md when done.`;
 
 export default function ShevonRoadmap() {
   const dispatch = useCanvasAction();
@@ -53,15 +56,15 @@ export default function ShevonRoadmap() {
       </Row>
 
       <Row gap={24} align="end">
-        <Stat value="(empty)" label="Now" />
-        <Stat value="G4" label="Next pairing" tone="warning" />
+        <Stat value="G5" label="Now" tone="warning" />
+        <Stat value="pairing" label="Next" />
         <Stat value="p3-*" label="Parked (low)" />
       </Row>
 
       <Callout tone="info" title="Polish exe first">
         Current goal: polish the daily exe on COMP + STAT + EQN.
-        `g3-resolve` landed (R44–R48 + setup-page1-disp).
-        Next pairing: G4 or G15. Phase 3 stays parked.
+        `g4-resolve` landed (`R49`–`R54`). Next: **G5 pairing**.
+        Phase 3 stays parked.
       </Callout>
 
       <H2>Now</H2>
@@ -70,17 +73,23 @@ export default function ShevonRoadmap() {
         headers={["#", "Id", "What", "Kickoff"]}
         rows={[
           [
-            "—",
-            "(empty)",
-            "Next: G4 pairing (logs / exponentials)",
-            "validate-unit.md",
+            "1",
+            "G5 pairing",
+            "Trig / hyperbolic (walk + log)",
+            "g5-pair.md",
           ],
         ]}
       />
 
       <Row gap={8} wrap>
-        <Button variant="primary" onClick={() => start(VALIDATE)}>
-          Start G4 pairing
+        <Button variant="primary" onClick={() => start(G5)}>
+          Start G5 pairing
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={() => open("docs/prompts/g5-pair.md")}
+        >
+          g5-pair.md
         </Button>
         <Button
           variant="ghost"
@@ -101,8 +110,8 @@ export default function ShevonRoadmap() {
 
       <H2>Gates</H2>
       <Text>
-        G3 resolve landed. Now queue empty — next is G4 pairing.
-        Phase 3 parked. No LineIO / 99-byte / `:` / `hist-letters`.
+        g4-resolve landed (`R49`–`R54`). Now: G5 pairing. Phase 3
+        parked. No LineIO / 99-byte / `:` / `hist-letters`.
         Debt A–C landed. EQN 1–4 run.
       </Text>
 

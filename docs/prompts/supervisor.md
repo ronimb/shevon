@@ -84,18 +84,16 @@ Snapshot 10 Oct 2026:
 
 - **Goal:** polish the daily exe on the existing featureset
   (COMP + STAT + EQN); later Phase 3 with the same pairing
-  treatment. **Now** queue empty — next is G4 pairing. All
-  Phase 3 is **very low priority** (parked). Queue:
-  `roadmap.md` **Now**.
-- `g2-resolve` / `g3-resolve` landed. `p4-packaging` /
-  `p4-tauri` / `g1-resolve` / Show-keys landed.
+  treatment. **Now** queue: **G5 pairing**
+  ([`g5-pair.md`](g5-pair.md)). All Phase 3 is **very low
+  priority** (parked). Queue: `roadmap.md` **Now**.
+- `g2-resolve` / `g3-resolve` / `g4-resolve` landed
+  (`R49`–`R54` closed + re-check). `p4-packaging` / `p4-tauri` /
+  `g1-resolve` / Show-keys landed. Open `R*`: none.
 - SHIFT/ALPHA hold is desired (not latch); `R42` closed.
-- G1–G3 and G14 walks **tested**; `R44`–`R48` +
-  `setup-page1-disp` closed. Nested COMP cases are **G15**
-  (`g15-nested.md`), not G2/G3 addenda. Next pairing: **G4**
-  (`g4-pair.md`); G15 when nesting is scheduled.
-  Cursor: [`validate-status.md`](validate-status.md). Workflow:
-  validation → log → separate issue-resolution chat.
+- G1–G4 and G14 walks **tested**. Nested COMP = **G15**
+  (`g15-nested.md`). Cursor: [`validate-status.md`](validate-status.md).
+  Workflow: validation → log → separate issue-resolution chat.
 - Phase 2 is landed. Daily driver: COMP + STAT + EQN (types 1–4).
 - Engine debt A–C is landed. Do not re-open unless a regression shows.
 - Do not pull LineIO, 99-byte, colon/Disp, `hist-letters`, or

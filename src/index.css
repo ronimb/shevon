@@ -109,6 +109,15 @@ body {
     font-weight: 700;
     letter-spacing: -0.06em;
 }
+/* 10^ template prefix — condensed ~one digit wide (R52). */
+.pow10-base {
+    font-size: 0.95em;
+    font-family: inherit;
+    font-weight: 700;
+    letter-spacing: -0.22em;
+    margin-right: 0.12em;
+    vertical-align: 0.02em;
+}
 /* Classic serif π — curved top bar / flared legs feel (R37). */
 .math-pi {
     font-family: "Times New Roman", Times, "Liberation Serif", serif;
@@ -118,7 +127,79 @@ body {
     font-size: 1.05em;
     line-height: 1;
 }
+/* Constant e (ALPHA) and e in e^ — bolder italic, not function text (R50).
+   Keep the LCD face font so metrics match digits / ln; only weight/style differ. */
+.math-e {
+    font-family: inherit;
+    font-style: italic;
+    font-weight: 700;
+    letter-spacing: 0;
+    font-size: 1.05em;
+    line-height: 1;
+}
 .math-sym { font-family: "Times New Roman", serif; font-style: italic; font-weight: bold; }
+/* Frac-exponent only (R54): drop the base so the stack reads as the power. */
+.pow-template {
+    display: inline;
+    line-height: 1;
+}
+.pow-template > .pow-base {
+    display: inline;
+    position: relative;
+    top: 0.4em;
+}
+.pow-template > .sup {
+    /* Same lift as a normal .sup; relative top is stabler next to a dropped base. */
+    vertical-align: baseline;
+    position: relative;
+    top: -0.55em;
+}
+/* Parentheses: metric-neutral for normal text (same baseline as digits).
+   Enlarge only when wrapping a tall nest (R53). */
+.paren-pair {
+    display: inline;
+    vertical-align: baseline;
+    line-height: inherit;
+}
+.paren-glyph {
+    font-family: inherit;
+    font-size: 1em;
+    font-weight: inherit;
+    line-height: inherit;
+    vertical-align: baseline;
+}
+.paren-inner {
+    display: inline;
+    vertical-align: baseline;
+}
+.paren-pair:has(.frac-container),
+.paren-pair:has(.mix-container),
+.paren-pair:has(.root),
+.paren-pair:has(.int-container),
+.paren-pair:has(.sum-container) {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+    line-height: 1;
+}
+.paren-pair:has(.frac-container) > .paren-glyph,
+.paren-pair:has(.mix-container) > .paren-glyph,
+.paren-pair:has(.root) > .paren-glyph,
+.paren-pair:has(.int-container) > .paren-glyph,
+.paren-pair:has(.sum-container) > .paren-glyph {
+    font-size: 1.85em;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+}
+.paren-pair:has(.frac-container) > .paren-inner,
+.paren-pair:has(.mix-container) > .paren-inner,
+.paren-pair:has(.root) > .paren-inner,
+.paren-pair:has(.int-container) > .paren-inner,
+.paren-pair:has(.sum-container) > .paren-inner {
+    display: inline-flex;
+    align-items: center;
+}
 .root {
     display: inline-flex;
     align-items: stretch;
@@ -552,6 +633,25 @@ body {
     font-size: 0.9em;
     vertical-align: 0.02em;
     margin: 0 0.04em;
+}
+
+.lcd-screen-mini .pow10-base {
+    font-size: 0.9em;
+    letter-spacing: -0.2em;
+    margin-right: 0.1em;
+}
+
+.lcd-screen-mini .paren-pair:has(.frac-container) > .paren-glyph,
+.lcd-screen-mini .paren-pair:has(.mix-container) > .paren-glyph,
+.lcd-screen-mini .paren-pair:has(.root) > .paren-glyph {
+    font-size: 1.55em;
+}
+
+.lcd-screen-mini .pow-template > .pow-base {
+    top: 0.3em;
+}
+.lcd-screen-mini .pow-template > .sup {
+    top: -0.45em;
 }
 
 .lcd-screen-mini .sub {

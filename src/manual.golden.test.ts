@@ -592,6 +592,95 @@ describe('vis-no-literal / ir-leak — IR stems never reach the LCD', () => {
   });
 });
 
+describe('g4-resolve — log / exp form (R49–R54)', () => {
+  const strip = (html: string) => html.replace(/<[^>]+>/g, '');
+
+  it('empty log / ln keep opening paren, no empty-slot box (R49)', () => {
+    const log = formatMath('log10(‸');
+    const ln = formatMath('ln(‸');
+    expect(log).not.toContain('empty-slot');
+    expect(ln).not.toContain('empty-slot');
+    expect(log).toContain('paren-open');
+    expect(ln).toContain('paren-open');
+    expect(strip(log)).toContain('log(');
+    expect(strip(ln)).toContain('ln(');
+    expect(log).toContain('cursor');
+    expect(ln).toContain('cursor');
+    expect(formatMath('sqrt(‸)')).toContain('empty-slot');
+  });
+
+  it('letter e (constant and e^) uses math-e; exponent stays in .sup (R50)', () => {
+    const constant = formatMath('e');
+    const empty = formatMath('e^(‸');
+    const exp = formatMath('e^(2)');
+    expect(constant).toContain('math-e');
+    expect(empty).toContain('math-e');
+    // Ordinary e^ is inline base + .sup (no pow-template wrapper).
+    expect(empty).toMatch(/math-e[\s\S]*class="sup"/);
+    expect(empty).not.toContain('pow-template');
+    expect(empty).toContain('empty-slot');
+    expect(exp).toContain('math-e');
+    expect(exp).toContain('class="sup"');
+    expect(exp).not.toContain('pow-template');
+    // Regression: never corrupt class="math-e" into visible e"> garbage.
+    expect(empty).toContain('class="math-e"');
+    expect(empty).not.toMatch(/math-<span/);
+    expect(strip(empty)).toBe('e');
+    expect(strip(exp)).toBe('e2');
+    expect(formatMath('ln(2)')).toContain('trig-fun');
+    expect(formatMath('ln(2)')).not.toContain('math-e');
+  });
+
+  it('log□ always paints visible open and close parentheses (R51)', () => {
+    const open = formatMath('log_b(‸,)');
+    const mid = formatMath('log_b(2,‸');
+    expect(open).toContain('paren-open');
+    expect(open).toContain('paren-close');
+    expect(mid).toContain('paren-open');
+    expect(mid).toContain('paren-close');
+    expect(strip(formatMath('log_b(2,8)'))).toBe('log2(8)');
+    expect(strip(open)).toMatch(/log.*\(.*\)/);
+  });
+
+  it('10^ prefix is condensed; exponent stays in .sup (R52)', () => {
+    const html = formatMath('10^(2)');
+    expect(html).toContain('pow10-base');
+    expect(html).not.toContain('pow-template');
+    expect(html).toMatch(/pow10-base[\s\S]*class="sup"/);
+    expect(html).not.toContain('sci-times10');
+    expect(strip(html)).toBe('102');
+  });
+
+  it('parens around nested frac are visible text in paren-pair (R53)', () => {
+    const logFrac = formatMath('log10(frac(1,100))');
+    const bare = formatMath('(frac(1,2))');
+    const sinFrac = formatMath('sin(frac(1,2))');
+    for (const html of [logFrac, bare, sinFrac]) {
+      expect(html).toContain('paren-pair');
+      expect(html).toContain('paren-open');
+      expect(html).toContain('paren-close');
+      expect(html).toContain('frac-container');
+      expect(strip(html)).toContain('(');
+      expect(strip(html)).toContain(')');
+    }
+  });
+
+  it('frac exponent wraps pow-template so the base can drop (R54)', () => {
+    const ten = formatMath('10^(frac(1,2))');
+    const ee = formatMath('e^(frac(1,2))');
+    const pwr = formatMath('pwr(3,frac(1,2))');
+    const caret = formatMath('5^(frac(1,2))');
+    for (const html of [ten, ee, pwr, caret]) {
+      expect(html).toContain('pow-template');
+      expect(html).toContain('pow-base');
+      expect(html).toContain('frac-container');
+      expect(html).toMatch(/pow-base[\s\S]*class="sup"[\s\S]*frac-container/);
+    }
+    expect(ten).toContain('pow10-base');
+    expect(ee).toContain('math-e');
+  });
+});
+
 describe('fraction ▲/▼ and DEL on an empty numerator', () => {
   it('▼ from the numerator lands at the end of the denominator', () => {
     expect(moveCompCursorDown('frac(2‸,)')).toBe('frac(2,‸)');

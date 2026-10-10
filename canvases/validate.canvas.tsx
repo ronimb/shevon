@@ -14,8 +14,8 @@ import {
 
 const PRE = `Follow docs/prompts/validate-unit.md exactly. Pairing / verification only. Workflow: validation session (walk + log) then separate issue-resolution chat — never fix in this chat. Do not implement leftovers, Phase 3, p4-tauri, LineIO, or packaging. Default: guide and scribe only — name one row, tell Ron what to press on the unit then on Shevon, wait for his reports, compare and log. Do NOT open/lock/CDP/click the browser or drive Shevon unless Ron explicitly asks. Form includes visuals: log R* for glyph/shape/window-chrome mismatches Ron notices (π serif vs straight, ×10ˣ paint, caret, AC blank vs 0). Do NOT dismiss those as pixel-perfect font out of scope. Template editing QA mandatory (DEL empty, ▲▼, nested templates, no IR leak). End sitting with a list of new R*/issue ids. Do not refile known leftovers. Update docs/prompts/validate-status.md when the sitting ends.`;
 
-const G4 = `Follow docs/prompts/g4-pair.md exactly.
-Pairing only: G4 logs and exponentials.
+const G5 = `Follow docs/prompts/g5-pair.md exactly.
+Pairing only: G5 trig and hyperbolic.
 Guide and scribe. Do not implement. Do not start Phase 3.
 Update validate-status.md when done.`;
 
@@ -44,8 +44,8 @@ export default function Validate() {
       </Stack>
 
       <Row gap={8} wrap>
-        <Button variant="primary" onClick={() => start(G4)}>
-          Start G4 logs
+        <Button variant="primary" onClick={() => start(G5)}>
+          Start G5 trig
         </Button>
         <Button variant="secondary" onClick={() => start(G15)}>
           Start G15 nested
@@ -72,14 +72,14 @@ export default function Validate() {
 
       <Row gap={24} align="end">
         <Stat value="15" label="Groups" />
-        <Stat value="G4" label="Next sitting" tone="warning" />
-        <Stat value="G15" label="Nested (later)" />
+        <Stat value="G5" label="Next" tone="warning" />
+        <Stat value="G15" label="Later" />
       </Row>
 
       <Callout tone="warning" title="Validate → log → resolve later">
         Pairing only: walk one group, log `R*` / issues, stop. Fixes
-        are a separate kickoff after the sitting. G2/G3 closed.
-        Nested COMP cases are **G15**. Next: G4.
+        are a separate kickoff after the sitting. G4 re-check pass
+        (`R49`–`R54`). Next: **G5**. **G15** later.
         Cursor: `docs/prompts/validate-status.md`. Do not implement here.
       </Callout>
 
@@ -91,8 +91,8 @@ export default function Validate() {
           ["G1", "Arithmetic and entry", "Sitting done — R36 ×10ˣ glyph dropped"],
           ["G2", "Fractions and display", "Sitting done"],
           ["G3", "Powers and roots", "Sitting + resolve — R44–R48"],
-          ["G4", "Logs and exponentials", "Next — incl. log/10^ of fraction"],
-          ["G5", "Trigonometry and hyperbolic", "incl. sin/Abs of fraction"],
+          ["G4", "Logs and exponentials", "Sitting + resolve + re-check — R49–R54"],
+          ["G5", "Trigonometry and hyperbolic", "Next — incl. sin/Abs of fraction"],
           ["G6", "Combinatorics and random", "x! nPr nCr Ran# RanInt#"],
           ["G7", "Calculus templates", "incl. frac in ∫ / d/dx"],
           ["G8", "Polar and rectangular", "Pol Rec + X,Y"],
@@ -106,7 +106,7 @@ export default function Validate() {
         ]}
       />
       <Text tone="secondary">
-        Source: `docs/prompts/validate-unit.md` · g3-resolve 10 Oct 2026.
+        Source: `docs/prompts/validate-unit.md` · G4 pair 10 Oct 2026.
       </Text>
 
       <H2>Launch a group</H2>

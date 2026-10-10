@@ -1,6 +1,6 @@
 # Tech issues — landed correctness
 
-Source of truth for review ids `R1`–`R48` and slices `ti-*`.
+Source of truth for review ids `R1`–`R54` and slices `ti-*`.
 Not Phase 2 leftovers and not honesty-policy lies. Do not copy an
 R-id into [`issues.md`](../issues.md).
 
@@ -16,7 +16,7 @@ Status: `[ ]` open · `[x]` done.
 
 ## Open
 
-(none)
+_(none — G4 form ids closed in `g4-resolve`.)_
 
 ---
 
@@ -31,6 +31,22 @@ Status: `[ ]` open · `[x]` done.
 
 ## Closed this sitting
 
+- [x] `R49` — Empty `log` / `ln` (same family) must not paint a
+      placeholder box when the unit shows none. DEL empty clears
+      kept. (`g4-resolve`; logged G4.1–G4.2 pairing 10 Oct 2026).
+- [x] `R50` — Letter `e` (ALPHA constant and `e` in `e^`) paints
+      `.math-e` (bolder italic), distinct from `ln`. (`g4-resolve`;
+      logged G4.2 / G4.5).
+- [x] `R51` — `log□` always paints closed parentheses (unit form).
+      (`g4-resolve`; logged G4.3).
+- [x] `R52` — `10^` prefix uses condensed `.pow10-base` (~one digit
+      wide). (`g4-resolve`; logged G4.4).
+- [x] `R53` — Shared stretchy `.paren-pair` for every text-level
+      `(…)` wrapping tall nests (frac / similar). (`g4-resolve`;
+      logged G4.6; Ron: global).
+- [x] `R54` — Shared `.pow-template`: stacked-frac exponent drops
+      the base (`10^` / `e^` / `xⁿ` / `^(…)`). (`g4-resolve`;
+      logged G4.7).
 - [x] `R45` — Empty radical radicand box: bottom on the writing line,
       height matches the COMP caret (`1.2em`), width unchanged
       (√ / ³√ / ⁿ√). 10 Oct 2026.

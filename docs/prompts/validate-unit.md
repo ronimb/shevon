@@ -81,6 +81,10 @@ Name keys so a human can read them (`x²` / `xⁿ` / `√`, or
 stacked questions. Describing LCD form (“superscript 2”, “radical
 template”) is fine.
 
+Do **not** say “happy path” to Ron. Say the keys and the expected
+result (e.g. `log` `100` `=` → **2**). When he says `clear`, treat
+form + value as done for that check unless he left something open.
+
 For **every** item: check **form** (elements, placement/role,
 glyphs/templates, chrome) **and** **function** (same key sequence →
 same result or error as the unit, to displayed precision).
@@ -113,7 +117,7 @@ of filing.
 ### Template editing QA (every stacked / boxed template)
 
 Whenever a row uses a template (`a b/c`, mixed, √, xⁿ, ∫, log□,
-hyp, …), also verify edit hygiene — not only a happy-path `=`:
+hyp, …), also verify edit hygiene — not only the normal `=` result:
 
 1. **No IR / code leak on the LCD** — never show stems or tails such
    as `frac(`, `mix(`, `sqrt(`, `int(`, `,2)`, bare `,`, or a dangling
@@ -133,11 +137,17 @@ hyp, …), also verify edit hygiene — not only a happy-path `=`:
    exponent, fraction inside log / ∫, …): form must stay nested
    glyphs (not IR), caret ▲▼ / ◀▶ move through the *inner* slots
    first the way the unit does, and DEL on an empty inner slot must
-   not leak IR or strand a broken outer template. Happy-path `=`
+   not leak IR or strand a broken outer template. The `=` result
    alone is not enough for these.
+6. **Tall parentheses** — when `(…)` wraps a stacked fraction (or
+   other tall nest), parens grow taller to fit, as on the unit
+   (`R53`). Global: every paren pair, not only `log`.
+7. **Fractional exponents** — with a stacked-frac exponent, the
+   base sits slightly lower so the frac reads as the exponent
+   (`R54`; `10^` / `e^` / `xⁿ` family).
 
-If a happy-path row already passed but edit hygiene fails, log a new
-`R*` (landed-correctness). Do not call it “known” under closed
+If the value already matched but edit hygiene fails, log a new `R*`
+(landed-correctness). Do not call it “known” under closed
 `ir-leak` / `ascii-tokens` unless the exact sequence is already open.
 
 Log a new fail once: landed-correctness → `docs/tech-issues.md`
@@ -427,7 +437,7 @@ landed 30 Sep 2026 (`show-keys-size`, `show-keys-face`,
 
 ## G15 — Nested COMP templates
 
-Cross-template nests that G2/G3 happy-paths did not cover. Apply
+Cross-template nests that G2/G3 basic rows did not cover. Apply
 **Template editing QA** (including nested templates). Kickoff:
 [`g15-nested.md`](g15-nested.md). Do not fold these back into G2/G3.
 
@@ -451,9 +461,9 @@ Mode-specific nests (log/sin/∫ of frac) stay in G4 / G5 / G7.
 ## How to run the evening
 
 1. Open this file, the **unit**, and Shevon (exe or `:3000`).
-2. Pick **one** group. G1–G3 and G14 are done. Next is **G4**,
-   then G5–G13; schedule **G15** when nesting is next. Tell the
-   agent the group id.
+2. Pick **one** group. G1–G4 and G14 are done. Next pairing is
+   **G5** (after `g4-resolve`); then G6–G13; schedule **G15** when
+   nesting is next. Tell the agent the group id.
 3. For each row, follow **Cadence**: agent coaches; you report unit
    then Shevon (G14 is Shevon-only — still one row at a time). Agent
    records item, form pass/fail, function (unit → Shevon). Keep the

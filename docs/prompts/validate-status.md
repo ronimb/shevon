@@ -6,7 +6,7 @@ Open leftovers stay in [`issues.md`](../../issues.md). Landed
 `R*` stay in [`docs/tech-issues.md`](../tech-issues.md). The walk
 itself is [`validate-unit.md`](validate-unit.md).
 
-Logged 1 Oct 2026; G2 walk 10 Oct 2026; G3 walk 10 Oct 2026.
+Logged 1 Oct 2026; G2–G4 walks 10 Oct 2026; `g4-resolve` done.
 Pairing chat: guide and scribe only. Ron runs the unit and Shevon.
 Do not drive the browser unless he asks. One row at a time. No
 calculator code in a pairing chat.
@@ -16,23 +16,19 @@ calculator code in a pairing chat.
 
 ## Cursor
 
-**G3 resolve done** (10 Oct 2026). `R44`–`R48` + `setup-page1-disp`
-closed in [`docs/tech-issues.md`](../tech-issues.md)
-(`R45` empty-box + `R48` stretchy radical).
+**G4 pairing + resolve + re-check done** (10 Oct 2026).
+`R49`–`R54` closed in `g4-resolve`; re-check pass (Ron).
 
-Nested cases that G2/G3 missed are **G15** (untested) —
-[`g15-nested.md`](g15-nested.md).
-
-**Next pairing sitting:** **G4** — [`g4-pair.md`](g4-pair.md).
-**G15** nested is untested — schedule separately.
-**Now** queue empty. Do not start Phase 3.
+**Next:** G5 pairing — [`g5-pair.md`](g5-pair.md). **G15** nested
+untested — schedule separately. Do not start Phase 3.
 Closed chats:
 [re-check](4fbb9cb3-f9d5-4048-a8bd-e98650315fcc),
 [R38 resolve](9aacae11-a4cf-46ce-a525-879a23bf52f2),
 [G2 pair](f2cb3982-4abe-4a32-9ec3-3a2966947df0),
 [g2-resolve](4d4bba9a-944f-40b3-ab42-79ece793603f),
 [G3 pair](b29225fa-f226-40e0-a6b3-52cbad938732),
-[g3-resolve](52d1a0ee-c8b6-4764-93fc-132516030a23).
+[g3-resolve](52d1a0ee-c8b6-4764-93fc-132516030a23),
+[G4 pair](db788c9e-e8de-401f-8e63-7b766be15180).
 
 ## Re-check results (10 Oct 2026)
 
@@ -107,6 +103,24 @@ Open `R*` after `g2-resolve` re-check: none (before G3).
 
 Open `R*` after `g3-resolve` / radical paint: none.
 
+### G4 — logs and exponentials (10 Oct 2026)
+
+Function assumed pass unless Ron called a mismatch. Values matched;
+all new fails are form.
+
+| # | Walk | Notes |
+|---|------|-------|
+| 1 log | function **pass**. Form **fail** → **`R49`**. DEL empty clears both | empty box on Shevon only |
+| 2 ln | function **pass**. Form **`R49`** + **`R50`** | e bold/italic on unit |
+| 3 log□ | function **pass**. Form **`R51`** | unit closes parens |
+| 4 10^ | function **pass**. Form **`R52`** | condensed `10` (~one digit wide) |
+| 5 e^ | function / hygiene **pass**. Form **`R50`** | e in e^ same as R50 |
+| 6 log of frac | function / hygiene **pass**. Form **`R53`** | tall parens — **global** |
+| 7 10^ of frac | function **pass** (assumed). Form **`R54`** (+ `R52`) | drop `10` so frac exponent sits clear |
+
+Open `R*` after G4 sitting: **`R49`–`R54`** → **closed** in
+`g4-resolve`; **re-check pass** (Ron, 10 Oct 2026).
+
 ### G14 — emulator extras (30 Sep 2026)
 
 | # | Walk | After the fix |
@@ -120,9 +134,9 @@ Open `R*` after `g3-resolve` / radical paint: none.
 ## Untested
 
 - **G15** nested COMP templates ([`g15-nested.md`](g15-nested.md)).
-- **G4.6–7**, **G5.11–12**, **G7.6–7** (nested frac in those
-  groups — walk with the group).
-- Groups **G4–G13** (full).
+- **G5.11–12**, **G7.6–7** (nested frac in those groups — walk
+  with the group).
+- Groups **G5–G13** (full). G4 done.
 
 ## Do not refile
 
@@ -130,4 +144,4 @@ Open `R*` after `g3-resolve` / radical paint: none.
 confirmed on G3), `show-keys-size`, `show-keys-face`, `hist-scroll`,
 `surd-pi-form` / `p4-exact`, `lying-menus`, `setup-page2` (closed),
 `setup-page1-disp` (closed in `g3-resolve`), `lineio-display`,
-`ind-arrows`, `prompt-prev-size`. `R44`–`R48` closed — do not refile.
+`ind-arrows`, `prompt-prev-size`. `R44`–`R54` closed — do not refile.

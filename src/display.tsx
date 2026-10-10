@@ -41,6 +41,179 @@ const infixSlot = (text: unknown): string => {
   return text;
 };
 
+/** log / ln paren args: no empty-slot box when the unit shows none (R49). */
+const openArg = (text: unknown): string => infixSlot(text);
+
+/** Visible stretchy parens — text glyphs; CSS enlarges when body is tall (R53). */
+const stretchyParenHtml = (inner: string, closed: boolean) =>
+  `<span class="paren-pair">` +
+  `<span class="paren-glyph paren-open">(</span>` +
+  `<span class="paren-inner">${inner}</span>` +
+  (closed ? `<span class="paren-glyph paren-close">)</span>` : '') +
+  `</span>`;
+
+/** Match text-level `)` for `(` at openIdx, skipping HTML tags. */
+const findMatchingTextParen = (html: string, openIdx: number): number | null => {
+  let depth = 0;
+  let i = openIdx;
+  while (i < html.length) {
+    if (html[i] === '<') {
+      const gt = html.indexOf('>', i);
+      if (gt === -1) return null;
+      i = gt + 1;
+      continue;
+    }
+    if (html[i] === '(') depth++;
+    else if (html[i] === ')') {
+      depth--;
+      if (depth === 0) return i;
+    }
+    i++;
+  }
+  return null;
+};
+
+/** Wrap every text-level `(…)` so parens grow with nested frac / root (R53). */
+const wrapStretchyParens = (html: string): string => {
+  let result = '';
+  let i = 0;
+  while (i < html.length) {
+    if (html[i] === '<') {
+      const gt = html.indexOf('>', i);
+      if (gt === -1) {
+        result += html.slice(i);
+        break;
+      }
+      result += html.slice(i, gt + 1);
+      i = gt + 1;
+      continue;
+    }
+    if (html[i] === '(') {
+      const end = findMatchingTextParen(html, i);
+      if (end !== null) {
+        const inner = html.slice(i + 1, end);
+        result += stretchyParenHtml(wrapStretchyParens(inner), true);
+        i = end + 1;
+      } else {
+        result += stretchyParenHtml(wrapStretchyParens(html.slice(i + 1)), false);
+        break;
+      }
+      continue;
+    }
+    result += html[i];
+    i++;
+  }
+  return result;
+};
+
+const MATH_E = '<span class="math-e">e</span>';
+const POW10 = '<span class="pow10-base">10</span>';
+
+/** Apply `map` only to text outside HTML tags (never class names / attrs). */
+const mapTextNodes = (html: string, map: (text: string) => string): string => {
+  let result = '';
+  let i = 0;
+  while (i < html.length) {
+    if (html[i] === '<') {
+      const gt = html.indexOf('>', i);
+      if (gt === -1) {
+        result += html.slice(i);
+        break;
+      }
+      result += html.slice(i, gt + 1);
+      i = gt + 1;
+      continue;
+    }
+    let j = i;
+    while (j < html.length && html[j] !== '<') j++;
+    result += map(html.slice(i, j));
+    i = j;
+  }
+  return result;
+};
+
+/** Constant e in text nodes only (R50). Never touch `class="math-e"`. */
+const paintMathE = (html: string): string =>
+  mapTextNodes(html, (text) =>
+    text.replace(/(^|[^A-Za-z])e(?![A-Za-z])/g, `$1${MATH_E}`),
+  );
+
+/**
+ * Power base + exponent. Ordinary powers keep the pre-g4 inline
+ * `base` + `.sup` layout so the exponent stays above-right. Only a
+ * stacked-frac (or mixed) exponent wraps `.pow-template` so R54 can
+ * drop the base without flattening every `e^` / `10^` / `xⁿ`.
+ */
+const paintPower = (base: string, exp: string) => {
+  const tallFrac = /class="(?:frac-container|mix-container)"/.test(exp);
+  if (tallFrac) {
+    return `<span class="pow-template"><span class="pow-base">${base}</span><span class="sup">${exp}</span></span>`;
+  }
+  return `${base}<span class="sup">${exp}</span>`;
+};
+
+/** Trailing base before a `^(…)` superscript (digits, Ans, π, e, 10, …). */
+const takeTrailingPowBase = (s: string): string | null => {
+  const spans = [
+    /<span class="math-e">e<\/span>$/,
+    /<span class="math-pi">π<\/span>$/,
+    /<span class="pow10-base">10<\/span>$/,
+    /<span class="sci-times10">×10<\/span>$/,
+  ];
+  for (const re of spans) {
+    const m = s.match(re);
+    if (m) return m[0];
+  }
+  if (s.endsWith('Ans')) return 'Ans';
+  const num = s.match(/(\d+\.?\d*)$/);
+  if (num) return num[1];
+  const letter = s.match(/([A-FMXY])$/);
+  if (letter) return letter[1];
+  return null;
+};
+
+/** Paint `^(…)` (incl. nested HTML in the exponent) and wrap base for R54. */
+const paintCaretPowers = (html: string): string => {
+  let out = '';
+  let i = 0;
+  while (i < html.length) {
+    if (html[i] === '<') {
+      const gt = html.indexOf('>', i);
+      if (gt === -1) {
+        out += html.slice(i);
+        break;
+      }
+      out += html.slice(i, gt + 1);
+      i = gt + 1;
+      continue;
+    }
+    if (html.startsWith('^(', i)) {
+      const bal = getBalanced(html, i + 1);
+      let exp: string;
+      let next: number;
+      if (bal) {
+        exp = html.slice(i + 2, bal.endIdx);
+        next = bal.endIdx + 1;
+      } else {
+        exp = html.slice(i + 2);
+        next = html.length;
+      }
+      const base = takeTrailingPowBase(out);
+      const paintedExp = slot(exp);
+      if (base) {
+        out = out.slice(0, -base.length) + paintPower(base, paintedExp);
+      } else {
+        out += `<span class="sup">${paintedExp}</span>`;
+      }
+      i = next;
+      continue;
+    }
+    out += html[i];
+    i++;
+  }
+  return out;
+};
+
 /** Find the `)` that balances the `(` at `startIdx`; null when it is unclosed. */
 const getBalanced = (s: string, startIdx: number): { content: string; endIdx: number } | null => {
   let count = 0;
@@ -122,7 +295,11 @@ const TEMPLATE_SPECS: TemplateSpec[] = [
   { stem: 'sin', html: namedFn('sin'), latex: a => `\\sin(${lx(a[0])})` },
   { stem: 'cos', html: namedFn('cos'), latex: a => `\\cos(${lx(a[0])})` },
   { stem: 'tan', html: namedFn('tan'), latex: a => `\\tan(${lx(a[0])})` },
-  { stem: 'ln', html: namedFn('ln'), latex: a => `\\ln(${lx(a[0])})` },
+  {
+    stem: 'ln',
+    html: (a, closed) => `<span class="trig-fun">ln</span>${parenBody(openArg(a[0]), closed)}`,
+    latex: a => `\\ln(${lx(a[0])})`,
+  },
   {
     stem: 'nCr',
     html: a => `<span class="comb-perm">${infixSlot(a[0])}<span class="comb-perm-sym">C</span>${infixSlot(a[1] || '')}</span>`,
@@ -184,22 +361,28 @@ const TEMPLATE_SPECS: TemplateSpec[] = [
     html: a => `<span class="root">${ROOT_SYMBOL_HTML}<span class="root-body">${slot(a[0])}</span></span>`,
     latex: a => `\\sqrt{${lx(a[0])}}`,
   },
-  { stem: 'sqr', html: a => `${slot(a[0])}<span class="sup">2</span>`, latex: a => `{${lx(a[0])}}^2` },
-  { stem: 'cube', html: a => `${slot(a[0])}<span class="sup">3</span>`, latex: a => `{${lx(a[0])}}^3` },
+  { stem: 'sqr', html: a => paintPower(slot(a[0]), '2'), latex: a => `{${lx(a[0])}}^2` },
+  { stem: 'cube', html: a => paintPower(slot(a[0]), '3'), latex: a => `{${lx(a[0])}}^3` },
   {
     stem: 'log_b',
-    html: (a, closed) => `log<span class="sub">${slot(a[0])}</span>${parenBody(slot(a[1] || ''), closed)}`,
+    // Unit always paints closed parens on log□ (R51), even mid-entry.
+    html: (a) => `log<span class="sub">${slot(a[0])}</span>${parenBody(slot(a[1] || ''), true)}`,
     latex: a => `\\log_{${lx(a[0])}}(${lx(a[1])})`,
   },
-  { stem: 'log10', html: (a, closed) => `log${parenBody(slot(a[0]), closed)}`, latex: a => `\\log_{10}(${lx(a[0])})` },
-  { stem: 'e^', html: a => `e<span class="sup">${slot(a[0])}</span>`, latex: a => `e^{${lx(a[0])}}` },
+  {
+    stem: 'log10',
+    html: (a, closed) => `log${parenBody(openArg(a[0]), closed)}`,
+    latex: a => `\\log_{10}(${lx(a[0])})`,
+  },
+  // Plain `e` here — `paintMathE` wraps text nodes after templates (R50).
+  { stem: 'e^', html: a => paintPower('e', slot(a[0])), latex: a => `e^{${lx(a[0])}}` },
   {
     stem: '×10^',
-    html: a => `<span class="sci-times10">×10</span><span class="sup">${slot(a[0])}</span>`,
+    html: a => paintPower(`<span class="sci-times10">×10</span>`, slot(a[0])),
     latex: a => `\\times 10^{${lx(a[0])}}`,
   },
-  { stem: '10^', html: a => `10<span class="sup">${slot(a[0])}</span>`, latex: a => `10^{${lx(a[0])}}` },
-  { stem: 'pwr', html: a => `${slot(a[0])}<span class="sup">${slot(a[1] || '')}</span>`, latex: a => `{${lx(a[0])}}^{${lx(a[1])}}` },
+  { stem: '10^', html: a => paintPower(POW10, slot(a[0])), latex: a => `10^{${lx(a[0])}}` },
+  { stem: 'pwr', html: a => paintPower(slot(a[0]), slot(a[1] || '')), latex: a => `{${lx(a[0])}}^{${lx(a[1])}}` },
   {
     stem: 'Σ',
     html: a => `<div class="sum-container"><div class="sum-bounds"><span>${slot(a[3])}</span><span>${slot(a[1] || 'x')}=${slot(a[2])}</span></div><span class="sum-symbol">Σ</span><div class="sum-body">${slot(a[0])}</div></div>`,
@@ -218,8 +401,8 @@ const TEMPLATE_SPECS: TemplateSpec[] = [
   },
   // Legacy IR aliases still emitted by `toLaTeX` history; harmless on the LCD.
   { stem: 'factorial', html: a => `${slot(a[0])}!`, latex: a => `{${lx(a[0])}}!` },
-  { stem: 'exp', html: a => `e<span class="sup">${slot(a[0])}</span>`, latex: a => `e^{${lx(a[0])}}` },
-  { stem: 'pow', html: a => `${slot(a[0])}<span class="sup">${slot(a[1] || '')}</span>`, latex: a => `{${lx(a[0])}}^{${lx(a[1])}}` },
+  { stem: 'exp', html: a => paintPower('e', slot(a[0])), latex: a => `e^{${lx(a[0])}}` },
+  { stem: 'pow', html: a => paintPower(slot(a[0]), slot(a[1] || '')), latex: a => `{${lx(a[0])}}^{${lx(a[1])}}` },
 ];
 
 /**
@@ -307,16 +490,20 @@ export const formatMath = (input: string): string => {
   h = h.replace(/'t/g, '<span class="trig-fun">→t</span>');
   // Classic serif π (curved top / flared legs), never the letters "pi" (R37).
   h = h.replace(/π/g, '<span class="math-pi">π</span>');
+  // Constant e / e^ base — text nodes only so `class="math-e"` stays intact (R50).
+  h = paintMathE(h);
 
-  h = h.replace(/→([A-M X-Y])/g, '<span style="font-size: 0.8em; margin: 0 4px;">→</span>$1')
-       .replace(/\^\(([^)]*)\)/g, (_m, p1) => `<span class="sup">${slot(p1)}</span>`)
-       .replace(/\^\(([^)]*)$/g, (_m, p1) => `<span class="sup">${slot(p1)}</span>`)
-       .replace(/\^-1/g, '<span class="sup">-1</span>')
+  h = h.replace(/→([A-M X-Y])/g, '<span style="font-size: 0.8em; margin: 0 4px;">→</span>$1');
+  // `^(…)` with nested HTML in the exponent; wrap base for frac-exp drop (R54).
+  h = paintCaretPowers(h);
+  h = h.replace(/\^-1/g, '<span class="sup">-1</span>')
        // x² / x³ keys insert unicode; paint them like `^(2)` / `^(3)` so they
        // match the x^y superscript (same .sup metrics, not a raw glyph).
        .replace(/²/g, '<span class="sup">2</span>')
-       .replace(/³/g, '<span class="sup">3</span>')
-       .replace(/‸/g, '<span class="cursor"></span>');
+       .replace(/³/g, '<span class="sup">3</span>');
+  // Stretchy parens around nested frac / tall content (R53) — every text `(…)`.
+  h = wrapStretchyParens(h);
+  h = h.replace(/‸/g, '<span class="cursor"></span>');
 
   // Restore equals signs with proper styling
   h = h.replace(/___EQUALS___/g, '<span class="equal-symbol mx-1">=</span>');

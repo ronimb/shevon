@@ -2,12 +2,10 @@ import {
   Button,
   Callout,
   H1,
-  H2,
   Pill,
   Row,
   Stack,
   Stat,
-  Table,
   Text,
   useCanvasAction,
 } from "cursor/canvas";
@@ -42,12 +40,12 @@ export default function TechIssues() {
 
       <Row gap={24} align="end">
         <Stat value="0" label="Open R-ids" tone="success" />
-        <Stat value="G2" label="Pairing next" />
+        <Stat value="G5" label="Pairing next" />
       </Row>
 
-      <Callout tone="info" title="G1 closed">
-        `R31`–`R35` and `R37` are checked. `R36` (`×10ˣ` glyph) is
-        unresolved and dropped. Honesty leftovers stay on `issues.md`.
+      <Callout tone="info" title="G4 form closed">
+        `R49`–`R54` closed in `g4-resolve`. `R36` (`×10ˣ` glyph)
+        remains dropped. Honesty leftovers stay on `issues.md`.
         Phase 3 is parked (low priority).
       </Callout>
 
@@ -71,9 +69,8 @@ export default function TechIssues() {
       </Row>
 
       <Text tone="secondary">
-        `ti-stat` … `ti-edges`, `R17`, `R27`–`R35`, `R37`–`R38`, and
-        `prompt-prev-size` are closed. `R36` dropped. Next focus is
-        unit pairing (G2+); Phase 3 stays parked.
+        `ti-stat` … `ti-edges`, `R17`, `R27`–`R35`, `R37`–`R54` closed
+        (`R36` dropped). Next: G5 pairing. Phase 3 stays parked.
       </Text>
 
       <Row gap={8} wrap>

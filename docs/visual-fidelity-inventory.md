@@ -65,6 +65,7 @@ rebuild.
 | Keypad overlay | `Calculator.tsx`, `keys.ts` | Transparent buttons over faceplate PNG |
 | ENG / hyp / Abs / Ran# / RanInt# | `modeRouter.ts`, `display.tsx` | No literal ENG/hyp dump; abs is `| |`; Ran# templates |
 | Trig / hyp / `ln` / unclosed templates | `display.tsx` | Shared `paintTemplates` table; IR stems never reach the LCD (`vis-no-literal`) |
+| log / ln / log□ / 10^ / e | `display.tsx` | Empty log/ln no box (`R49`); `.math-e` (`R50`); log□ closed parens (`R51`); condensed `10^` (`R52`); stretchy parens (`R53`); frac-exp base drop (`R54`) |
 | ×10ˣ entry | `display.tsx`, `keys.ts` | Condensed `×10` + superscript; caret jumps `×10^(` (`R28`). `R36` dropped |
 | ∫ template | `display.tsx`, `modes/comp.ts` | Limits on the ∫ glyph; ▶ integrand → lower → upper → after dx → before ∫; ◀ reverses that cycle; ▲/▼ only jump upper↔lower (`R29`) |
 | ◀▶ + COMP ▲▼ | `lcd.tsx` | Light from caret navigability and COMP history replay |
