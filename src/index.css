@@ -432,12 +432,22 @@ body {
   line-height: 1.25;
 }
 
-.abs-template {
+/* Abs bars: metric-neutral for normal text; enlarge for tall nests (R59). */
+.abs-template,
+.abs-pair {
     display: inline-flex;
-    align-items: stretch;
+    align-items: center;
     font-weight: 700;
     line-height: 1.05;
     vertical-align: middle;
+}
+.abs-bar {
+    font-family: inherit;
+    font-size: 1em;
+    font-weight: inherit;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
 }
 .abs-body {
     display: inline-flex;
@@ -445,6 +455,22 @@ body {
     min-width: 0.7em;
     padding: 0 0.12em;
     margin: 0 0.04em;
+}
+.abs-pair:has(.frac-container),
+.abs-pair:has(.mix-container),
+.abs-pair:has(.root),
+.abs-pair:has(.int-container),
+.abs-pair:has(.sum-container) {
+    align-items: stretch;
+    line-height: 1;
+}
+.abs-pair:has(.frac-container) > .abs-bar,
+.abs-pair:has(.mix-container) > .abs-bar,
+.abs-pair:has(.root) > .abs-bar,
+.abs-pair:has(.int-container) > .abs-bar,
+.abs-pair:has(.sum-container) > .abs-bar {
+    font-size: 1.85em;
+    line-height: 1;
 }
 
 .decimal-result { font-size: 2.2rem; font-weight: bold; letter-spacing: -1.2px; }
@@ -647,6 +673,12 @@ body {
     font-size: 1.55em;
 }
 
+.lcd-screen-mini .abs-pair:has(.frac-container) > .abs-bar,
+.lcd-screen-mini .abs-pair:has(.mix-container) > .abs-bar,
+.lcd-screen-mini .abs-pair:has(.root) > .abs-bar {
+    font-size: 1.55em;
+}
+
 .lcd-screen-mini .pow-template > .pow-base {
     top: 0.3em;
 }
@@ -746,16 +778,39 @@ body {
 .mini-btn.shift {
     background: linear-gradient(180deg, #f2f0e8 0%, #c8c4b8 48%, #b0aa9e 100%);
     border-color: #8a867c;
-    color: #d4af37;
+    /* Bright yellow fill + thin dark outline (R55) — yellow-on-beige alone is illegible. */
+    color: #ffd400;
     box-shadow: inset 0 1px 0 #fff, 0 1px 0 #7a766c;
-    font-size: 7px;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+    text-shadow:
+        0.6px 0 0 #1a1400,
+        -0.6px 0 0 #1a1400,
+        0 0.6px 0 #1a1400,
+        0 -0.6px 0 #1a1400,
+        0.6px 0.6px 0 #1a1400,
+        -0.6px -0.6px 0 #1a1400,
+        0.6px -0.6px 0 #1a1400,
+        -0.6px 0.6px 0 #1a1400;
 }
 .mini-btn.alpha {
     background: linear-gradient(180deg, #f2f0e8 0%, #c8c4b8 48%, #b0aa9e 100%);
     border-color: #8a867c;
-    color: #d4488a;
+    color: #ff5aa0;
     box-shadow: inset 0 1px 0 #fff, 0 1px 0 #7a766c;
-    font-size: 7px;
+    font-size: 10px;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+    text-shadow:
+        0.6px 0 0 #2a0014,
+        -0.6px 0 0 #2a0014,
+        0 0.6px 0 #2a0014,
+        0 -0.6px 0 #2a0014,
+        0.6px 0.6px 0 #2a0014,
+        -0.6px -0.6px 0 #2a0014,
+        0.6px -0.6px 0 #2a0014,
+        -0.6px 0.6px 0 #2a0014;
 }
 .mini-btn.num {
     background: linear-gradient(180deg, #9a9ca0 0%, #808288 42%, #686a6e 100%);
@@ -848,8 +903,17 @@ body {
     min-width: 66px;
 }
 .mini-btn.shape-numpad.legend {
+    font-size: 15px;
+    padding-top: 6px;
+}
+/* ×10ˣ chip: larger base + raised x so it stays readable at overlay scale (R55). */
+.mini-btn.shape-numpad.legend .mini-exp10 {
+    font-size: 16px;
+    font-weight: 700;
+}
+.mini-btn.shape-numpad.legend .mini-exp10 .mini-sup {
     font-size: 11px;
-    padding-top: 7px;
+    margin-top: -4px;
 }
 
 .mini-x-power {
@@ -861,7 +925,7 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 9px;
+    font-size: 10px;
     font-weight: 800;
     margin-left: 1px;
     margin-top: -3px;

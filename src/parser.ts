@@ -33,10 +33,12 @@ export class ParseError extends Error {
   }
 }
 
+/** `juxt` is inserted for hardware juxtaposition (2π, 2(); binds above ×÷). */
 type Token =
   | { type: 'num'; value: number; pos: number }
   | { type: 'ident'; value: string; pos: number }
   | { type: 'op'; value: BinaryOp; pos: number }
+  | { type: 'juxt'; pos: number }
   | { type: 'lparen'; pos: number }
   | { type: 'rparen'; pos: number }
   | { type: 'comma'; pos: number };
@@ -153,9 +155,10 @@ function startsValue(t: Token): boolean {
 }
 
 /**
- * Token-level implicit multiply: `2(` → `2*(`, `2__sin(` → `2*__sin(`,
- * `)(` → `)*(`. `ident(` is a call only when `ident` is a helper (`__…`).
- * That keeps `__log10(100)` a call instead of `__log10*(100)`.
+ * Token-level juxtaposition: `2(` → `2·(`, `2__sin(` → `2·__sin(`,
+ * `)(` → `)·(`. `ident(` is a call only when `ident` is a helper (`__…`).
+ * That keeps `__log10(100)` a call instead of `__log10·(100)`.
+ * Juxtaposition binds tighter than ×÷ so `10π÷2π` is `(10π)÷(2π)` (R56).
  */
 export function insertImplicitMultiply(tokens: Token[]): Token[] {
   if (tokens.length === 0) return tokens;
@@ -165,7 +168,7 @@ export function insertImplicitMultiply(tokens: Token[]): Token[] {
     const next = tokens[i];
     const callOpen = prev.type === 'ident' && next.type === 'lparen' && isCallIdent(prev.value);
     if (endsValue(prev) && startsValue(next) && !callOpen) {
-      out.push({ type: 'op', value: '*', pos: next.pos });
+      out.push({ type: 'juxt', pos: next.pos });
     }
     out.push(next);
   }
@@ -175,13 +178,13 @@ export function insertImplicitMultiply(tokens: Token[]): Token[] {
 /**
  * Recursive-descent / precedence-climbing parser.
  *
- * Precedence (low → high), matching the JavaScript semantics the previous
- * `new Function` implementation relied on:
+ * Precedence (low → high):
  *   1. + -            (left-associative)
- *   2. * /            (left-associative)
- *   3. unary + -
- *   4. **             (right-associative, binds tighter than unary on its left)
- *   5. primary        (numbers, identifiers, calls, parentheses)
+ *   2. * /            (left-associative; explicit ×÷)
+ *   3. juxtaposition  (implicit × — binds across ÷, R56)
+ *   4. unary + -
+ *   5. **             (right-associative, binds tighter than unary on its left)
+ *   6. primary        (numbers, identifiers, calls, parentheses)
  */
 class Parser {
   private tokens: Token[];
@@ -222,13 +225,29 @@ class Parser {
   }
 
   private parseMultiplicative(): AstNode {
-    let left = this.parseUnary();
+    let left = this.parseJuxtaposition();
     while (true) {
       const t = this.peek();
       if (t && t.type === 'op' && (t.value === '*' || t.value === '/')) {
         this.next();
-        const right = this.parseUnary();
+        const right = this.parseJuxtaposition();
         left = { type: 'binary', op: t.value, left, right, offset: t.pos };
+      } else {
+        break;
+      }
+    }
+    return left;
+  }
+
+  /** Hardware juxtaposition product — folds to `*` in the AST (R56). */
+  private parseJuxtaposition(): AstNode {
+    let left = this.parseUnary();
+    while (true) {
+      const t = this.peek();
+      if (t && t.type === 'juxt') {
+        this.next();
+        const right = this.parseUnary();
+        left = { type: 'binary', op: '*', left, right, offset: t.pos };
       } else {
         break;
       }

@@ -73,6 +73,20 @@ export type PcKeyboardActions = {
   isRcl: boolean;
 };
 
+/** Drop hold-only SHIFT/ALPHA when keyup was lost (Alt-Tab / blur) — R58. */
+export function clearPcMomentaryModifiers(
+  a: Pick<PcKeyboardActions, 'isShift' | 'isAlpha' | 'setShiftMomentary' | 'setAlphaMomentary' | 'unflashKey'>,
+): void {
+  if (a.isShift) {
+    a.unflashKey('shift');
+    a.setShiftMomentary(false);
+  }
+  if (a.isAlpha) {
+    a.unflashKey('alpha');
+    a.setAlphaMomentary(false);
+  }
+}
+
 export function usePcKeyboard(a: PcKeyboardActions) {
   const aRef = useRef(a);
   aRef.current = a;
@@ -192,11 +206,20 @@ export function usePcKeyboard(a: PcKeyboardActions) {
       }
     };
 
+    const handleBlur = () => clearPcMomentaryModifiers(aRef.current);
+    const handleVisibility = () => {
+      if (document.visibilityState === 'hidden') clearPcMomentaryModifiers(aRef.current);
+    };
+
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
+    window.addEventListener('blur', handleBlur);
+    document.addEventListener('visibilitychange', handleVisibility);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('blur', handleBlur);
+      document.removeEventListener('visibilitychange', handleVisibility);
     };
   }, []);
 }

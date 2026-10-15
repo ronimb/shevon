@@ -6,21 +6,23 @@ Open leftovers stay in [`issues.md`](../../issues.md). Landed
 `R*` stay in [`docs/tech-issues.md`](../tech-issues.md). The walk
 itself is [`validate-unit.md`](validate-unit.md).
 
-Logged 1 Oct 2026; G2–G4 walks 10 Oct 2026; `g4-resolve` done.
-Pairing chat: guide and scribe only. Ron runs the unit and Shevon.
-Do not drive the browser unless he asks. One row at a time. No
-calculator code in a pairing chat.
+Logged 1 Oct 2026; G2–G4 walks 10 Oct 2026; `g4-resolve` done;
+G5 walk 15 Oct 2026. Pairing chat: guide and scribe only. Ron
+runs the unit and Shevon. One case = one prompt; Ron reports
+**findings only** (not matching results). Do not drive the
+browser unless he asks. No calculator code in a pairing chat.
 
 **Tested** means Ron walked it on the unit and Shevon.
 **Untested** means no such walk yet.
 
 ## Cursor
 
-**G4 pairing + resolve + re-check done** (10 Oct 2026).
-`R49`–`R54` closed in `g4-resolve`; re-check pass (Ron).
+**G5 pairing done** (15 Oct 2026). **`g5-resolve`** closed
+**`R55`–`R59`**.
 
-**Next:** G5 pairing — [`g5-pair.md`](g5-pair.md). **G15** nested
-untested — schedule separately. Do not start Phase 3.
+**Next:** **G6** pairing ([`validate-unit.md`](validate-unit.md)).
+**G15** nested untested — schedule separately. Do not start
+Phase 3.
 Closed chats:
 [re-check](4fbb9cb3-f9d5-4048-a8bd-e98650315fcc),
 [R38 resolve](9aacae11-a4cf-46ce-a525-879a23bf52f2),
@@ -28,7 +30,8 @@ Closed chats:
 [g2-resolve](4d4bba9a-944f-40b3-ab42-79ece793603f),
 [G3 pair](b29225fa-f226-40e0-a6b3-52cbad938732),
 [g3-resolve](52d1a0ee-c8b6-4764-93fc-132516030a23),
-[G4 pair](db788c9e-e8de-401f-8e63-7b766be15180).
+[G4 pair](db788c9e-e8de-401f-8e63-7b766be15180),
+[G5 pair](this sitting — 15 Oct 2026).
 
 ## Re-check results (10 Oct 2026)
 
@@ -121,6 +124,30 @@ all new fails are form.
 Open `R*` after G4 sitting: **`R49`–`R54`** → **closed** in
 `g4-resolve`; **re-check pass** (Ron, 10 Oct 2026).
 
+### G5 — trigonometry and hyperbolic (15 Oct 2026)
+
+Function **pass** unless noted. Form fails logged. No IR leak on
+empty DEL for walked templates.
+
+| # | Walk | Notes |
+|---|------|-------|
+| 1 Deg | function **pass** (`sin 30` → 0.5). Form **fail** → **`R57`** | empty `sin(` placeholder box on Shevon only |
+| 2 Rad | **pass** (`sin` of π/6 → 0.5) | **`R57`** only |
+| 3 Gra | **pass** (`sin 50` → 0.5) | **`R57`** only |
+| 4 sin / cos / tan | **pass** (`cos 60` → 0.5; `tan 45` → 1) | **`R57`** extended to cos/tan |
+| 5 inverses | **pass** (`sin⁻¹ 0.5` → 30) | **`R57`** covers inverses |
+| 6 tan poles | **pass** — Math ERROR (`R1`) | |
+| 7 hyp menu | **pass** — overlay, not letters `hyp` | |
+| 8 sinh… | **pass** (`sinh 0` → 0); no leak | **`R57`** extended to hyp |
+| 9 hyp inverses | **pass** (`sinh⁻¹ 0` → 0); no leak | **`R57`** |
+| 10 Abs | function **pass** (`Abs (−)7` → 7). Form **fail** → **`R59`** | Abs bars do not stretch for tall frac |
+| 11 sin of frac | **pass** (form + value) | nested under sin; **`R57`** on empty |
+| 12 Abs of frac | function **pass**; form **`R59`** | already logged on G5.10 |
+
+Open `R*` after G5 sitting: **`R57`**, **`R59`** (plus interim
+**`R55`** / **`R56`** / **`R58`**) → **closed** in `g5-resolve`
+(15 Oct 2026).
+
 ### G14 — emulator extras (30 Sep 2026)
 
 | # | Walk | After the fix |
@@ -134,9 +161,8 @@ Open `R*` after G4 sitting: **`R49`–`R54`** → **closed** in
 ## Untested
 
 - **G15** nested COMP templates ([`g15-nested.md`](g15-nested.md)).
-- **G5.11–12**, **G7.6–7** (nested frac in those groups — walk
-  with the group).
-- Groups **G5–G13** (full). G4 done.
+- **G7.6–7** (nested frac in ∫ / d/dx — walk with G7).
+- Groups **G6–G13** (full). G5 done.
 
 ## Do not refile
 
@@ -144,4 +170,4 @@ Open `R*` after G4 sitting: **`R49`–`R54`** → **closed** in
 confirmed on G3), `show-keys-size`, `show-keys-face`, `hist-scroll`,
 `surd-pi-form` / `p4-exact`, `lying-menus`, `setup-page2` (closed),
 `setup-page1-disp` (closed in `g3-resolve`), `lineio-display`,
-`ind-arrows`, `prompt-prev-size`. `R44`–`R54` closed — do not refile.
+`ind-arrows`, `prompt-prev-size`. `R44`–`R59` closed — do not refile.

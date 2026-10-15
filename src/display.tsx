@@ -260,9 +260,10 @@ const commaArgs = (a: string[]) =>
 const commaArgsPlain = (a: string[]) =>
   a.length > 1 ? `${lx(a[0])},${lx(a[1])}` : lx(a[0]);
 
-/** LCD function-name glyph (sin, ln, Abs, Pol, …) — never the raw `name(` stem. */
+/** LCD function-name glyph (sin, ln, Abs, Pol, …) — never the raw `name(` stem.
+ * Empty open arg: no placeholder box when the unit shows none (R49 / R57). */
 const namedFn = (label: string) => (a: string[], closed: boolean) =>
-  `<span class="trig-fun">${label}</span>${parenBody(slot(a[0]), closed)}`;
+  `<span class="trig-fun">${label}</span>${parenBody(openArg(a[0]), closed)}`;
 const lx = (v: string | undefined) => v ?? '';
 
 /**
@@ -396,7 +397,13 @@ const TEMPLATE_SPECS: TemplateSpec[] = [
   { stem: 'Rnd', html: (a, closed) => `<span class="trig-fun">Rnd</span>${parenBody(slot(a[0]), closed)}`, latex: a => `\\operatorname{Rnd}(${lx(a[0])})` },
   {
     stem: 'abs',
-    html: a => `<span class="abs-template">|<span class="abs-body">${slot(a[0])}</span>|</span>`,
+    // Stretchy bars for tall nests (frac / root), same idea as paren-pair (R59).
+    html: a =>
+      `<span class="abs-template abs-pair">` +
+      `<span class="abs-bar">|</span>` +
+      `<span class="abs-body">${slot(a[0])}</span>` +
+      `<span class="abs-bar">|</span>` +
+      `</span>`,
     latex: a => `|${lx(a[0])}|`,
   },
   // Legacy IR aliases still emitted by `toLaTeX` history; harmless on the LCD.

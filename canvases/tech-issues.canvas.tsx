@@ -39,14 +39,14 @@ export default function TechIssues() {
       </Row>
 
       <Row gap={24} align="end">
-        <Stat value="0" label="Open R-ids" tone="success" />
-        <Stat value="G5" label="Pairing next" />
+        <Stat value="0" label="Open R-ids" />
+        <Stat value="G6" label="Next" />
       </Row>
 
-      <Callout tone="info" title="G4 form closed">
-        `R49`–`R54` closed in `g4-resolve`. `R36` (`×10ˣ` glyph)
-        remains dropped. Honesty leftovers stay on `issues.md`.
-        Phase 3 is parked (low priority).
+      <Callout tone="success" title="R55–R59 closed in g5-resolve">
+        Show-keys SHIFT/`×10ˣ`; π/`e` across ÷; empty trig/hyp boxes;
+        Alt sticky on blur; Abs bars vs tall frac. `R36` remains
+        dropped. Phase 3 parked.
       </Callout>
 
       <Row gap={8} wrap>
@@ -69,8 +69,9 @@ export default function TechIssues() {
       </Row>
 
       <Text tone="secondary">
-        `ti-stat` … `ti-edges`, `R17`, `R27`–`R35`, `R37`–`R54` closed
-        (`R36` dropped). Next: G5 pairing. Phase 3 stays parked.
+        `ti-stat` … `ti-edges`, `R17`, `R27`–`R35`, `R37`–`R59` closed
+        (`R36` dropped). Open: none. Next: G6 pairing.
+        Phase 3 stays parked.
       </Text>
 
       <Row gap={8} wrap>
@@ -80,8 +81,8 @@ export default function TechIssues() {
         >
           Roadmap canvas
         </Pill>
-        <Pill onClick={() => open("docs/prompts/sanity-stat.md")}>
-          sanity-stat
+        <Pill onClick={() => open("canvases/validate.canvas.tsx")}>
+          Validate canvas
         </Pill>
       </Row>
     </Stack>

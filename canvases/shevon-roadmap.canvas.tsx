@@ -14,8 +14,9 @@ import {
 
 const TRIAGE = `Follow docs/prompts/supervisor.md exactly. You are the Shevon supervisor (triage and oversight). Do not implement leftovers. Start with one briefing from the files as they are now.`;
 
-const G5 = `Follow docs/prompts/g5-pair.md exactly.
-Pairing only: G5 trig and hyperbolic.
+const G6 = `Follow docs/prompts/validate-unit.md G6 exactly.
+Pairing only: G6 combinatorics and random.
+One case = one prompt; Ron runs both; findings only (not results/pass).
 Guide and scribe. Do not implement. Do not start Phase 3.
 Update validate-status.md when done.`;
 
@@ -56,14 +57,14 @@ export default function ShevonRoadmap() {
       </Row>
 
       <Row gap={24} align="end">
-        <Stat value="G5" label="Now" tone="warning" />
-        <Stat value="pairing" label="Next" />
+        <Stat value="G6" label="Now" tone="warning" />
+        <Stat value="G15" label="Later" />
         <Stat value="p3-*" label="Parked (low)" />
       </Row>
 
       <Callout tone="info" title="Polish exe first">
         Current goal: polish the daily exe on COMP + STAT + EQN.
-        `g4-resolve` landed (`R49`–`R54`). Next: **G5 pairing**.
+        `g5-resolve` closed `R55`–`R59`. Next: **G6** pairing.
         Phase 3 stays parked.
       </Callout>
 
@@ -74,22 +75,22 @@ export default function ShevonRoadmap() {
         rows={[
           [
             "1",
-            "G5 pairing",
-            "Trig / hyperbolic (walk + log)",
-            "g5-pair.md",
+            "G6 pairing",
+            "Combinatorics / random",
+            "validate-unit.md G6",
           ],
         ]}
       />
 
       <Row gap={8} wrap>
-        <Button variant="primary" onClick={() => start(G5)}>
-          Start G5 pairing
+        <Button variant="primary" onClick={() => start(G6)}>
+          Start G6 pairing
         </Button>
         <Button
           variant="ghost"
-          onClick={() => open("docs/prompts/g5-pair.md")}
+          onClick={() => open("docs/prompts/validate-unit.md")}
         >
-          g5-pair.md
+          validate-unit.md
         </Button>
         <Button
           variant="ghost"
@@ -110,8 +111,8 @@ export default function ShevonRoadmap() {
 
       <H2>Gates</H2>
       <Text>
-        g4-resolve landed (`R49`–`R54`). Now: G5 pairing. Phase 3
-        parked. No LineIO / 99-byte / `:` / `hist-letters`.
+        `g5-resolve` landed. Now: G6 pairing. G15 nested untested.
+        Phase 3 parked. No LineIO / 99-byte / `:` / `hist-letters`.
         Debt A–C landed. EQN 1–4 run.
       </Text>
 

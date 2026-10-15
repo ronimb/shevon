@@ -114,7 +114,14 @@ export function renderMiniButton(label: string, id: string | number): React.Reac
     );
   }
   if (label === '×10ˣ') {
-    return <span className={cls} key={id}>×10ˣ</span>;
+    // Readable ×10 + raised x (R55) — bare ˣ stays tiny at overlay scale.
+    return (
+      <span className={cls} key={id}>
+        <span className="mini-x-power mini-exp10">
+          ×10<span className="mini-sup">x</span>
+        </span>
+      </span>
+    );
   }
   if (label === 'S⇔D') {
     return <span className={cls} key={id}>S⇔D</span>;

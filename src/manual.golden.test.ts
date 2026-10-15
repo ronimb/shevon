@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { allowsCalcSolveHyp, allowsCompLineEdit, applyAllClear, applyHistoryLoad, applyPowerKey, applySquareKey, attemptStoreOperand, calcExpressionToEval, collectCalcPromptVars, collectSolvePromptVars, commitPromptValue, expressionHasSolveUnknown, isStatSessionMode, deleteCompAtCursor, moveCompCursorDown, moveCompCursorLeft, moveCompCursorRight, moveCompCursorUp, newtonSolveX, parseCalcAssignment, placeCaretAtOffset, reconstructSequence, wrapPrecedingBinary } from './modes/comp.ts';
 import { CURSOR_PATS } from './keys.ts';
 import { chipFamily, renderMiniButton } from './historyKeys.tsx';
+import { clearPcMomentaryModifiers } from './keyboard.ts';
 import { isLcdMenu, lcdPaintInput, lcdShowsCompCaret, LcdScreen, resultLineWhileEditing } from './lcd.tsx';
 import { liveOperationSequence, nextHistoryReplayDown, nextHistoryReplayUp, setupCommitSequence } from './historyOps.ts';
 import { evaluateExpression, mergePolRecVars, resultDisplayMode, toFraction } from './evaluator.ts';
@@ -678,6 +679,78 @@ describe('g4-resolve — log / exp form (R49–R54)', () => {
     }
     expect(ten).toContain('pow10-base');
     expect(ee).toContain('math-e');
+  });
+});
+
+describe('g5-resolve — show-keys / π÷e / empty trig-hyp / Alt blur / Abs (R55–R59)', () => {
+  const strip = (html: string) => html.replace(/<[^>]+>/g, '');
+
+  it('SHIFT chip and ×10ˣ face stay readable at overlay scale (R55)', () => {
+    const shift = renderToStaticMarkup(renderMiniButton('SHIFT', 's') as React.ReactElement);
+    expect(shift).toContain('shape-shift');
+    expect(shift).toContain('mini-btn shift');
+    const exp = renderToStaticMarkup(renderMiniButton('×10ˣ', 'e') as React.ReactElement);
+    expect(exp).toContain('mini-exp10');
+    expect(exp).toContain('mini-sup');
+    expect(exp).toContain('>x<');
+    expect(exp).toContain('×10');
+    expect(exp).not.toContain('×10ˣ');
+  });
+
+  it('empty trig / hyp open templates keep paren, no empty-slot box (R57)', () => {
+    const stems = [
+      'sin(‸', 'cos(‸', 'tan(‸',
+      'sin⁻¹(‸', 'cos⁻¹(‸', 'tan⁻¹(‸',
+      'sinh(‸', 'cosh(‸', 'tanh(‸',
+      'sinh⁻¹(‸', 'cosh⁻¹(‸', 'tanh⁻¹(‸',
+    ];
+    for (const ir of stems) {
+      const html = formatMath(ir);
+      expect(html, ir).not.toContain('empty-slot');
+      expect(html, ir).toContain('paren-open');
+      expect(html, ir).toContain('cursor');
+    }
+    // Filled arg still paints; radicals still use empty-slot boxes.
+    expect(formatMath('sin(30)')).toContain('trig-fun');
+    expect(strip(formatMath('sin(30)'))).toContain('sin(30)');
+    expect(formatMath('sqrt(‸)')).toContain('empty-slot');
+  });
+
+  it('blur clears hold-only SHIFT / ALPHA (R58)', () => {
+    const calls: string[] = [];
+    clearPcMomentaryModifiers({
+      isShift: true,
+      isAlpha: true,
+      setShiftMomentary: (v) => { calls.push(`shift:${v}`); },
+      setAlphaMomentary: (v) => { calls.push(`alpha:${v}`); },
+      unflashKey: (id) => { calls.push(`unflash:${id}`); },
+    });
+    expect(calls).toEqual([
+      'unflash:shift', 'shift:false',
+      'unflash:alpha', 'alpha:false',
+    ]);
+    const idle: string[] = [];
+    clearPcMomentaryModifiers({
+      isShift: false,
+      isAlpha: false,
+      setShiftMomentary: () => { idle.push('shift'); },
+      setAlphaMomentary: () => { idle.push('alpha'); },
+      unflashKey: () => { idle.push('unflash'); },
+    });
+    expect(idle).toEqual([]);
+  });
+
+  it('Abs bars stretch around tall frac content (R59)', () => {
+    const tall = formatMath('abs(frac(1,2))');
+    expect(tall).toContain('abs-pair');
+    expect(tall).toContain('abs-bar');
+    expect(tall).toContain('frac-container');
+    expect(strip(tall)).toBe('|12|');
+    const empty = formatMath('abs(‸)');
+    expect(empty).toContain('abs-pair');
+    expect(empty).toContain('abs-bar');
+    expect(empty).toContain('empty-slot');
+    expect(strip(empty)).toBe('||');
   });
 });
 

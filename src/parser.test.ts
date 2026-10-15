@@ -131,7 +131,46 @@ describe('evaluator: no new Function, AST-backed', () => {
       args: [{ type: 'num', value: 100 }],
     });
     const toks = insertImplicitMultiply(tokenize('__log10(100)'));
-    expect(toks.some((t) => t.type === 'op' && t.value === '*')).toBe(false);
+    expect(toks.some((t) => t.type === 'juxt' || (t.type === 'op' && t.value === '*'))).toBe(false);
+  });
+
+  it('juxtaposition with π / e binds across ÷ (R56)', () => {
+    expect(evalComp('10π÷2π')).toBeCloseTo(5, 10);
+    expect(evalComp('10e÷2e')).toBeCloseTo(5, 10);
+    // Adjacent values use juxt (tighter than ÷) → (10×π)÷(2×π).
+    expect(shape(parse('10pi/2pi'))).toEqual({
+      type: 'binary',
+      op: '/',
+      left: {
+        type: 'binary',
+        op: '*',
+        left: { type: 'num', value: 10 },
+        right: { type: 'var', name: 'pi' },
+      },
+      right: {
+        type: 'binary',
+        op: '*',
+        left: { type: 'num', value: 2 },
+        right: { type: 'var', name: 'pi' },
+      },
+    });
+    // Explicit * stays left-associative with / → ((10×π)÷2)×π.
+    expect(shape(parse('10*pi/2*pi'))).toEqual({
+      type: 'binary',
+      op: '*',
+      left: {
+        type: 'binary',
+        op: '/',
+        left: {
+          type: 'binary',
+          op: '*',
+          left: { type: 'num', value: 10 },
+          right: { type: 'var', name: 'pi' },
+        },
+        right: { type: 'num', value: 2 },
+      },
+      right: { type: 'var', name: 'pi' },
+    });
   });
 
   it('inserts implicit multiply at token level for 2(', () => {

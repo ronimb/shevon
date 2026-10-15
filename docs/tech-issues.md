@@ -1,6 +1,6 @@
 # Tech issues — landed correctness
 
-Source of truth for review ids `R1`–`R54` and slices `ti-*`.
+Source of truth for review ids `R1`–`R59` and slices `ti-*`.
 Not Phase 2 leftovers and not honesty-policy lies. Do not copy an
 R-id into [`issues.md`](../issues.md).
 
@@ -16,7 +16,7 @@ Status: `[ ]` open · `[x]` done.
 
 ## Open
 
-_(none — G4 form ids closed in `g4-resolve`.)_
+(none — `R55`–`R59` closed in `g5-resolve`.)
 
 ---
 
@@ -31,6 +31,21 @@ _(none — G4 form ids closed in `g4-resolve`.)_
 
 ## Closed this sitting
 
+- [x] `R55` — Show-keys overlay: SHIFT legend contrast/size and
+      shifted faces such as `×10ˣ` (readable `×10` + raised `x`)
+      at overlay scale. (`g5-resolve`; interim 15 Oct 2026).
+- [x] `R56` — Implicit × with π / `e` binds across ÷:
+      `10π÷2π` / `10e÷2e` → 5 (juxtaposition above ×÷).
+      (`g5-resolve`; interim 15 Oct 2026).
+- [x] `R57` — Empty trig / hyp open templates (`sin(` … / hyp
+      inverses) keep the paren, no placeholder box — same family
+      as `R49`. (`g5-resolve`; G5 pairing 15 Oct 2026).
+- [x] `R58` — PC Alt / Shift hold clears on `blur` /
+      `visibilitychange` so Alt-Tab cannot stick ALPHA/SHIFT.
+      (`g5-resolve`; interim 15 Oct 2026).
+- [x] `R59` — Abs bars `| |` stretch for tall nests (frac /
+      root), same idea as `R53` parens. (`g5-resolve`; G5.10
+      pairing 15 Oct 2026).
 - [x] `R49` — Empty `log` / `ln` (same family) must not paint a
       placeholder box when the unit shows none. DEL empty clears
       kept. (`g4-resolve`; logged G4.1–G4.2 pairing 10 Oct 2026).

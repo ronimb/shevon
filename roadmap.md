@@ -48,11 +48,8 @@ TABLE / CONST into **Now** on agent initiative. Lying MODE rows
 wait for the matching feature. LineIO / 99-byte / `:` /
 `hist-letters` stay parked.
 
-Active focus: **G5 pairing** next
-(`[g5-pair.md](docs/prompts/g5-pair.md)` — trig / hyperbolic;
-walk and log only). `g4-resolve` landed (`R49`–`R54`, re-check
-pass). **G15** nested untested (schedule separately). Phase 3
-stays parked.
+Active focus: **G6** pairing next (`g5-resolve` closed `R55`–`R59`).
+**G15** nested untested (schedule separately). Phase 3 stays parked.
 
 Catalog of landed-correctness ids: `[docs/tech-issues.md](docs/tech-issues.md)`.
 Honesty leftovers: `[issues.md](issues.md)`. After every slice: `[sanity-landed.md](docs/prompts/sanity-landed.md)`.
@@ -68,14 +65,14 @@ Triage (no code): `[supervisor.md](docs/prompts/supervisor.md)`
 
 | Order | Id | What | Kickoff |
 | ----- | -- | ---- | ------- |
-| 1 | G5 pairing | Trig / hyperbolic (walk + log) | `[g5-pair.md](docs/prompts/g5-pair.md)` |
+| 1 | G6 pairing | Combinatorics and random (walk + log) | `[validate-unit.md](docs/prompts/validate-unit.md)` G6 |
 
 `ti-stat` … `ti-edges`, `R17` (`r17-percent`), `R28` (`r28-exp`),
 `R29` (`r29-int`), `g1-resolve`, `g2-resolve` (`R39`–`R43` +
 `setup-page2`), `g3-resolve` (`R44`–`R48` + `setup-page1-disp`),
-and `g4-resolve` (`R49`–`R54`) are in **Landed**. `R36` (`×10ˣ`
-glyph) dropped — not in the queue. `R27` closed. `R30` / `R33`
-closed earlier (not bugs / frac ▲▼).
+`g4-resolve` (`R49`–`R54`), and `g5-resolve` (`R55`–`R59`) are in
+**Landed**. `R36` (`×10ˣ` glyph) dropped — not in the queue.
+`R27` closed. `R30` / `R33` closed earlier (not bugs / frac ▲▼).
 
 Engine debt A–C historical: `[tech-debt.md](docs/prompts/tech-debt.md)`.
 
@@ -424,8 +421,8 @@ lit; `=` uses the current STAT data. CALC / SOLVE / hyp do not overlay
 **Tests** — golden (manual samples + Phase 1/2 + vis-no-literal +
 history/keys + SOLVE + E-19 CALC + E-40 offset/jump + STAT Edit + E-25 Dist + stay-in-STAT + `ti-stat` +
 `ti-numerics` + `ti-store` + `ti-parse` + `ti-keys` + `ti-escape` +
-`ti-edges` + `r17-percent` + `r28-exp` + `r29-int` + `g1-resolve` + `g2-resolve` + `g3-resolve` + `g4-resolve` + E-28 linear + E-28 cubic) + parser (implicit
-multiply) = 200 (10 Oct 2026).
+`ti-edges` + `r17-percent` + `r28-exp` + `r29-int` + `g1-resolve` + `g2-resolve` + `g3-resolve` + `g4-resolve` + `g5-resolve` + E-28 linear + E-28 cubic) + parser (implicit
+multiply / juxt across ÷).
 
 **ti-stat** — STAT editor first keystroke replaces the cell (FREQ `1` → `5`);
 `evaluateExpression` does not overlay A/B/C/R/N on user memory; invalid
@@ -493,6 +490,11 @@ box caret-tall on the writing line (`R45`). 10 Oct 2026.
 (`R51`); condensed `10^` prefix (`R52`); global stretchy
 parentheses (`R53`); shared frac-exponent base drop (`R54`).
 10 Oct 2026.
+
+**g5-resolve** — Show-keys SHIFT / `×10ˣ` legibility (`R55`);
+juxtaposition π/`e` across ÷ (`R56`); empty trig/hyp open boxes
+(`R57`); Alt/Shift clear on blur (`R58`); stretchy Abs bars
+(`R59`). 15 Oct 2026.
 
 **debt-source-map** — IR rewrite carries original offsets onto AST nodes and
 `CalcError.offset`. Syntax / Math ERROR ◀▶ jumps to the fault token. Implicit
