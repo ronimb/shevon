@@ -14,21 +14,56 @@ import { isDesktopApp } from './desktopBridge.ts';
 const BRING_FRONT_KEY = 'calc_bring_front_accel';
 const BRING_FRONT_DEFAULT = 'CommandOrControl+Shift+Space';
 
+/** Windows reserves Ctrl+Shift+Esc for Task Manager — RegisterHotKey always fails. */
+function isReservedBringAccel(accel: string): boolean {
+  const n = accel.replace(/CommandOrControl/g, 'Ctrl').replace(/\s+/g, '');
+  return /^Ctrl\+Shift\+(Esc|Escape)$/i.test(n);
+}
+
+function loadBringAccel(): string {
+  const saved = localStorage.getItem(BRING_FRONT_KEY) || BRING_FRONT_DEFAULT;
+  return isReservedBringAccel(saved) ? BRING_FRONT_DEFAULT : saved;
+}
+
 function eventToAccelerator(e: KeyboardEvent | React.KeyboardEvent): string | null {
   if (['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) return null;
   const parts: string[] = [];
   if (e.ctrlKey || e.metaKey) parts.push('CommandOrControl');
   if (e.altKey) parts.push('Alt');
   if (e.shiftKey) parts.push('Shift');
-  const named: Record<string, string> = {
-    ' ': 'Space',
+
+  const fromCode: Record<string, string> = {
+    Space: 'Space',
     Escape: 'Esc',
     ArrowUp: 'Up',
     ArrowDown: 'Down',
     ArrowLeft: 'Left',
     ArrowRight: 'Right',
+    Backspace: 'Backspace',
+    Tab: 'Tab',
+    Enter: 'Enter',
+    Delete: 'Delete',
+    Home: 'Home',
+    End: 'End',
+    PageUp: 'PageUp',
+    PageDown: 'PageDown',
   };
-  const key = named[e.key] ?? (e.key.length === 1 ? e.key.toUpperCase() : e.key);
+  let key = fromCode[e.code];
+  if (!key && /^Key[A-Z]$/i.test(e.code)) key = e.code.slice(3).toUpperCase();
+  if (!key && /^Digit[0-9]$/.test(e.code)) key = e.code.slice(5);
+  if (!key && /^F([1-9]|1[0-9]|2[0-4])$/.test(e.code)) key = e.code;
+  if (!key) {
+    const named: Record<string, string> = {
+      ' ': 'Space',
+      Escape: 'Esc',
+      ArrowUp: 'Up',
+      ArrowDown: 'Down',
+      ArrowLeft: 'Left',
+      ArrowRight: 'Right',
+    };
+    key = named[e.key] ?? (e.key.length === 1 ? e.key.toUpperCase() : '');
+  }
+  if (!key) return null;
   parts.push(key);
   return parts.length > 1 ? parts.join('+') : null;
 }
@@ -53,8 +88,14 @@ const Calculator: React.FC = () => {
   const [showCurrentKeys, setShowCurrentKeys] = useState<boolean>(() => localStorage.getItem('calc_show_current_keys_on') === '1');
   const [paneView, setPaneView] = useState<'history' | 'help'>('history');
   const [expandedItem, setExpandedItem] = useState<string | null>(null);
-  const [bringAccel, setBringAccel] = useState(() => localStorage.getItem(BRING_FRONT_KEY) || BRING_FRONT_DEFAULT);
+  const [bringAccel, setBringAccel] = useState(loadBringAccel);
   const [captureBring, setCaptureBring] = useState(false);
+  const [bringError, setBringError] = useState<string | null>(() =>
+    isReservedBringAccel(localStorage.getItem(BRING_FRONT_KEY) || '')
+      ? 'Ctrl+Shift+Esc is reserved by Windows (Task Manager). Using Ctrl+Shift+Space.'
+      : null,
+  );
+  const lastGoodBringRef = useRef(bringAccel);
 
   const store = useCalculatorState();
   const actions = useModeRouter(store);
@@ -95,21 +136,52 @@ const Calculator: React.FC = () => {
 
   useEffect(() => {
     if (!isDesktop) return;
-    localStorage.setItem(BRING_FRONT_KEY, bringAccel);
-    void window.shevonDesktop?.setBringToFrontAccelerator(bringAccel);
-  }, [isDesktop, bringAccel]);
+    let cancelled = false;
+    const apply = async () => {
+      const api = window.shevonDesktop;
+      if (!api) return;
+      // Pause the OS hotkey while recording so keystrokes reach the page.
+      if (captureBring) {
+        await api.setBringToFrontAccelerator('');
+        return;
+      }
+      localStorage.setItem(BRING_FRONT_KEY, bringAccel);
+      const ok = await api.setBringToFrontAccelerator(bringAccel);
+      if (cancelled) return;
+      if (ok === false) {
+        setBringError('Could not register that shortcut (in use by Windows or another app).');
+        if (bringAccel !== lastGoodBringRef.current) {
+          setBringAccel(lastGoodBringRef.current);
+        }
+        return;
+      }
+      lastGoodBringRef.current = bringAccel;
+      setBringError(null);
+    };
+    void apply();
+    return () => {
+      cancelled = true;
+    };
+  }, [isDesktop, bringAccel, captureBring]);
 
   useEffect(() => {
     if (!captureBring) return;
     const onKey = (e: KeyboardEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      if (e.key === 'Escape') {
+      // Bare Esc cancels; Ctrl/Alt/Shift+Esc is a valid shortcut chord.
+      if (e.key === 'Escape' && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
         setCaptureBring(false);
         return;
       }
       const accel = eventToAccelerator(e);
       if (!accel) return;
+      if (isReservedBringAccel(accel)) {
+        setBringError('Ctrl+Shift+Esc is reserved by Windows (Task Manager). Pick another shortcut.');
+        setCaptureBring(false);
+        return;
+      }
+      setBringError(null);
       setBringAccel(accel);
       setCaptureBring(false);
     };
@@ -556,11 +628,17 @@ const Calculator: React.FC = () => {
                   <button
                     type="button"
                     onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => setCaptureBring((v) => !v)}
+                    onClick={() => {
+                      setBringError(null);
+                      setCaptureBring((v) => !v);
+                    }}
                     className={`w-full text-left px-3 py-2 rounded-xl border text-[12px] font-bold tracking-wide ${captureBring ? 'border-blue-400/50 bg-blue-500/10 text-blue-200' : 'border-white/10 bg-white/[0.03] text-white/70 hover:bg-white/[0.06]'}`}
                   >
                     {captureBring ? 'Press a shortcut…' : bringAccel.replace('CommandOrControl', 'Ctrl')}
                   </button>
+                  {bringError ? (
+                    <p className="mt-2 text-[10px] leading-relaxed text-amber-300/90">{bringError}</p>
+                  ) : null}
                 </section>
                 ) : null}
 

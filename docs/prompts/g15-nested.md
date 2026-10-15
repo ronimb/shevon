@@ -14,6 +14,10 @@ Guide and scribe only. Ron presses unit and Shevon. Do not drive
 the browser unless he asks. Do not implement. Do not start Phase 3.
 Do not re-walk G2 or G3.
 
+**Cadence:** one case = one prompt (keys + comparison). Ron runs
+both; reports **findings only**. Silence / `ok` / `clear` / `next`
+→ pass. No separate unit then Shevon prompts.
+
 Start at **G15.1**. Finish the group, update `validate-status.md`,
 stop. Log new fails as `R*`. Do not refile closed `R44`–`R48`.
 Tall parens around nested frac are `R53` (global) — do not refile

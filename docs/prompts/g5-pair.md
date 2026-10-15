@@ -12,7 +12,14 @@ table, cadence, form rules, and template editing QA. Cursor:
 Guide and scribe only. Ron presses unit and Shevon. Do not drive
 the browser unless he asks.
 
-Coach clearly. One row, stop, wait. Never say “happy path” — name
-the keys and expected result. When Ron says `clear`, move on unless
-he left a gap. Start at **G5.1**. Finish G5, update
-`validate-status.md`, stop. Log new fails as `R*`. No code.
+**Cadence:** one case = one prompt (keys + what to compare on both
+devices). Stop. Ron runs both; he reports **findings only** — not
+matching results or “pass.” Silence / `ok` / `clear` / `next` →
+pass that row. Never split unit vs Shevon into two prompts. Never
+say “happy path.”
+
+Start at **G5.1**. Finish G5, update `validate-status.md`, stop.
+Log new fails as `R*`. No code.
+
+**After this sitting:** use [`g5-resolve.md`](g5-resolve.md)
+(`R55`–`R59`). Historical — G5 pairing done 15 Oct 2026.

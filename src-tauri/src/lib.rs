@@ -140,17 +140,19 @@ fn set_bring_to_front_accelerator(
   state: State<'_, Mutex<DesktopState>>,
   accel: String,
 ) -> Result<bool, String> {
-  if accel.trim().is_empty() {
-    return Ok(false);
-  }
-  let normalized = normalize_accel(&accel);
   let mut st = state.lock().map_err(|e| e.to_string())?;
-  if st.bring_accel.as_deref() == Some(normalized.as_str()) {
+
+  // Empty string pauses the hotkey (used while the UI records a new combo).
+  if accel.trim().is_empty() {
+    if let Some(prev) = st.bring_accel.take() {
+      let _ = app.global_shortcut().unregister(prev.as_str());
+    }
     return Ok(true);
   }
 
-  if let Some(prev) = st.bring_accel.take() {
-    let _ = app.global_shortcut().unregister(prev.as_str());
+  let normalized = normalize_accel(&accel);
+  if st.bring_accel.as_deref() == Some(normalized.as_str()) {
+    return Ok(true);
   }
 
   let shortcut: Shortcut = normalized
@@ -158,6 +160,8 @@ fn set_bring_to_front_accelerator(
     .map_err(|e| format!("invalid shortcut {normalized}: {e}"))?;
 
   let app_handle = app.clone();
+  // Register the new shortcut before dropping the old one so a failure
+  // does not leave show/hide unbound.
   app
     .global_shortcut()
     .on_shortcut(shortcut, move |app, _shortcut, event| {
@@ -173,6 +177,11 @@ fn set_bring_to_front_accelerator(
     })
     .map_err(|e| e.to_string())?;
 
+  if let Some(prev) = st.bring_accel.take() {
+    if prev != normalized {
+      let _ = app.global_shortcut().unregister(prev.as_str());
+    }
+  }
   st.bring_accel = Some(normalized);
   Ok(true)
 }

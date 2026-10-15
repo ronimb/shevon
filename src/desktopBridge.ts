@@ -29,7 +29,7 @@ export async function installShevonDesktopBridge(): Promise<void> {
     setHistoryOpen: (open) => invoke('set_history_open', { open: !!open }),
     setAlwaysOnTop: (on) => invoke('set_always_on_top', { on: !!on }),
     setBringToFrontAccelerator: (accel) =>
-      invoke<boolean>('set_bring_to_front_accelerator', { accel }),
+      invoke<boolean>('set_bring_to_front_accelerator', { accel }).catch(() => false),
     closeApp: async () => {
       await getCurrentWindow().close();
     },

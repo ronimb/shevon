@@ -102,12 +102,24 @@ function toggleWindow() {
 }
 
 function registerBringToFront(accel) {
-  if (!accel || typeof accel !== 'string') return false;
+  if (typeof accel !== 'string') return false;
+  // Empty string pauses the hotkey while the UI records a new combo.
+  if (accel.trim() === '') {
+    if (bringAccel) {
+      try {
+        globalShortcut.unregister(bringAccel);
+      } catch {
+        /* ignore */
+      }
+      bringAccel = null;
+    }
+    return true;
+  }
   if (accel === bringAccel) return true;
   try {
     const ok = globalShortcut.register(accel, toggleWindow);
     if (!ok) return false;
-    if (bringAccel) globalShortcut.unregister(bringAccel);
+    if (bringAccel && bringAccel !== accel) globalShortcut.unregister(bringAccel);
     bringAccel = accel;
     return true;
   } catch {

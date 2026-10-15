@@ -1,16 +1,22 @@
 # Kickoff — `g5-resolve` (R55–R59)
 
-Copy everything below the line into a **new agent chat**. One slice.
-Resolution only — not pairing. G5 pairing sitting is done
-(15 Oct 2026; see [`validate-status.md`](validate-status.md) G5).
+Historical kickoff — **landed** 15 Oct 2026 (`R55`–`R59` closed).
+Keep for regressions. Do not re-open as **Now**.
+
+Copy everything below the line only if re-running the slice.
+
+---
+
+Resolution only — not pairing. G5 pairing sitting was done
+15 Oct 2026 (see [`validate-status.md`](validate-status.md) G5).
 
 Do not start Phase 3, G6 pairing, or G15 unless Ron asks.
 
 ---
 
 Follow `docs/principles.md` (**Naming**, visual fidelity). Sources:
-[`docs/tech-issues.md`](../tech-issues.md) open `R55`–`R59`,
-`roadmap.md` **Now** `g5-resolve`,
+[`docs/tech-issues.md`](../tech-issues.md) `R55`–`R59`,
+`roadmap.md` **Now** (was `g5-resolve`),
 [`validate-status.md`](validate-status.md) G5 table.
 Update tech-issues / roadmap **Now** / validate-status in the same
 change. Smoke [`sanity-landed.md`](sanity-landed.md).

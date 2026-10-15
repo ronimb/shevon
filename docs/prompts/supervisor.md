@@ -55,6 +55,8 @@ Each session, do only this:
    (`lying-menus`, `setup-page2`).
 4. **Unit pairing workflow** — validation sittings
    ([`validate-unit.md`](validate-unit.md)) **only** walk and log.
+   Cadence: one case prompt (keys + comparison); Ron runs unit and
+   Shevon; he reports **findings only** — not passes/results.
    Issue resolution is a **later** implementation chat from a
    kickoff / **Now** id. Never tell Ron to “just fix it in the
    pairing chat.” After a group closes, route new `R*` / issues into
@@ -80,20 +82,21 @@ Each session, do only this:
 Re-read `roadmap.md` **Now** each session. If this snapshot disagrees
 with that file, the **roadmap wins** — then refresh this snapshot.
 
-Snapshot 10 Oct 2026:
+Snapshot 15 Oct 2026:
 
 - **Goal:** polish the daily exe on the existing featureset
   (COMP + STAT + EQN); later Phase 3 with the same pairing
-  treatment. **Now** queue: **G5 pairing**
-  ([`g5-pair.md`](g5-pair.md)). All Phase 3 is **very low
-  priority** (parked). Queue: `roadmap.md` **Now**.
-- `g2-resolve` / `g3-resolve` / `g4-resolve` landed
-  (`R49`–`R54` closed + re-check). `p4-packaging` / `p4-tauri` /
-  `g1-resolve` / Show-keys landed. Open `R*`: none.
-- SHIFT/ALPHA hold is desired (not latch); `R42` closed.
-- G1–G4 and G14 walks **tested**. Nested COMP = **G15**
+  treatment. **Now** queue: **G6 pairing**
+  ([`validate-unit.md`](validate-unit.md) G6). All Phase 3 is
+  **very low priority** (parked).
+- `g2-resolve` … `g5-resolve` landed (`R55`–`R59` closed).
+  Open `R*`: none.
+- SHIFT/ALPHA hold is desired (not latch); `R42` closed; `R58`
+  clears modifiers on blur.
+- G1–G5 and G14 walks **tested**. Nested COMP = **G15**
   (`g15-nested.md`). Cursor: [`validate-status.md`](validate-status.md).
   Workflow: validation → log → separate issue-resolution chat.
+  Cadence: one case prompt; findings only.
 - Phase 2 is landed. Daily driver: COMP + STAT + EQN (types 1–4).
 - Engine debt A–C is landed. Do not re-open unless a regression shows.
 - Do not pull LineIO, 99-byte, colon/Disp, `hist-letters`, or

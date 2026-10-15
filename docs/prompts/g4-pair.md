@@ -13,7 +13,9 @@ nested frac where G4 lists it). Cursor:
 Guide and scribe only. Ron presses unit and Shevon. Do not drive
 the browser unless he asks.
 
-Coach clearly. One row, stop, wait. Never say “happy path” — name
-the keys and expected result. When Ron says `clear`, move on unless
-he left a gap. Start at **G4.1**. Finish G4, update
-`validate-status.md`, stop. Log new fails as `R*`. No code.
+**Cadence:** one case = one prompt (keys + comparison). Ron runs
+both; reports **findings only**. Silence / `ok` / `clear` / `next`
+→ pass. No separate unit then Shevon prompts. No “happy path.”
+
+Start at **G4.1**. Finish G4, update `validate-status.md`, stop.
+Log new fails as `R*`. No code.

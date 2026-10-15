@@ -54,6 +54,7 @@ leftovers in those chats.
 
 **Unit pairing** chats follow
 [`docs/prompts/validate-unit.md`](docs/prompts/validate-unit.md):
+one case = one prompt; Ron runs unit + Shevon; **findings only**;
 walk and log only, then a **separate** issue-resolution chat. Do not
 fix mid-sitting.
 

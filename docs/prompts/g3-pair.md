@@ -13,5 +13,7 @@ Only use this kickoff for a greenfield re-walk of G3.1–10.
 Follow [`validate-unit.md`](validate-unit.md) **G3** (rows 1–10)
 for cadence and logging. Cursor: [`validate-status.md`](validate-status.md).
 
-Guide and scribe only. Start at **G3.1**. Finish through 10, stop.
-No calculator code. Nested cases → G15.
+Guide and scribe only. **Cadence:** one case = one prompt; Ron runs
+both; **findings only** (silence / `ok` / `clear` / `next` → pass).
+No separate unit/Shevon prompts. Start at **G3.1**. Finish through
+10, stop. No calculator code. Nested cases → G15.

@@ -41,13 +41,14 @@ Follow `docs/principles.md`. Sources: `manual.pdf` (the spec),
 
 Ron has the **unit** and runs **Shevon** (exe or
 `http://localhost:3000`). The agent is a **guide and scribe**:
-name the next row, tell Ron exactly what to press and what to
-compare, wait for his reports, log pass/fail. `manual.pdf` is
-gitignored — Ron must have a local copy. G1 already logged `R30` / `R31`; start at **G2** unless re-checking
-G1. (`R30` closed on re-check — unit also paints 25/2.) After **G1
-wraps**, the next pairing sitting walks **G14** (done 30 Sep 2026;
-resolution landed as `show-keys-size`) before continuing G2–G13.
-That Show-keys fix is in. Phase 3 stays parked (low priority).
+present one case (keys + what to compare), **stop**, wait for
+findings only, log fails. `manual.pdf` is gitignored — Ron must
+have a local copy. G1 already logged `R30` / `R31`; start at **G2**
+unless re-checking G1. (`R30` closed on re-check — unit also paints
+25/2.) After **G1 wraps**, the next pairing sitting walks **G14**
+(done 30 Sep 2026; resolution landed as `show-keys-size`) before
+continuing G2–G13. That Show-keys fix is in. Phase 3 stays parked
+(low priority).
 
 ### Default: guide only (no browser driving)
 
@@ -57,22 +58,28 @@ Ron does both devices. The agent only coaches and records.
 
 **Exception:** drive Shevon in the browser only if Ron explicitly
 asks in that chat (e.g. “you drive Shevon” / “press it for me”).
-Even then, follow **Cadence** — never before his unit report for
-that row.
+Even then, still one case prompt — never split unit vs Shevon into
+two agent turns.
 
-### Cadence (mandatory — one item at a time)
+### Cadence (mandatory — one case, one prompt)
 
-1. Agent names the row (group + #), the key sequence, and what to
-   check for form. **Stop.**
-2. Ron runs it on the **unit** and reports form + result (or error).
-3. Agent tells Ron the same sequence on **Shevon** (unless he already
-   did both). Ron reports Shevon form + result.
-4. Compare: form pass/fail + unit value → Shevon value. Log if new.
-5. AC on both. Next row.
+1. Agent presents **one** case in a **single** message: group + #,
+   key sequence on **both** unit and Shevon, and what to compare
+   (form + expected function / error). **Stop.** No follow-up
+   “now do Shevon” turn.
+2. Ron runs that case on the **unit and Shevon himself**.
+3. Ron replies with **findings only** (mismatches: form, value,
+   error, chrome). He does **not** narrate matching results or say
+   “pass.”
+4. Agent: silence / `ok` / `clear` / `next` / empty → treat as
+   **pass** for that row. A finding → log `R*` / issue. Then AC
+   reminder if needed and present the **next** case the same way.
 
-Never batch rows, never “pre-drive” Shevon, never score a row from
-Shevon alone or from memory of the manual. No unit report → do not
-ask for (or drive) Shevon for that row.
+Never batch rows. Never ask Ron to report unit and Shevon in two
+separate prompts. Never ask him to confirm the numeric result when
+nothing is wrong. Never score a row from Shevon alone or from
+memory of the manual. If he has not answered yet, wait — do not
+re-prompt with a split unit/Shevon ask.
 
 ### Coach clearly
 
@@ -81,28 +88,30 @@ Name keys so a human can read them (`x²` / `xⁿ` / `√`, or
 stacked questions. Describing LCD form (“superscript 2”, “radical
 template”) is fine.
 
-Do **not** say “happy path” to Ron. Say the keys and the expected
-result (e.g. `log` `100` `=` → **2**). When he says `clear`, treat
-form + value as done for that check unless he left something open.
+Do **not** say “happy path” to Ron. In the **one** case prompt,
+name the keys and the comparison target (e.g. `log` `100` `=` →
+expect **2**, same form as unit). When he says `clear` / `next` /
+`ok`, move on unless he left a finding open.
 
-For **every** item: check **form** (elements, placement/role,
-glyphs/templates, chrome) **and** **function** (same key sequence →
-same result or error as the unit, to displayed precision).
+For **every** item the agent still checks (in the prompt text)
+**form** and **function** — but Ron only speaks when something
+differs.
 
 ### Form includes visuals (log them)
 
-**Form is not only “is it a π / not the letters pi.”** When Ron (or
-the photo) shows a **noticeable** visual mismatch vs the unit, treat
-it as a form **fail** and log an `R*` — even if the value is right
-and the symbol class is right. Examples that **must** be logged:
+**Form is not only “is it a π / not the letters pi.”** When Ron
+reports a **noticeable** visual mismatch vs the unit, treat it as
+a form **fail** and log an `R*` — even if the value is right and
+the symbol class is right. Examples that **must** be logged:
 
 - Glyph shape / weight (classic serif π vs straight-edged π — `R37`)
 - Caret visible when the unit hides it (`R32`, `R35`)
 - Idle / AC result chrome (blank vs painted `0` — `R34`)
 - Stacked vs flat, wrong slot boxes, wrong indicator lit
 
-Ask for form notes every row (symbol look, caret, empty slots,
-result chrome), not only the numeric answer.
+Put the form comparison in the case prompt (symbol look, caret,
+empty slots, result chrome). Do **not** ask Ron to describe form
+or value when they match — only log what he reports as wrong.
 
 **Out of scope (do not file):** true pixel-perfect LCD *typeface*
 mimicry — matching the hardware’s exact font raster, anti-aliasing,
@@ -164,7 +173,9 @@ format surprises you.
 - Start Phase 3, `p4-exact`, `p4-tauri`, or LineIO.
 - Open the browser / lock the tab / CDP / click calculator keys
   unless Ron explicitly asked you to drive Shevon.
-- Press Shevon (when driving) before Ron’s unit report for that row.
+- Split one case into separate unit then Shevon prompts.
+- Ask Ron to report matching results / “pass” / full value
+  narration — findings only.
 - Dismiss Ron’s visual / glyph / chrome notes as “pixel-perfect font
   out of scope” without logging an `R*` (see **Form includes
   visuals**).
@@ -178,13 +189,13 @@ format surprises you.
 
 ## Done when (the sitting)
 
-- Each item in the groups you walked is **pass** or **fail** with one
-  **unit** value (from Ron) and one Shevon value (from Ron, or from
-  the agent only if he asked it to drive), plus a **form** note
-  (glyph / caret / chrome) when anything looked different.
-- Every walked row had a hardware report before Shevon was scored.
-- Template rows include edit-hygiene notes (DEL / ▲▼ / no IR leak)
-  when the group uses templates.
+- Each walked row was presented as **one** case prompt; Ron ran unit
+  + Shevon himself; agent marked **pass** on silence/`ok`/`clear`/
+  `next`, or **fail** from a finding he reported.
+- Failed rows have enough detail in the `R*` / issue text to fix
+  later (what differed). Matching values are not required in chat.
+- Template rows: the case prompt covered edit hygiene (DEL / ▲▼ /
+  no IR leak) when the group uses templates; findings logged if any.
 - Noticeable visual mismatches Ron reported are logged as `R*` (not
   waved off as font polish).
 - End-of-sitting summary lists **new** `R*` / issue ids logged this
@@ -461,13 +472,13 @@ Mode-specific nests (log/sin/∫ of frac) stay in G4 / G5 / G7.
 ## How to run the evening
 
 1. Open this file, the **unit**, and Shevon (exe or `:3000`).
-2. Pick **one** group. G1–G4 and G14 are done. Next pairing is
-   **G5** (after `g4-resolve`); then G6–G13; schedule **G15** when
+2. Pick **one** group. G1–G5 and G14 are done. Next after
+   `g5-resolve` is **G6**; then G7–G13; schedule **G15** when
    nesting is next. Tell the agent the group id.
-3. For each row, follow **Cadence**: agent coaches; you report unit
-   then Shevon (G14 is Shevon-only — still one row at a time). Agent
-   records item, form pass/fail, function (unit → Shevon). Keep the
-   agent off the browser unless you ask.
+3. For each row, follow **Cadence**: one case prompt (keys +
+   comparison); you run unit and Shevon; reply with **findings
+   only** (G14 is Shevon-only — still one prompt per row). Agent
+   logs fails; keep the agent off the browser unless you ask.
 4. Stop at the end of the group. Agent lists new `R*` / issue ids.
    **Do not** open a fix chat mid-group. Resolution is a later
    sitting / kickoff (see **Workflow** above).

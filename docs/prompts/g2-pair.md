@@ -71,13 +71,14 @@ Do **not** re-walk G1 or G14. Do not start G3. Do not fix mid-sitting.
 
 ### Workflow
 
-1. Name one row. Stop.
-2. Wait for unit report, then Shevon report.
-3. Compare form + function. Log new fails to `docs/tech-issues.md`
-   (`R*` next free id after `R38`) or `issues.md` (honesty / extras).
-   Never both for the same defect. Update `validate-status.md` when
-   the sitting ends.
-4. AC both. Next row.
+1. One case = one prompt (keys + what to compare on both). Stop.
+2. Ron runs unit and Shevon; replies with **findings only** (not
+   matching results / “pass”). Silence / `ok` / `clear` / `next` →
+   pass that row.
+3. Log findings to `docs/tech-issues.md` (`R*`) or `issues.md`
+   (honesty / extras). Never both for the same defect. Update
+   `validate-status.md` when the sitting ends.
+4. AC both. Next case the same way.
 5. End with the list of new ids. **No calculator code.**
 
 ### Do not refile
