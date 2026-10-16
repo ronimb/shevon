@@ -1,14 +1,7 @@
 # Backlog
 
-Unassigned feature ideas — things we may want that are **not yet on the
-roadmap**. This file is not the task list.
-
-| If you need… | Go here |
-|--------------|---------|
-| Scheduled work (phases, Now, vis-*) | [`roadmap.md`](roadmap.md) |
-| Honesty / leftover bugs | [`issues.md`](issues.md) |
-| Landed-correctness review | [`docs/tech-issues.md`](docs/tech-issues.md) |
-| Design rules | [`docs/principles.md`](docs/principles.md) |
+Unassigned ideas — **not** the task list. Doc map:
+[`docs/README.md`](docs/README.md). Queue: [`roadmap.md`](roadmap.md).
 
 When an idea gets a phase, action id, or a “do this next”, **move it** to
 [`roadmap.md`](roadmap.md) (or [`issues.md`](issues.md) /

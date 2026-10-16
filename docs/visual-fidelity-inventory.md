@@ -205,7 +205,7 @@ Status bar CSS: `index.css`.
 | hyp | No | Opens sinh/cosh/tanh menu |
 | SHIFT+hyp (Abs) | No | Abs template with ⬚ slot |
 | Ran# (SHIFT+.) | No | Function token, not a raw code fragment |
-| RanInt# (ALPHA+.) | No | `RanInt(‸,)` template with ⬚ slots |
+| RanInt# (ALPHA+.) | No | `RanInt#(` — no placeholder boxes; comma only after the user types one (`R62`) |
 | sin / cos / tan / ln | No | Styled function name via the shared template table |
 
 ### 9. Current keys / History chips

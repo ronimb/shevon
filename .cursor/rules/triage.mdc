@@ -9,7 +9,8 @@ If this chat is **supervisor, triage, oversight, routing, “what’s next”,
 or a done-check** — follow
 [`docs/prompts/supervisor.md`](docs/prompts/supervisor.md) for the whole
 session (`docs/prompts/triage.md` is an alias). Do not implement a
-leftover in that chat.
+leftover in that chat. Doc map: [`docs/README.md`](docs/README.md).
 
 Implementation chats still follow the slice prompt named in `roadmap.md`
-**Now** (one slice per chat). Do not invent a second plan.
+**Now** (one slice per chat). Do not invent a second plan. Do not edit
+canvases on handoffs.

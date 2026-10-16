@@ -1075,7 +1075,7 @@ export function useModeRouter(s: CalculatorStore) {
 
   const handleDotKey = useCallback(() => {
     if (s.isShift) { handleInput('Ran#'); s.consumeShift(); }
-    else if (s.isAlpha) { handleInput('RanInt(‸,'); s.consumeAlpha(); }
+    else if (s.isAlpha) { handleInput('RanInt(‸'); s.consumeAlpha(); }
     else handleInput('.');
   }, [s, handleInput]);
 

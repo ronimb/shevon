@@ -4,23 +4,21 @@ Detailed plan for Shevon. This file is the
 **source of truth for scheduled work**.
 
 
-| If you need…                                      | Go here                                                                  |
-| ------------------------------------------------- | ------------------------------------------------------------------------ |
-| Design rules (visual fidelity, behavior matching) | `[docs/principles.md](docs/principles.md)`                               |
-| Open bugs (honesty / leftovers)                   | `[issues.md](issues.md)`                                                 |
-| Landed-correctness review (`R*` / `ti-*`)         | `[docs/tech-issues.md](docs/tech-issues.md)`                             |
-| Ideas not yet assigned to a phase                 | `[backlog.md](backlog.md)`                                               |
-| Feature-by-feature hardware map                   | `[docs/coverage.md](docs/coverage.md)`                                   |
-| LCD element audit                                 | `[docs/visual-fidelity-inventory.md](docs/visual-fidelity-inventory.md)` |
-| Triage / oversight (no implementation)            | `[docs/prompts/supervisor.md](docs/prompts/supervisor.md)`               |
-| Packaging slice (view)                            | `[canvases/packaging.canvas.tsx](canvases/packaging.canvas.tsx)`         |
-| Unit pairing (form + function, no code)           | `[docs/prompts/validate-unit.md](docs/prompts/validate-unit.md)`         |
-| Pairing cursor (tested / untested)                | `[docs/prompts/validate-status.md](docs/prompts/validate-status.md)`     |
+| If you need… | Go here |
+|--------------|---------|
+| Full doc map | [`docs/README.md`](docs/README.md) |
+| Design rules | [`docs/principles.md`](docs/principles.md) |
+| Honesty leftovers | [`issues.md`](issues.md) |
+| Landed-correctness `R*` | [`docs/tech-issues.md`](docs/tech-issues.md) |
+| Unassigned ideas | [`backlog.md`](backlog.md) |
+| Feature coverage | [`docs/coverage.md`](docs/coverage.md) |
+| LCD audit | [`docs/visual-fidelity-inventory.md`](docs/visual-fidelity-inventory.md) |
+| Supervisor | [`docs/prompts/supervisor.md`](docs/prompts/supervisor.md) |
+| Pairing cadence / tables | [`docs/prompts/validate-unit.md`](docs/prompts/validate-unit.md) |
+| Pairing cursor | [`docs/prompts/validate-status.md`](docs/prompts/validate-status.md) |
 
-
-Canvases (`canvases/*.canvas.tsx`) are **views**. If a canvas disagrees with
-this file, this file wins — refresh the canvas in the same change when the
-phase story changed.
+This file owns the **queue**. Canvases are optional and usually skipped
+([`canvases/README.md`](canvases/README.md)).
 
 Status: `[ ]` open · `[x]` done (leave done items here until the next phase
 wrap-up, then move them to **Landed**).
@@ -48,8 +46,9 @@ TABLE / CONST into **Now** on agent initiative. Lying MODE rows
 wait for the matching feature. LineIO / 99-byte / `:` /
 `hist-letters` stay parked.
 
-Active focus: **G6** pairing next (`g5-resolve` closed `R55`–`R59`).
-**G15** nested untested (schedule separately). Phase 3 stays parked.
+Active focus: **G7 pairing** next (`g6-resolve` closed 16 Oct 2026:
+`R60` / `R61` / `R62`). Do not start Phase 3 or **G15** unless Ron
+asks. Phase 3 stays parked.
 
 Catalog of landed-correctness ids: `[docs/tech-issues.md](docs/tech-issues.md)`.
 Honesty leftovers: `[issues.md](issues.md)`. After every slice: `[sanity-landed.md](docs/prompts/sanity-landed.md)`.
@@ -65,12 +64,13 @@ Triage (no code): `[supervisor.md](docs/prompts/supervisor.md)`
 
 | Order | Id | What | Kickoff |
 | ----- | -- | ---- | ------- |
-| 1 | G6 pairing | Combinatorics and random (walk + log) | `[validate-unit.md](docs/prompts/validate-unit.md)` G6 |
+| 1 | G7 pairing | Calculus templates (walk + log) | [`g7-pair.md`](docs/prompts/g7-pair.md) |
 
 `ti-stat` … `ti-edges`, `R17` (`r17-percent`), `R28` (`r28-exp`),
 `R29` (`r29-int`), `g1-resolve`, `g2-resolve` (`R39`–`R43` +
 `setup-page2`), `g3-resolve` (`R44`–`R48` + `setup-page1-disp`),
-`g4-resolve` (`R49`–`R54`), and `g5-resolve` (`R55`–`R59`) are in
+`g4-resolve` (`R49`–`R54`), `g5-resolve` (`R55`–`R59`), and
+`g6-resolve` (`R60`–`R62`) are in
 **Landed**. `R36` (`×10ˣ` glyph) dropped — not in the queue.
 `R27` closed. `R30` / `R33` closed earlier (not bugs / frac ▲▼).
 
@@ -495,6 +495,10 @@ parentheses (`R53`); shared frac-exponent base drop (`R54`).
 juxtaposition π/`e` across ÷ (`R56`); empty trig/hyp open boxes
 (`R57`); Alt/Shift clear on blur (`R58`); stretchy Abs bars
 (`R59`). 15 Oct 2026.
+
+**g6-resolve** — DEL on infix P/C erases nPr/nCr (`R60`); tall
+Abs bars keep a thin stroke (`R61`); empty RanInt# is `RanInt#(`
+with no boxes or built-in comma (`R62`). 16 Oct 2026.
 
 **debt-source-map** — IR rewrite carries original offsets onto AST nodes and
 `CalcError.offset`. Syntax / Math ERROR ◀▶ jumps to the fault token. Implicit

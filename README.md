@@ -27,11 +27,14 @@ math library. Behavior is checked against the official manual
 
 ```bash
 npm install
-npm run dev
+npm run dev          # http://localhost:3000 — run in your own terminal
+npm run stop:dev     # kill whatever holds port 3000 (no agent hunt)
 ```
 
-Then open http://localhost:3000. No API keys or environment variables are
-required. (`.env.example` documents the only optional dev toggle, `DISABLE_HMR`.)
+Run `dev` from **Terminal → New Terminal** (or Windows Terminal), not
+from an agent chat — agent terminals are hard to find later. No API
+keys required. Optional: `DISABLE_HMR=true` in `.env` (see
+`.env.example`) to avoid flicker while an agent edits files.
 
 ## Run as a desktop app (Tauri / WebView2)
 
@@ -52,14 +55,13 @@ npm run build:exe:electron  # → dist-desktop/Shevon-electron.exe
 
 ## Unit pairing (form + function)
 
-Copy [`docs/prompts/validate-unit.md`](docs/prompts/validate-unit.md)
-below the line into a **new** chat (or open the Validate canvas).
-One group per sitting. G1 re-check closed `R30`; `R31` remains in
-[`docs/tech-issues.md`](docs/tech-issues.md). Pairing chats do not
-implement.
+Use the kickoff named in [`roadmap.md`](roadmap.md) **Now** (e.g.
+[`docs/prompts/g6-pair.md`](docs/prompts/g6-pair.md)). Cadence and
+tables: [`docs/prompts/validate-unit.md`](docs/prompts/validate-unit.md).
+Cursor: [`docs/prompts/validate-status.md`](docs/prompts/validate-status.md).
+Pairing chats do not implement. Doc map: [`docs/README.md`](docs/README.md).
 
-You need a local `manual.pdf` (gitignored). Bring that file with
-you; the repo will not have it after clone/pull.
+You need a local `manual.pdf` (gitignored).
 
 ## Other scripts
 
@@ -78,33 +80,12 @@ references (e.g. `E-16`) appear throughout the code and tests.
 
 ## Documentation
 
-Markdown files are the **source of truth**. Canvases are visual views refreshed
-from those files — not a second plan.
+Full map: [`docs/README.md`](docs/README.md). Markdown is the source of
+truth; canvases are optional ([`canvases/README.md`](canvases/README.md)).
 
-| File | Role |
-|------|------|
-| [`docs/principles.md`](docs/principles.md) | Visual fidelity and function-behavior rules |
-| [`roadmap.md`](roadmap.md) | Phased roadmap, current work, landed work |
-| [`issues.md`](issues.md) | Honesty / leftover bugs (with phase/action when one exists) |
-| [`docs/tech-issues.md`](docs/tech-issues.md) | Landed-correctness review (`R*` / `ti-*`) |
-| [`backlog.md`](backlog.md) | Feature ideas not yet assigned to a phase |
-| [`docs/coverage.md`](docs/coverage.md) | Feature-by-feature hardware coverage |
-| [`docs/visual-fidelity-inventory.md`](docs/visual-fidelity-inventory.md) | LCD element audit |
-
-Agents: [`AGENTS.md`](AGENTS.md) and `.cursor/rules/`. Triage / oversight
-chats follow [`docs/prompts/supervisor.md`](docs/prompts/supervisor.md)
-([`triage.md`](docs/prompts/triage.md) is an alias). Do not
-name the hardware vendor or original model (`docs/principles.md` **Naming**).
+Agents: [`AGENTS.md`](AGENTS.md). Naming: [`docs/principles.md`](docs/principles.md).
 
 ## Status
 
-Daily driver is COMP + STAT + EQN (FREQ, Dist, stay-in-STAT, SOLVE,
-EQN types 1–4). CMPLX, BASE-N, MATRIX, VECTOR, TABLE, CONST, and CONV
-are menu chrome only.
-
-Phase 2 is landed. `p4-packaging` and `p4-tauri` are in
-(WebView2 daily exe ~10 MB; Electron kept as
-`build:exe:electron`). `show-keys-size` and `g4-resolve` are in.
-Phase 3 (`p3-*`) is parked (low priority). Next work is
-[`roadmap.md`](roadmap.md) **Now** (G5 pairing). Coverage:
-[`docs/coverage.md`](docs/coverage.md).
+Daily driver: COMP + STAT + EQN. Phase 3 parked. Next work:
+[`roadmap.md`](roadmap.md) **Now**. Coverage: [`docs/coverage.md`](docs/coverage.md).

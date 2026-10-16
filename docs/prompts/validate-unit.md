@@ -25,30 +25,19 @@ Do **not** collapse these into one chat.
    rows that failed, or continue the next group. Do not start fixing
    mid-group because a fail showed up.
 
-Order for the current program: **G1** and **G14** are done
-(resolutions landed; G14 face/size re-check passed 10 Oct 2026).
-Resume at **G2** in a **new** chat from [`g2-pair.md`](g2-pair.md).
-Cursor: [`validate-status.md`](validate-status.md). Pairing never
-jumps the queue; fixes never land inside pairing.
+**Which group next?** [`validate-status.md`](validate-status.md)
+**Cursor** (and `roadmap.md` **Now** for the sitting kickoff, G7 in
+[`validate-unit.md`](validate-unit.md)). Do not jump the queue; no fixes in
+pairing. Doc map: [`../README.md`](../README.md).
 
 ---
 
-Follow `docs/principles.md`. Sources: `manual.pdf` (the spec),
-[`docs/coverage.md`](../coverage.md),
-[`docs/visual-fidelity-inventory.md`](../visual-fidelity-inventory.md),
-[`issues.md`](../../issues.md),
-[`docs/tech-issues.md`](../tech-issues.md).
+Follow `docs/principles.md`. Spec: `manual.pdf` (gitignored — Ron
+must have a local copy). Log fails to `docs/tech-issues.md` (`R*`)
+or `issues.md` (honesty).
 
-Ron has the **unit** and runs **Shevon** (exe or
-`http://localhost:3000`). The agent is a **guide and scribe**:
-present one case (keys + what to compare), **stop**, wait for
-findings only, log fails. `manual.pdf` is gitignored — Ron must
-have a local copy. G1 already logged `R30` / `R31`; start at **G2**
-unless re-checking G1. (`R30` closed on re-check — unit also paints
-25/2.) After **G1 wraps**, the next pairing sitting walks **G14**
-(done 30 Sep 2026; resolution landed as `show-keys-size`) before
-continuing G2–G13. That Show-keys fix is in. Phase 3 stays parked
-(low priority).
+Ron runs the **unit** and **Shevon**. Agent: **guide and scribe** —
+one case prompt, stop, findings only. Phase 3 stays parked.
 
 ### Default: guide only (no browser driving)
 
@@ -471,18 +460,11 @@ Mode-specific nests (log/sin/∫ of frac) stay in G4 / G5 / G7.
 
 ## How to run the evening
 
-1. Open this file, the **unit**, and Shevon (exe or `:3000`).
-2. Pick **one** group. G1–G5 and G14 are done. Next after
-   `g5-resolve` is **G6**; then G7–G13; schedule **G15** when
-   nesting is next. Tell the agent the group id.
-3. For each row, follow **Cadence**: one case prompt (keys +
-   comparison); you run unit and Shevon; reply with **findings
-   only** (G14 is Shevon-only — still one prompt per row). Agent
-   logs fails; keep the agent off the browser unless you ask.
-4. Stop at the end of the group. Agent lists new `R*` / issue ids.
-   **Do not** open a fix chat mid-group. Resolution is a later
-   sitting / kickoff (see **Workflow** above).
-5. Next group is a new sitting or the same chat with “G14 next” /
-   “G2 next”. Launch from
-   [Validate](../../canvases/validate.canvas.tsx) if you want a
-   group-scoped chat.
+1. Open the kickoff named in `roadmap.md` **Now**, the **unit**,
+   and Shevon (exe or `:3000`).
+2. One group per sitting. Cursor: [`validate-status.md`](validate-status.md).
+3. **Cadence:** one case prompt; you run both; **findings only**.
+4. End of group → agent lists new `R*` / issue ids. No mid-group
+   fix chat (see **Workflow** above).
+5. Next sitting = new chat from the next kickoff (supervisor writes
+   it when needed).

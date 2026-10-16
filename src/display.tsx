@@ -257,6 +257,9 @@ const parenBody = (inner: string, closed: boolean) => `(${inner}${closed ? ')' :
 /** Pol/Rec: no built-in comma. Show `,` only after the user types one (2nd arg). */
 const commaArgs = (a: string[]) =>
   a.length > 1 ? `${slot(a[0])},${slot(a[1] || '')}` : slot(a[0]);
+/** RanInt#: same comma rule, and no placeholder boxes (R62). */
+const ranIntArgs = (a: string[]) =>
+  a.length > 1 ? `${openArg(a[0])},${openArg(a[1] || '')}` : openArg(a[0]);
 const commaArgsPlain = (a: string[]) =>
   a.length > 1 ? `${lx(a[0])},${lx(a[1])}` : lx(a[0]);
 
@@ -391,13 +394,14 @@ const TEMPLATE_SPECS: TemplateSpec[] = [
   },
   {
     stem: 'RanInt',
-    html: (a, closed) => `<span class="trig-fun">RanInt#</span>${parenBody(`${slot(a[0])},${slot(a[1] || '')}`, closed)}`,
-    latex: a => `\\operatorname{RanInt}(${lx(a[0])},${lx(a[1])})`,
+    // Empty form is `RanInt#(` — comma only after the user types one (R62).
+    html: (a, closed) => `<span class="trig-fun">RanInt#</span>${parenBody(ranIntArgs(a), closed)}`,
+    latex: a => `\\operatorname{RanInt}(${commaArgsPlain(a)})`,
   },
   { stem: 'Rnd', html: (a, closed) => `<span class="trig-fun">Rnd</span>${parenBody(slot(a[0]), closed)}`, latex: a => `\\operatorname{Rnd}(${lx(a[0])})` },
   {
     stem: 'abs',
-    // Stretchy bars for tall nests (frac / root), same idea as paren-pair (R59).
+    // Stretchy bars for tall nests (frac / root). Height grows; stroke stays thin (R59 / R61).
     html: a =>
       `<span class="abs-template abs-pair">` +
       `<span class="abs-bar">|</span>` +

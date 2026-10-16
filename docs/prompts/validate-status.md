@@ -1,37 +1,19 @@
 # Unit pairing — status
 
-Handoff for the next machine. This is the pairing cursor only.
-Scheduled work stays in [`roadmap.md`](../../roadmap.md) **Now**.
-Open leftovers stay in [`issues.md`](../../issues.md). Landed
-`R*` stay in [`docs/tech-issues.md`](../tech-issues.md). The walk
-itself is [`validate-unit.md`](validate-unit.md).
+**Pairing cursor only** — not the queue. Queue: [`roadmap.md`](../../roadmap.md)
+**Now**. Tables/cadence: [`validate-unit.md`](validate-unit.md).
+Doc map: [`../README.md`](../README.md).
 
-Logged 1 Oct 2026; G2–G4 walks 10 Oct 2026; `g4-resolve` done;
-G5 walk 15 Oct 2026. Pairing chat: guide and scribe only. Ron
-runs the unit and Shevon. One case = one prompt; Ron reports
-**findings only** (not matching results). Do not drive the
-browser unless he asks. No calculator code in a pairing chat.
+Ron runs unit + Shevon. Agent: findings only; no code; no browser
+drive unless asked.
 
-**Tested** means Ron walked it on the unit and Shevon.
-**Untested** means no such walk yet.
+**Tested** = walked on unit and Shevon. **Untested** = not yet.
 
 ## Cursor
 
-**G5 pairing done** (15 Oct 2026). **`g5-resolve`** closed
-**`R55`–`R59`**.
-
-**Next:** **G6** pairing ([`validate-unit.md`](validate-unit.md)).
-**G15** nested untested — schedule separately. Do not start
-Phase 3.
-Closed chats:
-[re-check](4fbb9cb3-f9d5-4048-a8bd-e98650315fcc),
-[R38 resolve](9aacae11-a4cf-46ce-a525-879a23bf52f2),
-[G2 pair](f2cb3982-4abe-4a32-9ec3-3a2966947df0),
-[g2-resolve](4d4bba9a-944f-40b3-ab42-79ece793603f),
-[G3 pair](b29225fa-f226-40e0-a6b3-52cbad938732),
-[g3-resolve](52d1a0ee-c8b6-4764-93fc-132516030a23),
-[G4 pair](db788c9e-e8de-401f-8e63-7b766be15180),
-[G5 pair](this sitting — 15 Oct 2026).
+**G6 resolve done** (16 Oct 2026): **`R60`** / **`R61`** /
+**`R62`** closed. **Next:** G7 pairing —
+[`g7-pair.md`](g7-pair.md). **G15** later. Phase 3 parked.
 
 ## Re-check results (10 Oct 2026)
 
@@ -148,6 +130,25 @@ Open `R*` after G5 sitting: **`R57`**, **`R59`** (plus interim
 **`R55`** / **`R56`** / **`R58`**) → **closed** in `g5-resolve`
 (15 Oct 2026).
 
+### G6 — combinatorics and random (16 Oct 2026)
+
+Function **pass** unless noted. `R6` (n! / nCr reject) still
+good — not refiled. `fact-max` not walked.
+
+| # | Walk | Notes |
+|---|------|-------|
+| 1 x! | **pass** | `5` x! → 120 |
+| 2 n! reject | **pass** | `1.5!` and `(−)1!` Math ERROR |
+| 3 nPr | function **pass** (`5` nPr `2` → 20). DEL **`R60`** → **closed in code** | caret at P erased the operator |
+| 4 nCr | function **pass**. **`R60`** → **closed in code** | `5` nCr `2` → 10; same DEL on C |
+| 5 nPr / nCr reject | **pass** | `5` nCr `1.5` Math ERROR |
+| 6 Ran# | **pass** | two results in [0, 1); no leak |
+| 7 RanInt# | function **pass** (not reported). Form **`R62`** → **closed in code** | empty form is `RanInt#(` only. DEL does not leave a comma |
+
+Open `R*` after `g6-resolve`: none. **`R60`** / **`R61`** /
+**`R62`** closed 16 Oct 2026. **`R61`** was the Abs bar-weight
+follow-up (not a G6 row).
+
 ### G14 — emulator extras (30 Sep 2026)
 
 | # | Walk | After the fix |
@@ -160,14 +161,12 @@ Open `R*` after G5 sitting: **`R57`**, **`R59`** (plus interim
 
 ## Untested
 
-- **G15** nested COMP templates ([`g15-nested.md`](g15-nested.md)).
-- **G7.6–7** (nested frac in ∫ / d/dx — walk with G7).
-- Groups **G6–G13** (full). G5 done.
+- **G7–G13** (full). **G15** nested ([`g15-nested.md`](g15-nested.md)).
+- Nested frac rows inside G7 when that group is walked.
 
 ## Do not refile
 
-`R30`–`R43` (except dropped `R36`), `R5` / `R9` (closed behavior
-confirmed on G3), `show-keys-size`, `show-keys-face`, `hist-scroll`,
-`surd-pi-form` / `p4-exact`, `lying-menus`, `setup-page2` (closed),
-`setup-page1-disp` (closed in `g3-resolve`), `lineio-display`,
-`ind-arrows`, `prompt-prev-size`. `R44`–`R59` closed — do not refile.
+`R30`–`R43` (except dropped `R36`), `R5` / `R9`, `show-keys-size`,
+`show-keys-face`, `hist-scroll`, `surd-pi-form` / `p4-exact`,
+`lying-menus`, `setup-page2`, `setup-page1-disp`, `lineio-display`,
+`ind-arrows`, `prompt-prev-size`. `R44`–`R62` closed.

@@ -453,11 +453,13 @@ describe('Phase 1 — COMP LCD templates', () => {
     expect(html).toContain('Ran#');
   });
 
-  it('RanInt#(a,b) uses ⬚ slots like other COMP templates', () => {
-    const html = formatMath('RanInt(‸,)');
+  it('empty RanInt# is RanInt#( with no boxes or comma (R62)', () => {
+    const html = formatMath('RanInt(‸');
     expect(html).toContain('RanInt#');
-    expect(html).toContain('empty-slot');
+    expect(html).not.toContain('empty-slot');
+    expect(html).not.toContain(',');
     expect(html).toContain('cursor');
+    expect(html.replace(/<[^>]+>/g, '')).toBe('RanInt#(');
   });
 });
 
@@ -751,6 +753,55 @@ describe('g5-resolve — show-keys / π÷e / empty trig-hyp / Alt blur / Abs (R5
     expect(empty).toContain('abs-bar');
     expect(empty).toContain('empty-slot');
     expect(strip(empty)).toBe('||');
+  });
+});
+
+describe('g6-resolve — nPr/nCr DEL, Abs stroke, RanInt# (R60–R62)', () => {
+  const strip = (html: string) => html.replace(/<[^>]+>/g, '');
+
+  it('DEL on infix P/C erases the operator (R60)', () => {
+    expect(strip(formatMath('nPr(5,‸2)'))).toBe('5P2');
+    expect(strip(formatMath('nCr(5,‸2)'))).toBe('5C2');
+    expect(deleteCompAtCursor('nPr(5,‸2)')).toBe('5‸2');
+    expect(deleteCompAtCursor('nCr(5,‸2)')).toBe('5‸2');
+    expect(deleteCompAtCursor('nPr(5,‸)')).toBe('5‸');
+    expect(deleteCompAtCursor('nCr(,‸)')).toBe('‸');
+    expect(deleteCompAtCursor('1+nPr(10,‸4)+3')).toBe('1+10‸4+3');
+    expect(deleteCompAtCursor('nCr(frac(1,2),‸3)')).toBe('frac(1,2)‸3');
+    expect(strip(formatMath(deleteCompAtCursor('nPr(5,‸2)')!))).toBe('52');
+    expect(deleteCompAtCursor('nPr(5,‸2)')).not.toBe('nPr(5‸2)');
+    // Digits on either side still delete; the operator stays.
+    expect(deleteCompAtCursor('nPr(5,2‸)')).toBe('nPr(5,‸)');
+    expect(deleteCompAtCursor('nCr(5‸,2)')).toBe('nCr(‸,2)');
+    expect(evalComp('nPr(5,2)')).toBe(20);
+    expect(evalComp('nCr(5,2)')).toBe(10);
+    expect(evalComp('nPr(10,4)')).toBe(5040);
+    expect(evalComp('nCr(10,4)')).toBe(210);
+  });
+
+  it('tall Abs still wraps frac; stroke is not a scaled glyph (R61)', () => {
+    const tall = formatMath('abs(frac(1,2))');
+    expect(tall).toContain('abs-pair');
+    expect(tall).toContain('abs-bar');
+    expect(tall).toContain('frac-container');
+    expect(strip(tall)).toBe('|12|');
+    const plain = formatMath('abs(7)');
+    expect(strip(plain)).toBe('|7|');
+    expect(plain).toContain('abs-bar');
+  });
+
+  it('empty RanInt# has no boxes or comma; DEL does not strand one (R62)', () => {
+    const open = formatMath('RanInt(‸');
+    expect(open).not.toContain('empty-slot');
+    expect(strip(open)).toBe('RanInt#(');
+    expect(deleteCompAtCursor('RanInt(‸')).toBe('‸');
+    expect(deleteCompAtCursor('RanInt(‸,')).toBe('‸');
+    expect(deleteCompAtCursor('RanInt(‸,)')).toBe('‸');
+    const mid = formatMath('RanInt(1,‸');
+    expect(mid).not.toContain('empty-slot');
+    expect(strip(mid)).toBe('RanInt#(1,');
+    expect(strip(formatMath('RanInt(1,6)'))).toBe('RanInt#(1,6)');
+    expect(toLaTeX('RanInt(1,6)')).toContain('1,6');
   });
 });
 

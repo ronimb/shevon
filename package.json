@@ -8,6 +8,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
+    "stop:dev": "node scripts/stop-dev.mjs",
     "build": "vite build",
     "deploy": "npm run build && gh-pages -d dist",
     "preview": "vite preview",

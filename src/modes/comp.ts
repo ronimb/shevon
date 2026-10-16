@@ -729,13 +729,56 @@ export function moveCompCursorUp(currentInput: string): string {
   return currentInput;
 }
 
+/**
+ * Caret sitting on infix P/C is the IR spot just after the nPr/nCr comma.
+ * DEL there must drop the operator (R60). Deleting the comma alone pulls
+ * the right arg behind the letter.
+ */
+function eraseInfixPermComb(before: string, after: string): string | null {
+  if (!before.endsWith(',')) return null;
+  const segment = before.slice(0, -1);
+  let depth = 0;
+  let openIdx = -1;
+  for (let i = segment.length - 1; i >= 0; i--) {
+    const ch = segment[i];
+    if (ch === ')') depth++;
+    else if (ch === '(') {
+      if (depth === 0) {
+        openIdx = i;
+        break;
+      }
+      depth--;
+    }
+  }
+  if (openIdx < 0) return null;
+  const prefixWithStem = segment.slice(0, openIdx);
+  const stem = prefixWithStem.endsWith('nPr') ? 'nPr'
+    : prefixWithStem.endsWith('nCr') ? 'nCr'
+    : null;
+  if (!stem) return null;
+  const arg0 = segment.slice(openIdx + 1);
+  const prefix = prefixWithStem.slice(0, -stem.length);
+  const second = readTopArg(after);
+  return prefix + arg0 + '‸' + second.arg + second.rest;
+}
+
 export function deleteCompAtCursor(currentInput: string): string | null {
   let parts = currentInput.split('‸');
   let before = parts[0], after = parts[1] || '';
   if (before.length === 0) return null;
 
+  const erased = eraseInfixPermComb(before, after);
+  if (erased !== null) return erased;
+
   let found = PATS.find(p => before.endsWith(p));
   if (found) {
+    // Empty RanInt# is `RanInt#(` only (R62). A leftover comma must not survive DEL.
+    if (found === 'RanInt(') {
+      const bare = after.replace(/[‸⬚]/g, '');
+      if (bare === '' || bare === ',' || bare === ',)' || bare === ')') {
+        return before.slice(0, -found.length) + '‸';
+      }
+    }
     // Empty numerator: drop the fraction bar and keep the denominator.
     // Swallowing only `frac(` would leave the tail (`,2)`) as literal text.
     if (found === 'frac(' && after.startsWith(',')) {

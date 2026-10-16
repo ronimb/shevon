@@ -1,14 +1,14 @@
 # Tech issues — landed correctness
 
-Source of truth for review ids `R1`–`R59` and slices `ti-*`.
-Not Phase 2 leftovers and not honesty-policy lies. Do not copy an
-R-id into [`issues.md`](../issues.md).
+Source of truth for review ids `R1`–`R62` and slices `ti-*`.
+Doc map: [`README.md`](README.md). Do not copy an R-id into
+[`issues.md`](../issues.md).
 
 | If you need… | Go here |
 |--------------|---------|
-| Queue (what to implement next) | [`roadmap.md`](../roadmap.md) **Now** |
+| Queue | [`roadmap.md`](../roadmap.md) **Now** |
 | Honesty leftovers | [`issues.md`](../issues.md) |
-| STAT / EQN pairing (no code) | [`sanity-stat.md`](prompts/sanity-stat.md) |
+| Doc map | [`README.md`](README.md) |
 
 Status: `[ ]` open · `[x]` done.
 
@@ -16,7 +16,7 @@ Status: `[ ]` open · `[x]` done.
 
 ## Open
 
-(none — `R55`–`R59` closed in `g5-resolve`.)
+None. Next pairing is **G7** (do not start it from a resolve chat).
 
 ---
 
@@ -31,6 +31,13 @@ Status: `[ ]` open · `[x]` done.
 
 ## Closed this sitting
 
+- [x] `R60` — DEL with the caret on infix **P** / **C** erases the
+      nPr / nCr operator. (`g6-resolve`; G6.3 pairing 16 Oct 2026.)
+- [x] `R61` — Tall Abs bars stay a thin stroke while they stretch
+      (`R59` height kept). (`g6-resolve`; 16 Oct 2026.)
+- [x] `R62` — Empty RanInt# is `RanInt#(` only: no placeholder
+      boxes, no comma until the user types one. DEL does not leave
+      a stranded comma. (`g6-resolve`; G6.7 pairing 16 Oct 2026.)
 - [x] `R55` — Show-keys overlay: SHIFT legend contrast/size and
       shifted faces such as `×10ˣ` (readable `×10` + raised `x`)
       at overlay scale. (`g5-resolve`; interim 15 Oct 2026).

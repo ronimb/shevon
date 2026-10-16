@@ -1,34 +1,35 @@
 ---
-description: Markdown files are the source of truth; canvases are views
+description: Markdown files are the source of truth; canvases are optional
 alwaysApply: true
 ---
 
 # Documentation sources of truth
 
-Read `roadmap.md` before starting a feature, picking next work, or claiming
-something is done. Follow `docs/principles.md` for how it should look and
-behave.
+Start from [`docs/README.md`](docs/README.md). Read `roadmap.md` **Now**
+before starting a feature, picking next work, or claiming something is
+done. Design: `docs/principles.md`.
 
-| File | Role |
-|------|------|
-| `roadmap.md` | Scheduled work (Now, phases, vis-*, leftovers, landed) |
-| `issues.md` | Honesty / leftover bugs; include phase/action id when one exists |
-| `docs/tech-issues.md` | Landed-correctness review (`R*` / `ti-*`) |
-| `backlog.md` | Unassigned ideas only — not the task list |
-| `docs/coverage.md` | hardware feature coverage |
-| `docs/visual-fidelity-inventory.md` | LCD element audit |
-| `docs/prompts/supervisor.md` | Triage / oversight chats (not an implementation slice); `triage.md` is an alias |
-| `docs/prompts/tech-debt.md` | Engine debt A–C (landed; historical) |
+| File | Owns | Must not become |
+|------|------|-----------------|
+| `roadmap.md` | Scheduled work (Now, phases, vis-*, landed) | Bug narrative; long how-to |
+| `issues.md` | Honesty leftovers (Associated id) | Copy of `R*` |
+| `docs/tech-issues.md` | Landed-correctness `R*` / `ti-*` | Honesty menu policy |
+| `backlog.md` | Unassigned ideas | The Now queue |
+| `docs/coverage.md` | Feature × manual status | Phase schedule |
+| `docs/visual-fidelity-inventory.md` | LCD element audit | Full coverage table |
+| `docs/principles.md` | Design rules | Task list |
+| `README.md` | How to run; Status → **Now** | Duplicate roadmap |
+| `AGENTS.md` / `.cursor/rules/*.mdc` | Agent gates | Competing Now |
+| `docs/prompts/<id>.md` | One-slice / pairing kickoff | Second roadmap |
+| `docs/prompts/supervisor.md` | Oversight + short snapshot | Implementation |
+| `docs/prompts/validate-unit.md` | Pairing cadence + G tables | Queue |
+| `docs/prompts/validate-status.md` | Pairing cursor | Queue |
 
-- Update the matching `.md` file in the same change when you add, finish,
-  defer, or close work.
-- Canvases (`canvases/*.canvas.tsx`) are visual views. If they disagree with
-  markdown, markdown wins — refresh the canvas when the story changed.
-- Do not name the hardware vendor or the original calculator model.
-  Follow `docs/principles.md` **Naming**.
-- Triage / oversight chats follow `docs/prompts/supervisor.md`
-  (`docs/prompts/triage.md` is an alias). Do not implement leftovers
-  in those chats.
-- When Ron asks to verify / validate all project docs, follow
-  `.cursor/skills/verify-docs/SKILL.md`.
-- Do not recreate a competing task list in chat, a canvas, or the README.
+- Update the **owning** `.md` when you add, finish, defer, or close work.
+- **Canvases:** optional. Do **not** refresh on pairing/resolve/setup
+  handoffs. Only if Ron asks or verify-docs says so. See
+  `canvases/README.md`.
+- Naming: never name the hardware vendor or original model.
+- Supervisor chats: `docs/prompts/supervisor.md` — no leftover impl.
+- Full audit: `.cursor/skills/verify-docs/SKILL.md`.
+- Do not recreate a task list in the README, a canvas, or chat.

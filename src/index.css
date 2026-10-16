@@ -464,13 +464,34 @@ body {
     align-items: stretch;
     line-height: 1;
 }
+/* Tall nests keep the stretch (R59) but the stroke stays a hairline (R61).
+   Scaling the | glyph thickened it with the height. The glyph still sets
+   the advance width; text-fill hides it so currentColor stays the LCD ink. */
 .abs-pair:has(.frac-container) > .abs-bar,
 .abs-pair:has(.mix-container) > .abs-bar,
 .abs-pair:has(.root) > .abs-bar,
 .abs-pair:has(.int-container) > .abs-bar,
 .abs-pair:has(.sum-container) > .abs-bar {
-    font-size: 1.85em;
+    align-self: stretch;
+    position: relative;
+    justify-content: center;
+    font-size: 1em;
     line-height: 1;
+    -webkit-text-fill-color: transparent;
+}
+.abs-pair:has(.frac-container) > .abs-bar::before,
+.abs-pair:has(.mix-container) > .abs-bar::before,
+.abs-pair:has(.root) > .abs-bar::before,
+.abs-pair:has(.int-container) > .abs-bar::before,
+.abs-pair:has(.sum-container) > .abs-bar::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 1.5px;
+    transform: translateX(-50%);
+    background: currentColor;
 }
 
 .decimal-result { font-size: 2.2rem; font-weight: bold; letter-spacing: -1.2px; }
@@ -673,11 +694,6 @@ body {
     font-size: 1.55em;
 }
 
-.lcd-screen-mini .abs-pair:has(.frac-container) > .abs-bar,
-.lcd-screen-mini .abs-pair:has(.mix-container) > .abs-bar,
-.lcd-screen-mini .abs-pair:has(.root) > .abs-bar {
-    font-size: 1.55em;
-}
 
 .lcd-screen-mini .pow-template > .pow-base {
     top: 0.3em;

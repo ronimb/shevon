@@ -20,5 +20,5 @@ both; reports **findings only**. Silence / `ok` / `clear` / `next`
 
 Start at **G15.1**. Finish the group, update `validate-status.md`,
 stop. Log new fails as `R*`. Do not refile closed `R44`–`R48`.
-Tall parens around nested frac are `R53` (global) — do not refile
-if still open; note if G15 still shows the miss.
+Tall parens (`R53`) and Abs stretch (`R59`) are closed — do not
+refile; note only if G15 shows a regression.
