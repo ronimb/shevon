@@ -82,7 +82,6 @@ const Calculator: React.FC = () => {
 
   const [scale, setScale] = useState(1);
   const [chipScale, setChipScale] = useState(1);
-  const stripRef = useRef<HTMLDivElement>(null);
   const [showPane, setShowPane] = useState<boolean>(false);
   const [pinned, setPinned] = useState(false);
   const [showCurrentKeys, setShowCurrentKeys] = useState<boolean>(() => localStorage.getItem('calc_show_current_keys_on') === '1');
@@ -104,9 +103,8 @@ const Calculator: React.FC = () => {
   useEffect(() => {
     const fit = () => {
       const chromeH = document.querySelector('.app-chrome')?.getBoundingClientRect().height ?? 40;
-      const stripH = showCurrentKeys ? (stripRef.current?.getBoundingClientRect().height ?? 0) : 0;
       const paneW = showPane && (isDesktop || window.innerWidth >= 768) ? 382 : 0;
-      const availH = Math.max(280, window.innerHeight - chromeH - stripH);
+      const availH = Math.max(280, window.innerHeight - chromeH);
       const availW = Math.max(240, window.innerWidth - paneW);
       const next = Math.min(1, availH / 1000, availW / 504);
       // Same scale as the unit, clamped so a large window stays at the
@@ -119,7 +117,8 @@ const Calculator: React.FC = () => {
     fit();
     window.addEventListener('resize', fit);
     const ro = new ResizeObserver(fit);
-    if (stripRef.current) ro.observe(stripRef.current);
+    const chrome = document.querySelector('.app-chrome');
+    if (chrome) ro.observe(chrome);
     return () => {
       window.removeEventListener('resize', fit);
       ro.disconnect();
@@ -321,11 +320,25 @@ const Calculator: React.FC = () => {
   return (
     <div className="app-shell flex flex-col bg-[#121212] m-0 overflow-hidden font-sans">
       <div className={showCurrentKeys ? 'app-top keys-open' : 'app-top'}>
-      <div className="app-chrome flex items-center gap-2 px-3 py-2 shrink-0" data-tauri-drag-region>
+      <div className="app-chrome relative shrink-0" data-tauri-drag-region>
+        <div className={`flex items-center min-h-[40px] px-3 py-1 ${showCurrentKeys && isDesktop ? 'pr-16' : ''}`}>
+          {showCurrentKeys ? (
+            <div className="current-keys-strip app-no-drag flex-1 min-w-0 overflow-x-auto overflow-y-hidden">
+              {liveKeys.length === 0 ? (
+                <div className="text-[11px] text-white/20 italic py-1">No current operation</div>
+              ) : (
+                renderKeyRow(liveKeys, 'live')
+              )}
+            </div>
+          ) : (
+            <div className="flex-1 min-h-[28px]" data-tauri-drag-region />
+          )}
+        </div>
+        <div className="absolute inset-0 flex items-center gap-2 px-3 pointer-events-none">
         <button
           type="button"
           onClick={() => setShowCurrentKeys(v => !v)}
-          className="keys-toggle app-no-drag px-3 py-1.5 bg-[#1c1c1c] text-[10px] font-black tracking-widest uppercase text-blue-400/80 rounded-full border border-white/10 hover:bg-[#2a2a2a]"
+          className="keys-toggle app-no-drag pointer-events-auto px-3 py-1.5 bg-[#1c1c1c] text-[10px] font-black tracking-widest uppercase text-blue-400/80 rounded-full border border-white/10 hover:bg-[#2a2a2a]"
         >
           {showCurrentKeys ? 'Hide keys' : 'Show keys'}
         </button>
@@ -333,7 +346,7 @@ const Calculator: React.FC = () => {
         <button
           type="button"
           onClick={() => setShowPane(!showPane)}
-          className="more-toggle app-no-drag px-3 py-1.5 bg-[#1c1c1c] text-[10px] font-black tracking-widest uppercase text-white/70 rounded-full border border-white/10 hover:bg-[#2a2a2a]"
+          className="more-toggle app-no-drag pointer-events-auto px-3 py-1.5 bg-[#1c1c1c] text-[10px] font-black tracking-widest uppercase text-white/70 rounded-full border border-white/10 hover:bg-[#2a2a2a]"
         >
           More
         </button>
@@ -347,7 +360,7 @@ const Calculator: React.FC = () => {
               setPinned(next);
               void window.shevonDesktop?.setAlwaysOnTop(next);
             }}
-            className={`app-no-drag p-1.5 rounded-full border hover:bg-[#2a2a2a] ${pinned ? 'bg-blue-500/20 text-blue-300 border-blue-400/40' : 'bg-[#1c1c1c] text-white/50 border-white/10'}`}
+            className={`pin-toggle app-no-drag pointer-events-auto p-1.5 rounded-full border hover:bg-[#2a2a2a] ${pinned ? 'bg-blue-500/20 text-blue-300 border-blue-400/40' : 'bg-[#1c1c1c] text-white/50 border-white/10'}`}
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill={pinned ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M12 17v5" />
@@ -362,21 +375,13 @@ const Calculator: React.FC = () => {
               if (window.shevonDesktop?.closeApp) void window.shevonDesktop.closeApp();
               else window.close();
             }}
-            className="app-no-drag px-3 py-1.5 bg-[#1c1c1c] text-[10px] font-black tracking-widest uppercase text-white/50 rounded-full border border-white/10 hover:bg-[#2a2a2a]"
+            className="close-toggle app-no-drag pointer-events-auto px-3 py-1.5 bg-[#1c1c1c] text-[10px] font-black tracking-widest uppercase text-white/50 rounded-full border border-white/10 hover:bg-[#2a2a2a]"
           >
             Close
           </button>
         ) : null}
-      </div>
-      {showCurrentKeys && (
-        <div ref={stripRef} className="app-no-drag current-keys-strip w-full border-b border-white/10 px-3 py-0.5">
-          {liveKeys.length === 0 ? (
-            <div className="text-[11px] text-white/20 italic py-1">No current operation</div>
-          ) : (
-            renderKeyRow(liveKeys, 'live')
-          )}
         </div>
-      )}
+      </div>
       </div>
     <div className={`flex justify-center items-stretch flex-1 min-h-0 overflow-hidden gap-8 ${showPane ? 'flex-row' : 'flex-col md:flex-row'}`}>
 
@@ -666,7 +671,7 @@ const Calculator: React.FC = () => {
                     <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">Q</kbd> <span>Square (x²)</span></div>
                     <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">D</kbd> <span>Fraction</span></div>
                     <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">^</kbd> <span>Power (xⁿ)</span></div>
-                    <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">,</kbd> <span>Comma (SHIFT ))</span></div>
+                    <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">,</kbd> <span>Argument comma (same as SHIFT ))</span></div>
                     <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">A</kbd> <span>Answer (Ans)</span></div>
                     <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">X</kbd> <span>Variable X (ALPHA ))</span></div>
                     <div className="flex justify-between text-white/60"><kbd className="bg-white/10 px-2 py-0.5 rounded text-white">Y</kbd> <span>Variable Y (ALPHA S⇔D)</span></div>

@@ -31,6 +31,9 @@ Ron owns `npm run dev` in a **user** terminal (Terminal → New
 Terminal) or an external shell — not an agent terminal. Agents must
 **not** start a long-lived Vite/Tauri/Electron process and leave it
 running. To free port 3000 without hunting chats: `npm run stop:dev`.
+Prefer editing only under `docs/` / prompts when Ron is using the
+app — Vite ignores those paths; avoid touching `src/` / `*.css` /
+`index.html` unless the slice needs it (those still HMR).
 
 ## Canvases
 

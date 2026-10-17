@@ -11,9 +11,9 @@ drive unless asked.
 
 ## Cursor
 
-**G7 resolve done** (17 Oct 2026). **`R63`–`R68` closed.**
-**Next:** G8 pairing — [`g8-pair.md`](g8-pair.md). Interim for
-post-G8 resolve: **`R69`**. **G15** later. Phase 3 parked.
+**G8 resolve done** (17 Oct 2026). **`R69`–`R73` closed.**
+**Now:** nothing scheduled. Do not start G9, G15, or Phase 3
+unless Ron asks.
 
 ## Re-check results (10 Oct 2026)
 
@@ -167,6 +167,20 @@ pass). `R29` and `sigma-bounds` not refiled.
 Open `R*` after `g7-resolve`: none. **`R63`–`R68`** closed
 17 Oct 2026. **`R65`** was the overlay flash (not a G7 row).
 
+### G8 — polar and rectangular (17 Oct 2026)
+
+Function **pass** unless noted (findings only; a clear row is
+pass). `R16` and `debt-value` not refiled.
+
+| # | Walk | Notes |
+|---|------|-------|
+| 1 Pol | function **pass**. Form **`R70` closed**, **`R71` closed** | no argument boxes; result at normal size |
+| 2 Rec | placeholders **`R70` closed**. Form **`R72` closed** | square-root argument shares the writing line |
+| 3 Writes X,Y | **pass** | RCL X / Y match the unit |
+
+Open `R*` from this sitting: none. **`R69`–`R73`** closed
+17 Oct 2026 (`g8-resolve`).
+
 ### G14 — emulator extras (30 Sep 2026)
 
 | # | Walk | After the fix |
@@ -179,8 +193,8 @@ Open `R*` after `g7-resolve`: none. **`R63`–`R68`** closed
 
 ## Untested
 
-- **G8–G13** (full). **G15** nested ([`g15-nested.md`](g15-nested.md)).
-  G7 resolved 17 Oct 2026. Next walk is G8.
+- **G9–G13** (full). **G15** nested ([`g15-nested.md`](g15-nested.md)).
+  G8 walked and resolved 17 Oct 2026. **Now** is empty, not G9.
 
 ## Do not refile
 
@@ -188,4 +202,5 @@ Open `R*` after `g7-resolve`: none. **`R63`–`R68`** closed
 `show-keys-face`, `hist-scroll`, `surd-pi-form` / `p4-exact`,
 `lying-menus`, `setup-page2`, `setup-page1-disp`, `lineio-display`,
 `ind-arrows`, `prompt-prev-size`, closed `R29`, `sigma-bounds`.
-`R44`–`R68` closed.
+`R44`–`R73` closed. `R16` and `debt-value` (G8.3 / dual-line
+Pol/Rec) checked 17 Oct 2026 — do not refile.

@@ -33,8 +33,10 @@ npm run stop:dev     # kill whatever holds port 3000 (no agent hunt)
 
 Run `dev` from **Terminal → New Terminal** (or Windows Terminal), not
 from an agent chat — agent terminals are hard to find later. No API
-keys required. Optional: `DISABLE_HMR=true` in `.env` (see
-`.env.example`) to avoid flicker while an agent edits files.
+keys required. Vite ignores `docs/`, `canvases/`, `.cursor/`, and
+`*.md` so agent doc work should not refresh the app; if it still
+does, set `DISABLE_HMR=true` in `.env` (see `.env.example`) and
+restart `npm run dev`.
 
 ## Run as a desktop app (Tauri / WebView2)
 

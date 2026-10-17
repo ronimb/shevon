@@ -76,6 +76,13 @@ export type PcKeyboardActions = {
   isRcl: boolean;
 };
 
+/** PC `,` is the argument comma (same as SHIFT `)`), including Shift+, (R73). */
+export function isPcArgumentComma(e: { key: string; code?: string }): boolean {
+  if (e.key === ',') return true;
+  const code = e.code ?? '';
+  return code === 'Comma' || code === 'NumpadComma';
+}
+
 /** Drop hold-only SHIFT/ALPHA when keyup was lost (Alt-Tab / blur) — R58. */
 export function clearPcMomentaryModifiers(
   a: Pick<PcKeyboardActions, 'isShift' | 'isAlpha' | 'setShiftMomentary' | 'setAlphaMomentary' | 'unflashKey'>,
@@ -172,7 +179,7 @@ export function usePcKeyboard(a: PcKeyboardActions) {
       else if (e.key === '/') { e.preventDefault(); press('div', cur.handleDivKey, '÷'); }
       else if (e.key === '(') { e.preventDefault(); press('paren-open', () => cur.handleParentheses('(', 'X', true), '('); }
       else if (e.key === ')') { e.preventDefault(); press('paren-close', () => cur.handleParentheses(')', 'Y', true), ')'); }
-      else if (e.key === ',') {
+      else if (isPcArgumentComma(e)) {
         e.preventDefault();
         cur.flashKey('paren-close');
         recordShortcut(['SHIFT', ')']);

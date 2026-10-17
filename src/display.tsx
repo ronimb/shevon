@@ -254,9 +254,9 @@ interface TemplateSpec {
 /** Only paint `)` when the IR actually has one — user types the closer. */
 const parenBody = (inner: string, closed: boolean) => `(${inner}${closed ? ')' : ''}`;
 
-/** Pol/Rec: no built-in comma. Show `,` only after the user types one (2nd arg). */
+/** Pol/Rec: open `Pol(` / `Rec(` only. Comma after the user types one; no boxes (R70). */
 const commaArgs = (a: string[]) =>
-  a.length > 1 ? `${slot(a[0])},${slot(a[1] || '')}` : slot(a[0]);
+  a.length > 1 ? `${openArg(a[0])},${openArg(a[1] || '')}` : openArg(a[0]);
 /** RanInt#: same comma rule, and no placeholder boxes (R62). */
 const ranIntArgs = (a: string[]) =>
   a.length > 1 ? `${openArg(a[0])},${openArg(a[1] || '')}` : openArg(a[0]);

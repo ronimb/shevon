@@ -181,7 +181,7 @@ Status bar CSS: `index.css`.
 | π | SHIFT+×10ˣ inserts `π` (serif `.math-pi`) | Decimal unless integer |
 | Scientific ×10ⁿ | Boxed `×10^(` paints condensed `×10` + superscript | Yes via `SciNotation` |
 | Complex a+bi | No (CMPLX unused) | EQN quadratic only (`formatComplexPair`) |
-| Pol/Rec r,θ | `pol(‸` / `rec(‸` (comma typed) | Single line `r=…, θ=…` / bottom-right `x=…, y=…` |
+| Pol/Rec r,θ | `pol(‸` / `rec(‸` — no argument boxes; comma only after it is typed (`R70`) | Single line `r=…, θ=…` / bottom-right `x=…, y=…` at normal result size (`R71`) |
 | S⇔D | — | Yes in Norm mode when `showingResult` |
 | ENG | — | Yes |
 | DMS | ° ′ ″ | Yes |

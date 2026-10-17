@@ -46,12 +46,10 @@ TABLE / CONST into **Now** on agent initiative. Lying MODE rows
 wait for the matching feature. LineIO / 99-byte / `:` /
 `hist-letters` stay parked.
 
-Active focus: **G8 pairing**
-([`g8-pair.md`](docs/prompts/g8-pair.md)). `g7-resolve`
-(`R63`–`R68`) is in **Landed** (17 Oct 2026). After G8, resolve
-must also take interim **`R69`** (Show keys uses button-row
-height; chrome auto-hide on hover). **G15** nested untested
-(schedule separately). Phase 3 stays parked.
+Active focus: **none scheduled.** `g8-resolve` (`R69`–`R73`)
+is in **Landed**. G8 pairing walked 17 Oct 2026. The natural
+next sitting is G9 pairing — do not start it, G15, or Phase 3
+unless Ron asks.
 
 Catalog of landed-correctness ids: `[docs/tech-issues.md](docs/tech-issues.md)`.
 Honesty leftovers: `[issues.md](issues.md)`. After every slice: `[sanity-landed.md](docs/prompts/sanity-landed.md)`.
@@ -67,8 +65,9 @@ Triage (no code): `[supervisor.md](docs/prompts/supervisor.md)`
 
 | Order | Id | What | Kickoff |
 | ----- | -- | ---- | ------- |
-| 1 | G8 pairing | Polar and rectangular (walk + log) | [`g8-pair.md`](docs/prompts/g8-pair.md) |
+| — | — | Queue empty until Ron schedules the next sitting | — |
 
+`g8-resolve` (`R69`–`R73`) is in **Landed**.
 `ti-stat` … `ti-edges`, `R17` (`r17-percent`), `R28` (`r28-exp`),
 `R29` (`r29-int`), `g1-resolve`, `g2-resolve` (`R39`–`R43` +
 `setup-page2`), `g3-resolve` (`R44`–`R48` + `setup-page1-disp`),
@@ -512,6 +511,13 @@ with no boxes or built-in comma (`R62`). 16 Oct 2026.
 overlay key flash is a stronger amber hold (`R65`); d/dx and Σ
 share one tall calculus template (`R67`, `R68` — Σ bounds above
 and below, parenthesized body, no prefilled `10`). 17 Oct 2026.
+
+**g8-resolve** — Show keys chips share the top-button band
+(`R69`); empty Pol/Rec has no argument boxes (`R70`); Pol/Rec
+result uses normal result size (`R71`); a square-root argument
+inside Rec stays on the same writing line (`R72`); PC comma is
+the argument comma, including Shift+, and is listed in Keyboard
+shortcuts (`R73`). 17 Oct 2026.
 
 **debt-source-map** — IR rewrite carries original offsets onto AST nodes and
 `CalcError.offset`. Syntax / Math ERROR ◀▶ jumps to the fault token. Implicit

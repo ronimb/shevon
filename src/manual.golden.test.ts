@@ -2,10 +2,10 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { allowsCalcSolveHyp, allowsCompLineEdit, applyAllClear, applyHistoryLoad, applyPowerKey, applySquareKey, attemptStoreOperand, calcExpressionToEval, collectCalcPromptVars, collectSolvePromptVars, commitPromptValue, expressionHasSolveUnknown, isStatSessionMode, deleteCompAtCursor, moveCompCursorDown, moveCompCursorLeft, moveCompCursorRight, moveCompCursorUp, newtonSolveX, parseCalcAssignment, placeCaretAtOffset, reconstructSequence, wrapPrecedingBinary, FRESH_DIFF, FRESH_INT, FRESH_SUM } from './modes/comp.ts';
+import { allowsCalcSolveHyp, allowsCompLineEdit, applyAllClear, applyHistoryLoad, applyPowerKey, applySquareKey, attemptStoreOperand, calcExpressionToEval, collectCalcPromptVars, collectSolvePromptVars, commitPromptValue, expressionHasSolveUnknown, isStatSessionMode, deleteCompAtCursor, insertCompValue, moveCompCursorDown, moveCompCursorLeft, moveCompCursorRight, moveCompCursorUp, newtonSolveX, parseCalcAssignment, placeCaretAtOffset, reconstructSequence, wrapPrecedingBinary, FRESH_DIFF, FRESH_INT, FRESH_SUM } from './modes/comp.ts';
 import { CURSOR_PATS } from './keys.ts';
 import { chipFamily, renderMiniButton } from './historyKeys.tsx';
-import { clearPcMomentaryModifiers, KEY_FLASH_MS } from './keyboard.ts';
+import { clearPcMomentaryModifiers, isPcArgumentComma, KEY_FLASH_MS } from './keyboard.ts';
 import { isLcdMenu, lcdPaintInput, lcdShowsCompCaret, LcdScreen, resultLineWhileEditing } from './lcd.tsx';
 import { liveOperationSequence, nextHistoryReplayDown, nextHistoryReplayUp, setupCommitSequence } from './historyOps.ts';
 import { evaluateExpression, mergePolRecVars, resultDisplayMode, toFraction } from './evaluator.ts';
@@ -1117,6 +1117,85 @@ describe('g7-resolve — calculus templates (R63–R68)', () => {
     expect(evalComp('diff(sqr(x),x,3)')).toBeCloseTo(6, 7);
     expect(evalComp('diff(frac(1,x),x,2)')).toBeCloseTo(-0.25, 7);
     expect(evalComp('Σ(X,X,1,5)')).toBe(15);
+  });
+});
+
+describe('g8-resolve — keys chrome, Pol/Rec form, comma (R69–R73)', () => {
+  const strip = (html: string) => html.replace(/<[^>]+>/g, '');
+  const css = readFileSync(new URL('./index.css', import.meta.url), 'utf8');
+  const chrome = readFileSync(new URL('./Calculator.tsx', import.meta.url), 'utf8');
+
+  it('Show keys chips share the top-button band; Hide keys / More / Pin hover in (R69)', () => {
+    const top = chrome.indexOf('app-top');
+    const chromeOpen = chrome.indexOf('app-chrome', top);
+    const stripAt = chrome.indexOf('current-keys-strip', chromeOpen);
+    const chromeEnd = chrome.indexOf('</div>', chrome.indexOf('close-toggle', chromeOpen));
+    expect(stripAt).toBeGreaterThan(chromeOpen);
+    expect(stripAt).toBeLessThan(chrome.indexOf('keys-toggle', chromeOpen));
+    expect(chrome).toContain('pin-toggle');
+    expect(css).toMatch(/\.app-top\.keys-open \.keys-toggle/);
+    expect(css).toMatch(/\.app-top\.keys-open \.more-toggle/);
+    expect(css).toMatch(/\.app-top\.keys-open \.pin-toggle/);
+    expect(css).toMatch(/\.app-top\.keys-open:hover \.pin-toggle/);
+    expect(chromeEnd).toBeGreaterThan(stripAt);
+  });
+
+  it('empty Pol/Rec have no placeholder boxes; comma only after it is typed (R70)', () => {
+    for (const ir of ['pol(‸', 'rec(‸']) {
+      const html = formatMath(ir);
+      expect(html, ir).not.toContain('empty-slot');
+      expect(strip(html), ir).not.toContain(',');
+      expect(html, ir).toContain('cursor');
+    }
+    expect(strip(formatMath('pol(‸'))).toBe('Pol(');
+    expect(strip(formatMath('rec(‸'))).toBe('Rec(');
+    const typed = formatMath('pol(1,‸');
+    expect(typed).not.toContain('empty-slot');
+    expect(strip(typed)).toBe('Pol(1,');
+    expect(strip(formatMath('rec(2,0)'))).toBe('Rec(2,0)');
+    expect(formatMath('pol(,‸')).not.toContain('empty-slot');
+  });
+
+  it('Pol/Rec result uses the normal result size and weight (R71)', () => {
+    expect(css).toMatch(/\.pair-result\s*\{[^}]*font-size:\s*2\.2rem/);
+    expect(css).toMatch(/\.pair-result\s*\{[^}]*font-weight:\s*bold/);
+    expect(css).toMatch(/\.decimal-result\s*\{[^}]*font-size:\s*2\.2rem/);
+    expect(css).toMatch(/\.decimal-result\s*\{[^}]*font-weight:\s*bold/);
+  });
+
+  it('a square-root argument inside Rec shares the writing line (R72)', () => {
+    const html = formatMath('rec(sqrt(2),1)');
+    const innerStart = html.indexOf('paren-inner');
+    const innerEnd = html.indexOf('paren-close');
+    const inner = html.slice(innerStart, innerEnd);
+    expect(inner).toContain('root-body');
+    expect(inner).toContain('>2<');
+    expect(inner).toContain(',1');
+    expect(css).toMatch(/\.paren-pair:has\(\.root\) > \.paren-inner\s*\{[^}]*align-items:\s*flex-end/);
+    expect(css).toMatch(/\.root\s*\{[^}]*vertical-align:\s*text-bottom/);
+    expect(strip(html)).toBe('Rec(2,1)');
+  });
+
+  it('PC comma is the argument comma, including Shift+, and is listed in help (R73)', () => {
+    expect(isPcArgumentComma({ key: ',', code: 'Comma' })).toBe(true);
+    expect(isPcArgumentComma({ key: '<', code: 'Comma' })).toBe(true);
+    expect(isPcArgumentComma({ key: ',', code: 'NumpadComma' })).toBe(true);
+    expect(isPcArgumentComma({ key: ')', code: 'Digit0' })).toBe(false);
+    expect(isPcArgumentComma({ key: 'a', code: 'KeyA' })).toBe(false);
+    expect(insertCompValue('pol(1‸', false, ',')).toEqual({ input: 'pol(1,‸', showingResult: false });
+    expect(insertCompValue('rec(sqrt(2)‸', false, ',')).toEqual({
+      input: 'rec(sqrt(2),‸',
+      showingResult: false,
+    });
+    expect(strip(formatMath('rec(sqrt(2),‸'))).toBe('Rec(2,');
+    expect(chrome).toContain('Argument comma (same as SHIFT ))');
+    expect(chrome).toMatch(/<kbd[^>]*>,<\/kbd>/);
+  });
+
+  it('keeps the G8 samples that already matched', () => {
+    expect(evalComp('pol(3,4)')).toBeCloseTo(5, 9);
+    expect(evalComp('pol(1,1)')).toBeCloseTo(Math.SQRT2, 9);
+    expect(evalComp('rec(2,0)')).toBeCloseTo(2, 9);
   });
 });
 

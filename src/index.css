@@ -31,15 +31,17 @@ body {
     -webkit-app-region: drag;
 }
 
-/* While the live strip is open, Hide keys and More stay out of the
-   way until the chrome or the strip is hovered. */
+/* Keys mode: one band with the top buttons (R69). Hide keys, More,
+   and Pin stay out of that row until the band is hovered. */
 .app-top.keys-open .keys-toggle,
-.app-top.keys-open .more-toggle {
+.app-top.keys-open .more-toggle,
+.app-top.keys-open .pin-toggle {
     opacity: 0;
     pointer-events: none;
 }
 .app-top.keys-open:hover .keys-toggle,
-.app-top.keys-open:hover .more-toggle {
+.app-top.keys-open:hover .more-toggle,
+.app-top.keys-open:hover .pin-toggle {
     opacity: 1;
     pointer-events: auto;
 }
@@ -203,11 +205,16 @@ body {
     display: inline-flex;
     align-items: center;
 }
+/* R72: radicand and the sibling argument share one writing line.
+   The radical grows upward; digits stay on that baseline. */
+.paren-pair:has(.root) > .paren-inner {
+    align-items: flex-end;
+}
 .root {
     display: inline-flex;
     align-items: stretch;
     line-height: 1;
-    vertical-align: middle;
+    vertical-align: text-bottom;
 }
 /* nth-root index rides the top-left; body/symbol stretch with content. */
 .root > .sup {
@@ -566,18 +573,21 @@ body {
 }
 
 .decimal-result { font-size: 2.2rem; font-weight: bold; letter-spacing: -1.2px; }
+/* Pol/Rec pair uses the same result size and weight (R71). */
+.pair-result {
+    font-size: 2.2rem;
+    font-weight: bold;
+    letter-spacing: -0.07em;
+    line-height: 1.05;
+    white-space: nowrap;
+    max-width: 100%;
+}
 /* SOLVE/CALC previous value — same size as the result line (prompt-prev-size). */
 .prompt-prev-value {
     font-size: inherit;
     font-weight: inherit;
     letter-spacing: inherit;
     opacity: 1;
-}
-.pair-result {
-    font-size: 1.15rem;
-    font-weight: 700;
-    letter-spacing: -0.4px;
-    white-space: nowrap;
 }
 .solve-result {
     display: flex;

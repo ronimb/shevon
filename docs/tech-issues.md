@@ -1,6 +1,6 @@
 # Tech issues — landed correctness
 
-Source of truth for review ids `R1`–`R69` and slices `ti-*`.
+Source of truth for review ids `R1`–`R73` and slices `ti-*`.
 Doc map: [`README.md`](README.md). Do not copy an R-id into
 [`issues.md`](../issues.md).
 
@@ -16,15 +16,8 @@ Status: `[ ]` open · `[x]` done.
 
 ## Open
 
-Ride with **`g8-resolve`** (or next resolve after G8; do not drop).
-
-- [ ] `R69` — Exe / desktop chrome when **Show keys** is on: put the
-      live key strip in the **same vertical band as the top buttons**
-      (do not grow a second strip below that steals height). While
-      keys mode is on, the top chrome controls stay **auto-hidden**
-      and appear **on hover** — all three in that row (Hide keys /
-      More / Pin; Close may stay or follow the same hover rule if it
-      sits in that band). Logged 17 Oct 2026 interim.
+None. `g8-resolve` closed `R69`–`R73` on 17 Oct 2026. Do not
+start G9, G15, or Phase 3 unless Ron schedules them.
 
 ---
 
@@ -39,6 +32,21 @@ Ride with **`g8-resolve`** (or next resolve after G8; do not drop).
 
 ## Closed this sitting
 
+- [x] `R69` — Show keys chips sit in the same band as the top
+      buttons. Hide keys / More / Pin stay hidden until that band
+      is hovered. Close stays visible. (`g8-resolve`; 17 Oct 2026.)
+- [x] `R70` — Empty Pol/Rec is open `Pol(` / `Rec(` with no
+      placeholder boxes. The comma appears only after it is typed.
+      (`g8-resolve`; G8.1–G8.2 pairing 17 Oct 2026.)
+- [x] `R71` — Pol/Rec result (`r=`, `θ=` / `x=`, `y=`) uses the
+      normal result size and weight. Dual-line pair unchanged.
+      (`g8-resolve`; G8.1 pairing 17 Oct 2026.)
+- [x] `R72` — A square-root argument inside Rec shares the writing
+      line with the other argument. (`g8-resolve`; G8.2 pairing
+      17 Oct 2026.)
+- [x] `R73` — PC `,` (including Shift+,) inserts the argument comma,
+      same as SHIFT `)`, and is listed in Keyboard shortcuts.
+      (`g8-resolve`; 17 Oct 2026.)
 - [x] `R63` — Empty ∫: one DEL clears the template (no `,,,x`
       leak). (`g7-resolve`; G7.1 pairing 17 Oct 2026.)
 - [x] `R64` — ∫ limit slots are a column to the right of the

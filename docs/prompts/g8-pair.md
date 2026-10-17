@@ -1,7 +1,13 @@
-# Kickoff — G8 pairing (polar and rectangular)
+# Kickoff — G8 pairing (historical)
 
-Copy everything below the line into a **new agent chat**. Pairing
-only. Do not implement. Do not start Phase 3 or G15 unless Ron asks.
+**Sitting done** 17 Oct 2026. Resolve is **Now**:
+[`g8-resolve.md`](g8-resolve.md) (`R69`–`R73`). Do not restart G8
+pairing. Do not start Phase 3 or G9 unless Ron asks.
+
+---
+
+Copy everything below the line only for a greenfield re-walk.
+Pairing only. Do not implement.
 
 ---
 
@@ -22,7 +28,4 @@ Start at **G8.1**. Finish G8, update `validate-status.md`, stop.
 Log new fails as `R*`. No code.
 
 Do not refile closed `R16` (Pol/Rec write X,Y) or `debt-value`
-dual-line Pol/Rec unless a *new* fail shows. After the sitting,
-supervisor writes `g8-resolve` including interim **`R69`** (Show
-keys in button-row height; chrome auto-hide on hover) + any new
-G8 `R*`.
+dual-line Pol/Rec unless a *new* fail shows.
