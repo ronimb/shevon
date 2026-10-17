@@ -1,8 +1,8 @@
 # Kickoff — G8 pairing (historical)
 
-**Sitting done** 17 Oct 2026. Resolve is **Now**:
-[`g8-resolve.md`](g8-resolve.md) (`R69`–`R73`). Do not restart G8
-pairing. Do not start Phase 3 or G9 unless Ron asks.
+**Sitting done** 17 Oct 2026. Resolve landed 17 Oct 2026
+([`g8-resolve.md`](g8-resolve.md), `R69`–`R73` closed). Do not
+restart G8. Do not start Phase 3 or G9 unless Ron asks.
 
 ---
 

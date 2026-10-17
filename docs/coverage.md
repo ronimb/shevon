@@ -161,7 +161,7 @@ MATRIX, TABLE, VECTOR, CONST, and CONV are menu chrome only.
 | Feature | Manual | Status | In the emulator | Gap |
 |---------|--------|--------|-----------------|-----|
 | Photo overlay + hitboxes | — | Done | Absolute keys; triple-click calibration; `calculator_new.png` | — |
-| PC keyboard | — | Partial | Enter, arrows, Shift/Alt, comma (SHIFT )), S/C/T/L/R/Q/D/A, ` = S⇔D, X/Y vars | Letter keys steal typing. SHIFT/ALPHA hold is correct |
+| PC keyboard | — | Partial | Enter, arrows, Shift/Alt, `,` / Shift+, (argument comma = SHIFT )), S/C/T/L/R/Q/D/A, ` = S⇔D, X/Y vars | Letter keys steal typing. SHIFT/ALPHA hold is correct |
 | History / LaTeX pane | — | Done | More pane: 50 items, Load, physical-key Show Keys; STO / MODE / SETUP actions | Not hardware behavior; keep as extra. Live Current keys strip is on top |
 | Tauri / WebView2 + Electron fallback | — | Done | Daily `build:exe` → frameless `Shevon.exe` (~10 MB WebView2); Pin; History widen; Keyboard show/hide; Electron `build:exe:electron` → `Shevon-electron.exe`; Pages/PWA install skipped | — |
 | Tests | E-16 examples | Partial | Golden + parser + CalcValue + STAT Edit + E-19 CALC + E-25 Dist + stay-in-STAT + E-28 linear + E-28 cubic (171) | Remaining numbered sample operations in the PDF |
