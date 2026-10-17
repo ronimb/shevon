@@ -342,16 +342,18 @@ const TEMPLATE_SPECS: TemplateSpec[] = [
     stem: 'int',
     html: a => {
       const dummy = (a[3] || 'x').replace(/[‸⬚]/g, '') || 'x';
-      return `<div class="int-container"><span class="int-symbol">∫<span class="int-bounds"><span class="int-upper">${slot(a[2])}</span><span class="int-lower">${slot(a[1])}</span></span></span><span class="int-body">${slot(a[0])}<span class="int-dx">d${dummy}</span></span></div>`;
+      // Limits are a column to the right of ∫, not overlaid on the glyph (R64).
+      // Integrand stays one inline run so x² can rise. A flex child would
+      // center the power on the base (d/dx keeps it inside the paren).
+      return `<div class="int-container"><span class="int-op"><span class="int-symbol">∫</span><span class="int-bounds"><span class="int-upper">${slot(a[2])}</span><span class="int-lower">${slot(a[1])}</span></span></span><span class="int-body"><span class="int-integrand">${slot(a[0])}</span><span class="int-dx">d${dummy}</span></span></div>`;
     },
     latex: a => `\\int_{${lx(a[1])}}^{${lx(a[2])}} ${lx(a[0])} \\, d${(a[3] || 'x').replace(/[‸⬚]/g, '') || 'x'}`,
   },
   {
     stem: 'diff',
     html: a => {
-      const varName = a[1] || 'x';
-      const varSilent = varName.replace(CURSOR, '');
-      return `<div class="diff-container"><div class="diff-frac"><span class="diff-top">d</span><span>d${slot(varName)}</span></div>(${slot(a[0])})<div class="diff-at">${varSilent}=${slot(a[2])}</div></div>`;
+      const varName = (a[1] || 'x').replace(/[‸⬚]/g, '') || 'x';
+      return `<div class="calc-template diff-container"><span class="calc-stack diff-frac"><span class="diff-top">d</span><span class="diff-bot">d${varName}</span></span><span class="calc-body">(${slot(a[0])})</span><span class="diff-at">${varName}=${slot(a[2])}</span></div>`;
     },
     latex: a => `\\frac{d}{d${a[1] || 'x'}}\\left(${lx(a[0])}\\right)\\bigg|_{${a[1] || 'x'}=${lx(a[2])}}`,
   },
@@ -389,7 +391,11 @@ const TEMPLATE_SPECS: TemplateSpec[] = [
   { stem: 'pwr', html: a => paintPower(slot(a[0]), slot(a[1] || '')), latex: a => `{${lx(a[0])}}^{${lx(a[1])}}` },
   {
     stem: 'Σ',
-    html: a => `<div class="sum-container"><div class="sum-bounds"><span>${slot(a[3])}</span><span>${slot(a[1] || 'x')}=${slot(a[2])}</span></div><span class="sum-symbol">Σ</span><div class="sum-body">${slot(a[0])}</div></div>`,
+    html: a => {
+      const dummy = (a[1] || 'x').replace(/[‸⬚]/g, '') || 'x';
+      // Tall stack: empty upper above Σ, x= below, parenthesized body to the right (R68).
+      return `<div class="calc-template sum-container"><span class="calc-stack"><span class="calc-bound sum-upper">${slot(a[3])}</span><span class="calc-glyph sum-symbol">Σ</span><span class="calc-bound sum-lower">${dummy}=${slot(a[2])}</span></span><span class="calc-body">(${slot(a[0])})</span></div>`;
+    },
     latex: a => `\\sum_{${a[1] || 'x'}=${lx(a[2])}}^{${lx(a[3])}} ${lx(a[0])}`,
   },
   {

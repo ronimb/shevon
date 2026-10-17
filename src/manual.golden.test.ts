@@ -1,10 +1,11 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { allowsCalcSolveHyp, allowsCompLineEdit, applyAllClear, applyHistoryLoad, applyPowerKey, applySquareKey, attemptStoreOperand, calcExpressionToEval, collectCalcPromptVars, collectSolvePromptVars, commitPromptValue, expressionHasSolveUnknown, isStatSessionMode, deleteCompAtCursor, moveCompCursorDown, moveCompCursorLeft, moveCompCursorRight, moveCompCursorUp, newtonSolveX, parseCalcAssignment, placeCaretAtOffset, reconstructSequence, wrapPrecedingBinary } from './modes/comp.ts';
+import { allowsCalcSolveHyp, allowsCompLineEdit, applyAllClear, applyHistoryLoad, applyPowerKey, applySquareKey, attemptStoreOperand, calcExpressionToEval, collectCalcPromptVars, collectSolvePromptVars, commitPromptValue, expressionHasSolveUnknown, isStatSessionMode, deleteCompAtCursor, moveCompCursorDown, moveCompCursorLeft, moveCompCursorRight, moveCompCursorUp, newtonSolveX, parseCalcAssignment, placeCaretAtOffset, reconstructSequence, wrapPrecedingBinary, FRESH_DIFF, FRESH_INT, FRESH_SUM } from './modes/comp.ts';
 import { CURSOR_PATS } from './keys.ts';
 import { chipFamily, renderMiniButton } from './historyKeys.tsx';
-import { clearPcMomentaryModifiers } from './keyboard.ts';
+import { clearPcMomentaryModifiers, KEY_FLASH_MS } from './keyboard.ts';
 import { isLcdMenu, lcdPaintInput, lcdShowsCompCaret, LcdScreen, resultLineWhileEditing } from './lcd.tsx';
 import { liveOperationSequence, nextHistoryReplayDown, nextHistoryReplayUp, setupCommitSequence } from './historyOps.ts';
 import { evaluateExpression, mergePolRecVars, resultDisplayMode, toFraction } from './evaluator.ts';
@@ -1003,6 +1004,119 @@ describe('r29-int — ∫ limits on the symbol, caret path', () => {
     expect(s).toBe('int(X²,0,‸,x)');
     s = s.replace('‸', '1‸');
     expect(evalComp(s.replace(/‸/g, ''))).toBeCloseTo(1 / 3, 9);
+  });
+});
+
+describe('g7-resolve — calculus templates (R63–R68)', () => {
+  const strip = (html: string) => html.replace(/<[^>]+>/g, '');
+  const css = readFileSync(new URL('./index.css', import.meta.url), 'utf8');
+
+  it('one DEL clears an empty ∫ and does not leave ,,,x (R63)', () => {
+    expect(FRESH_INT).toBe('int(‸,,,x)');
+    expect(deleteCompAtCursor(FRESH_INT)).toBe('‸');
+    expect(deleteCompAtCursor('1+int(‸,,,x)+2')).toBe('1+‸+2');
+    const once = deleteCompAtCursor(FRESH_INT)!;
+    expect(once).not.toContain(',');
+    expect(formatMath(once)).not.toContain(',,,');
+    expect(deleteCompAtCursor(once)).toBeNull();
+    expect(deleteCompAtCursor('int(1‸,,,x)')).toBe(FRESH_INT);
+    expect(deleteCompAtCursor('int(‸,0,1,x)')).not.toBe('‸');
+  });
+
+  it('∫ limits are a column to the right of the glyph, edges aligned (R64)', () => {
+    const html = formatMath(FRESH_INT);
+    const symbol = html.indexOf('int-symbol');
+    const bounds = html.indexOf('int-bounds');
+    const upper = html.indexOf('int-upper');
+    const lower = html.indexOf('int-lower');
+    const body = html.indexOf('int-body');
+    expect(html.indexOf('int-op')).toBeLessThan(symbol);
+    expect(symbol).toBeLessThan(bounds);
+    expect(upper).toBeLessThan(lower);
+    expect(lower).toBeLessThan(body);
+    expect(html.slice(html.indexOf('int-symbol'), html.indexOf('int-bounds'))).not.toContain('int-upper');
+    const filled = formatMath('int(X²,0,1,x)');
+    expect(filled).toMatch(/int-upper[\s\S]*1/);
+    expect(filled).toMatch(/int-lower[\s\S]*0/);
+    expect(css).toMatch(/\.int-bounds\s*\{[^}]*flex-direction:\s*column/);
+    expect(css).toMatch(/\.int-bounds\s*\{[^}]*justify-content:\s*space-between/);
+    expect(css).toMatch(/\.int-op\s*\{[^}]*align-items:\s*stretch/);
+    expect(css).not.toMatch(/\.int-upper\s*\{[^}]*left:\s*0\.72em/);
+    expect(css).not.toMatch(/\.int-lower\s*\{[^}]*left:\s*0\.42em/);
+  });
+
+  it('x² inside ∫ keeps the power in the integrand run, not a flex sibling', () => {
+    const html = formatMath('int(X²,,,x)');
+    const integrand = html.slice(html.indexOf('int-integrand'), html.indexOf('int-dx'));
+    expect(integrand).toContain('class="sup"');
+    expect(integrand).toMatch(/int-integrand[\s\S]*class="sup"/);
+    expect(html.indexOf('int-integrand')).toBeLessThan(html.indexOf('class="sup"'));
+    expect(html.indexOf('class="sup"')).toBeLessThan(html.indexOf('int-dx'));
+  });
+
+  it('overlay key flash is a strong amber hold (R65)', () => {
+    expect(KEY_FLASH_MS).toBeGreaterThanOrEqual(200);
+    expect(css).toMatch(/\.key\.key-flash\s*\{[^}]*rgba\(255,\s*196,\s*32,\s*0\.72\)/);
+    expect(css).toMatch(/\.key\.key-flash\s*\{[^}]*inset 0 0 0 3px/);
+  });
+
+  it('one DEL clears an empty d/dx and does not leave ,x,) (R66)', () => {
+    expect(FRESH_DIFF).toBe('diff(‸,x,)');
+    expect(deleteCompAtCursor(FRESH_DIFF)).toBe('‸');
+    expect(deleteCompAtCursor('1+diff(‸,x,)+2')).toBe('1+‸+2');
+    const once = deleteCompAtCursor(FRESH_DIFF)!;
+    expect(formatMath(once)).not.toContain(',x,)');
+    expect(once).not.toContain(',');
+    expect(deleteCompAtCursor('diff(X²‸,x,3)')).toBe('diff(X‸,x,3)');
+    expect(deleteCompAtCursor('diff(‸,x,3)')).not.toBe('‸');
+  });
+
+  it('d/dx and Σ share the tall calculus template (R67 / R68)', () => {
+    const diff = formatMath(FRESH_DIFF);
+    const sum = formatMath(FRESH_SUM);
+    expect(diff).toContain('calc-template');
+    expect(sum).toContain('calc-template');
+    expect(diff).toContain('calc-stack');
+    expect(sum).toContain('calc-stack');
+    expect(diff).toContain('diff-frac');
+    expect(diff).toContain('paren-pair');
+    expect(sum).toContain('paren-pair');
+    expect(diff).not.toContain('diff(');
+    expect(sum).not.toContain('Σ(');
+    expect(strip(sum)).not.toContain('10');
+    expect(strip(sum)).not.toContain('0');
+    expect(strip(sum)).toContain('x=');
+    const upper = sum.indexOf('sum-upper');
+    const glyph = sum.indexOf('sum-symbol');
+    const lower = sum.indexOf('sum-lower');
+    const body = sum.indexOf('calc-body');
+    expect(upper).toBeLessThan(glyph);
+    expect(glyph).toBeLessThan(lower);
+    expect(lower).toBeLessThan(body);
+    expect(sum).not.toContain('sum-bounds');
+    const filled = formatMath('Σ(X,X,1,5)');
+    expect(filled).toMatch(/sum-upper[\s\S]*5/);
+    expect(filled).toMatch(/sum-lower[\s\S]*X[\s\S]*=[\s\S]*1/);
+    expect(filled).toContain('paren-pair');
+    expect(css).toMatch(/\.calc-template\s*\{[^}]*font-size:\s*1em/);
+    expect(css).toMatch(/\.diff-frac\s*\{[^}]*font-size:\s*1em/);
+    expect(css).not.toMatch(/\.diff-frac\s*\{[^}]*font-size:\s*0\.7em/);
+    let s = FRESH_SUM;
+    s = moveCompCursorRight(s);
+    expect(s).toBe('Σ(,x,‸,)');
+    s = moveCompCursorRight(s);
+    expect(s).toBe('Σ(,x,,‸)');
+    s = moveCompCursorRight(s);
+    expect(s).toBe('Σ(,x,,)‸');
+    expect(moveCompCursorLeft('Σ(,x,‸,)')).toBe(FRESH_SUM);
+  });
+
+  it('keeps the G7 samples that already matched', () => {
+    expect(evalComp('int(sqr(x),0,1)')).toBeCloseTo(1 / 3, 9);
+    expect(evalComp('int(frac(1,x),1,e)')).toBeCloseTo(1, 9);
+    expect(evalComp('diff(sqr(x),x,3)')).toBeCloseTo(6, 7);
+    expect(evalComp('diff(frac(1,x),x,2)')).toBeCloseTo(-0.25, 7);
+    expect(evalComp('Σ(X,X,1,5)')).toBe(15);
   });
 });
 

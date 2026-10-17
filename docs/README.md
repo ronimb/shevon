@@ -20,7 +20,7 @@ files — not canvases — for queue, pairing, and bugs.
 |------|------|
 | Cadence + all group tables (G1–G15) | [`prompts/validate-unit.md`](prompts/validate-unit.md) |
 | Cursor (tested / next / do-not-refile) | [`prompts/validate-status.md`](prompts/validate-status.md) |
-| **This sitting** kickoff | Named in `roadmap.md` **Now** ([`prompts/g7-pair.md`](prompts/g7-pair.md)) |
+| **This sitting** kickoff | Named in `roadmap.md` **Now** ([`prompts/g8-pair.md`](prompts/g8-pair.md)) |
 | After sitting → fix | Separate `*-resolve.md` when supervisor writes it |
 
 Ron runs unit + Shevon. Agent: one case = one prompt; **findings only**.
@@ -36,8 +36,8 @@ Ron runs unit + Shevon. Agent: one case = one prompt; **findings only**.
 
 ## Historical (do not re-open as Now)
 
-Landed kickoffs under `prompts/` (`g1-resolve` … `g6-resolve`,
-`g2-pair` … `g6-pair`, `p2-*`, `ti-*`, `debt-*`, `show-keys-size`,
+Landed kickoffs under `prompts/` (`g1-resolve` … `g7-resolve`,
+`g2-pair` … `g7-pair`, `p2-*`, `ti-*`, `debt-*`, `show-keys-size`,
 …). Keep for regressions. Status: **landed** or **historical** in
 the file header.
 

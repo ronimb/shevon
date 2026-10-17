@@ -8,7 +8,7 @@ chat. One slice / one sitting per chat.
 | File | Use |
 |------|-----|
 | [`supervisor.md`](supervisor.md) | Oversight (no code) |
-| [`g7-pair.md`](g7-pair.md) | Current pairing sitting (**Now**) |
+| [`g8-pair.md`](g8-pair.md) | Current pairing sitting (**Now**) |
 | [`validate-unit.md`](validate-unit.md) | Cadence + G1–G15 tables |
 | [`validate-status.md`](validate-status.md) | Pairing cursor |
 | [`g15-nested.md`](g15-nested.md) | Nested COMP (when scheduled) |
@@ -19,7 +19,7 @@ chat. One slice / one sitting per chat.
 
 ## Historical (landed — do not set as Now)
 
-Pair: `g2-pair` … `g6-pair`. Resolve: `g1-resolve` … `g6-resolve`.
+Pair: `g2-pair` … `g7-pair`. Resolve: `g1-resolve` … `g7-resolve`.
 Phase / debt / ti: `p2-*`, `p4-*`, `debt-*`, `ti-*`, `r17-*`,
 `r28-*`, `r29-*`, `show-keys-size`, `shift-ac-mem`, `tech-debt`.
 

@@ -1,6 +1,6 @@
 # Tech issues — landed correctness
 
-Source of truth for review ids `R1`–`R62` and slices `ti-*`.
+Source of truth for review ids `R1`–`R69` and slices `ti-*`.
 Doc map: [`README.md`](README.md). Do not copy an R-id into
 [`issues.md`](../issues.md).
 
@@ -16,7 +16,15 @@ Status: `[ ]` open · `[x]` done.
 
 ## Open
 
-None. Next pairing is **G7** (do not start it from a resolve chat).
+Ride with **`g8-resolve`** (or next resolve after G8; do not drop).
+
+- [ ] `R69` — Exe / desktop chrome when **Show keys** is on: put the
+      live key strip in the **same vertical band as the top buttons**
+      (do not grow a second strip below that steals height). While
+      keys mode is on, the top chrome controls stay **auto-hidden**
+      and appear **on hover** — all three in that row (Hide keys /
+      More / Pin; Close may stay or follow the same hover rule if it
+      sits in that band). Logged 17 Oct 2026 interim.
 
 ---
 
@@ -31,6 +39,23 @@ None. Next pairing is **G7** (do not start it from a resolve chat).
 
 ## Closed this sitting
 
+- [x] `R63` — Empty ∫: one DEL clears the template (no `,,,x`
+      leak). (`g7-resolve`; G7.1 pairing 17 Oct 2026.)
+- [x] `R64` — ∫ limit slots are a column to the right of the
+      glyph. Upper top lines up with the symbol top, lower bottom
+      lines up with the symbol bottom, and the two slots share
+      one column. Integrand `x²` keeps the power raised (same
+      lift as d/dx). (`g7-resolve`; 17 Oct 2026.)
+- [x] `R65` — Overlay key flash is a stronger amber wash and
+      ring, held long enough to see. (`g7-resolve`; 17 Oct 2026.)
+- [x] `R66` — Empty d/dx: one DEL clears the template (no `,x,)`
+      leak). (`g7-resolve`; G7.4 pairing 17 Oct 2026.)
+- [x] `R67` — d/dx uses the shared tall calculus template at unit
+      scale (same path as Σ). (`g7-resolve`; 17 Oct 2026.)
+- [x] `R68` — Σ is a tall template: empty upper bound above,
+      `x=` plus an empty lower bound below, parenthesized
+      expression to the right. No prefilled `10`. (`g7-resolve`;
+      G7.5 pairing 17 Oct 2026.)
 - [x] `R60` — DEL with the caret on infix **P** / **C** erases the
       nPr / nCr operator. (`g6-resolve`; G6.3 pairing 16 Oct 2026.)
 - [x] `R61` — Tall Abs bars stay a thin stroke while they stretch

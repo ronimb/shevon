@@ -46,9 +46,12 @@ TABLE / CONST into **Now** on agent initiative. Lying MODE rows
 wait for the matching feature. LineIO / 99-byte / `:` /
 `hist-letters` stay parked.
 
-Active focus: **G7 pairing** next (`g6-resolve` closed 16 Oct 2026:
-`R60` / `R61` / `R62`). Do not start Phase 3 or **G15** unless Ron
-asks. Phase 3 stays parked.
+Active focus: **G8 pairing**
+([`g8-pair.md`](docs/prompts/g8-pair.md)). `g7-resolve`
+(`R63`–`R68`) is in **Landed** (17 Oct 2026). After G8, resolve
+must also take interim **`R69`** (Show keys uses button-row
+height; chrome auto-hide on hover). **G15** nested untested
+(schedule separately). Phase 3 stays parked.
 
 Catalog of landed-correctness ids: `[docs/tech-issues.md](docs/tech-issues.md)`.
 Honesty leftovers: `[issues.md](issues.md)`. After every slice: `[sanity-landed.md](docs/prompts/sanity-landed.md)`.
@@ -64,13 +67,14 @@ Triage (no code): `[supervisor.md](docs/prompts/supervisor.md)`
 
 | Order | Id | What | Kickoff |
 | ----- | -- | ---- | ------- |
-| 1 | G7 pairing | Calculus templates (walk + log) | [`g7-pair.md`](docs/prompts/g7-pair.md) |
+| 1 | G8 pairing | Polar and rectangular (walk + log) | [`g8-pair.md`](docs/prompts/g8-pair.md) |
 
 `ti-stat` … `ti-edges`, `R17` (`r17-percent`), `R28` (`r28-exp`),
 `R29` (`r29-int`), `g1-resolve`, `g2-resolve` (`R39`–`R43` +
 `setup-page2`), `g3-resolve` (`R44`–`R48` + `setup-page1-disp`),
-`g4-resolve` (`R49`–`R54`), `g5-resolve` (`R55`–`R59`), and
-`g6-resolve` (`R60`–`R62`) are in
+`g4-resolve` (`R49`–`R54`), `g5-resolve` (`R55`–`R59`),
+`g6-resolve` (`R60`–`R62`), and
+`g7-resolve` (`R63`–`R68`) are in
 **Landed**. `R36` (`×10ˣ` glyph) dropped — not in the queue.
 `R27` closed. `R30` / `R33` closed earlier (not bugs / frac ▲▼).
 
@@ -88,7 +92,8 @@ Applies to **every** phase. Principles:
 - [ ] `vis-elements` — Missing or misplaced chrome on shipped screens.
   ```
   Open: (none from prompt-prev-size — closed with g1-resolve). EQN a/b/c,
-  carets, and ∫ limits on the symbol (`R29`) landed.
+  carets, and ∫ limits (`R29`, column to the right of the glyph in
+  `R64`) landed.
   ```
 - [ ] `vis-indicators` — Light status indicators from real state. ◀▶ and the
   ```
@@ -464,6 +469,8 @@ validated; the result line is blank while typing and after AC (no idle
 ◀ reverses: integrand → before ∫ → after dx → upper → lower →
 integrand. ▲ from integrand/lower → upper and stops; ▼ from
 integrand/upper → lower and stops. `int(sqr(x),0,1)` is still 1/3.
+`g7-resolve` `R64` moved both slots into a column on the right of
+the glyph (top and bottom edge-aligned).
 
 **g1-resolve** — COMP caret hidden after `=` / Ans-operator continue /
 history replay (`R32` / `R35` / `R31`); first history ▲ skips the
@@ -499,6 +506,12 @@ juxtaposition π/`e` across ÷ (`R56`); empty trig/hyp open boxes
 **g6-resolve** — DEL on infix P/C erases nPr/nCr (`R60`); tall
 Abs bars keep a thin stroke (`R61`); empty RanInt# is `RanInt#(`
 with no boxes or built-in comma (`R62`). 16 Oct 2026.
+
+**g7-resolve** — Empty ∫ / d/dx DEL clears the template (`R63`,
+`R66`); ∫ limits are a column to the right of the glyph (`R64`);
+overlay key flash is a stronger amber hold (`R65`); d/dx and Σ
+share one tall calculus template (`R67`, `R68` — Σ bounds above
+and below, parenthesized body, no prefilled `10`). 17 Oct 2026.
 
 **debt-source-map** — IR rewrite carries original offsets onto AST nodes and
 `CalcError.offset`. Syntax / Math ERROR ◀▶ jumps to the fault token. Implicit

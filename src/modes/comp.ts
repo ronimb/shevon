@@ -41,6 +41,11 @@ export function expressionHasSolveUnknown(expr: string): boolean {
   return expr.replace(/[‸⬚]/g, '').includes('X');
 }
 
+/** Fresh calculus templates. Σ bounds stay empty — do not prefill 10 (R68). */
+export const FRESH_INT = 'int(‸,,,x)';
+export const FRESH_DIFF = 'diff(‸,x,)';
+export const FRESH_SUM = 'Σ(‸,x,,)';
+
 /** IR stems whose letters are not memory (Ans, nCr, sin, …). Longest first (R8). */
 const SOLVE_IR_STEMS = Array.from(new Set([
   ...PATS.map((p) => p.replace(/\($/, '')),
@@ -678,6 +683,20 @@ function skipBalancedTail(src: string): string {
   return '';
 }
 
+/**
+ * Length of an empty ∫ / d/dx / Σ tail after the opening `(`.
+ * A filled slot does not match — only the fresh template (R63 / R66 / R68).
+ */
+function emptyCalculusTail(stem: string, after: string): number | null {
+  const re = stem === 'int(' ? /^,,,[xX](?:\)|$)/
+    : stem === 'diff(' ? /^,[xX],(?:\)|$)/
+    : stem === 'Σ(' ? /^,[xX],,(?:\)|$)/
+    : null;
+  if (!re) return null;
+  const m = after.match(re);
+  return m ? m[0].length : null;
+}
+
 /** One top-level argument, then whatever follows the call's closing `)`. */
 function readTopArg(src: string): { arg: string; rest: string } {
   let depth = 1;
@@ -790,6 +809,12 @@ export function deleteCompAtCursor(currentInput: string): string | null {
     if ((found === 'pwr(' || found === 'root(') && after.startsWith(',')) {
       const hoisted = readTopArg(after.slice(1));
       return before.slice(0, -found.length) + hoisted.arg + '‸' + hoisted.rest;
+    }
+    // Empty ∫ / d/dx / Σ: one DEL clears the template (R63 / R66).
+    // Swallowing only the stem leaves `,,,x` or `,x,)` on the LCD.
+    const emptyTail = emptyCalculusTail(found, after);
+    if (emptyTail !== null) {
+      return before.slice(0, -found.length) + '‸' + after.slice(emptyTail);
     }
     if (found === 'frac(' || found === 'mix(') {
       return before.slice(0, -found.length) + '‸' + skipBalancedTail(after);

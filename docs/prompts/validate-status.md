@@ -11,9 +11,9 @@ drive unless asked.
 
 ## Cursor
 
-**G6 resolve done** (16 Oct 2026): **`R60`** / **`R61`** /
-**`R62`** closed. **Next:** G7 pairing —
-[`g7-pair.md`](g7-pair.md). **G15** later. Phase 3 parked.
+**G7 resolve done** (17 Oct 2026). **`R63`–`R68` closed.**
+**Next:** G8 pairing — [`g8-pair.md`](g8-pair.md). Interim for
+post-G8 resolve: **`R69`**. **G15** later. Phase 3 parked.
 
 ## Re-check results (10 Oct 2026)
 
@@ -149,6 +149,24 @@ Open `R*` after `g6-resolve`: none. **`R60`** / **`R61`** /
 **`R62`** closed 16 Oct 2026. **`R61`** was the Abs bar-weight
 follow-up (not a G6 row).
 
+### G7 — calculus templates (17 Oct 2026)
+
+Function **pass** unless noted (findings only; a clear row is
+pass). `R29` and `sigma-bounds` not refiled.
+
+| # | Walk | Notes |
+|---|------|-------|
+| 1 ∫ paint | form **`R64` closed**. DEL **`R63` closed** | limits column to the right of ∫, edge-aligned; one DEL clears empty ∫ |
+| 2 ∫ caret | **pass** | |
+| 3 ∫ value | **pass** | ∫ of X² from 0 to 1 |
+| 4 d/dx | value **pass**. DEL **`R66` closed**. Size **`R67` closed** | one DEL clears empty d/dx; shared tall template |
+| 5 Σ | function **pass**. Form **`R68` closed** | tall template; bounds above/below; parens; no prefilled `10` |
+| 6 ∫ fraction | **pass** | 1/X from 1 to e |
+| 7 d/dx quotient | **pass** | 1/X at 2 |
+
+Open `R*` after `g7-resolve`: none. **`R63`–`R68`** closed
+17 Oct 2026. **`R65`** was the overlay flash (not a G7 row).
+
 ### G14 — emulator extras (30 Sep 2026)
 
 | # | Walk | After the fix |
@@ -161,12 +179,13 @@ follow-up (not a G6 row).
 
 ## Untested
 
-- **G7–G13** (full). **G15** nested ([`g15-nested.md`](g15-nested.md)).
-- Nested frac rows inside G7 when that group is walked.
+- **G8–G13** (full). **G15** nested ([`g15-nested.md`](g15-nested.md)).
+  G7 resolved 17 Oct 2026. Next walk is G8.
 
 ## Do not refile
 
 `R30`–`R43` (except dropped `R36`), `R5` / `R9`, `show-keys-size`,
 `show-keys-face`, `hist-scroll`, `surd-pi-form` / `p4-exact`,
 `lying-menus`, `setup-page2`, `setup-page1-disp`, `lineio-display`,
-`ind-arrows`, `prompt-prev-size`. `R44`–`R62` closed.
+`ind-arrows`, `prompt-prev-size`, closed `R29`, `sigma-bounds`.
+`R44`–`R68` closed.

@@ -48,10 +48,11 @@ needs them. Canvases: ignore unless Ron asks (`canvases/README.md`).
 
 ## Snapshot (refresh only if it disagrees with **Now**)
 
-- **Now:** **G7 pairing** — [`g7-pair.md`](g7-pair.md).
-  `g6-resolve` closed (`R60`–`R62`). Do not start Phase 3 or G15
+- **Now:** **G8 pairing** — [`g8-pair.md`](g8-pair.md).
+  `g7-resolve` closed (`R63`–`R68`). Do not start Phase 3 or G15
   unless Ron asks.
-- Open `R*`: none. `R55`–`R62` closed.
+- Open `R*`: **`R69`** (Show keys / chrome hover) — ride with
+  **`g8-resolve`**. `R55`–`R68` closed.
 - Pairing cursor: [`validate-status.md`](validate-status.md).
   Cadence: one case prompt; findings only.
 - Do not pull LineIO / 99-byte / `:` / `hist-letters` / Phase 3 into

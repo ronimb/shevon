@@ -28,6 +28,9 @@ import {
   applyHistoryLoad,
   applyPowerKey,
   applySquareKey,
+  FRESH_DIFF,
+  FRESH_INT,
+  FRESH_SUM,
 } from './modes/comp.ts';
 import {
   STAT_TYPES,
@@ -1042,8 +1045,8 @@ export function useModeRouter(s: CalculatorStore) {
   }, [s, handleInput]);
 
   const handleIntegralKey = useCallback(() => {
-    if (s.isShift) handleInput("diff(‸,x,)");
-    else handleInput("int(‸,,,x)");
+    if (s.isShift) handleInput(FRESH_DIFF);
+    else handleInput(FRESH_INT);
     s.consumeShift();
   }, [s, handleInput]);
 
@@ -1099,7 +1102,7 @@ export function useModeRouter(s: CalculatorStore) {
   }, [s, handleInput]);
 
   const handleLogKey = useCallback(() => {
-    if (s.isShift) handleInput('Σ(‸,x,0,10)'); else handleInput('log_b(‸,');
+    if (s.isShift) handleInput(FRESH_SUM); else handleInput('log_b(‸,');
     s.consumeShift();
   }, [s, handleInput]);
 

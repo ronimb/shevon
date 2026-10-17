@@ -1,4 +1,7 @@
-@import "tailwindcss";
+/* source(none): do not auto-scan the whole repo (canvases/docs/.md).
+   That was causing full CSS rebuilds / page bobbing while agents work. */
+@import "tailwindcss" source(none);
+@source "./**/*.{js,ts,jsx,tsx,html}";
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
@@ -176,7 +179,7 @@ body {
 .paren-pair:has(.mix-container),
 .paren-pair:has(.root),
 .paren-pair:has(.int-container),
-.paren-pair:has(.sum-container) {
+.paren-pair:has(.calc-template) {
     display: inline-flex;
     align-items: center;
     vertical-align: middle;
@@ -186,7 +189,7 @@ body {
 .paren-pair:has(.mix-container) > .paren-glyph,
 .paren-pair:has(.root) > .paren-glyph,
 .paren-pair:has(.int-container) > .paren-glyph,
-.paren-pair:has(.sum-container) > .paren-glyph {
+.paren-pair:has(.calc-template) > .paren-glyph {
     font-size: 1.85em;
     line-height: 1;
     display: inline-flex;
@@ -196,7 +199,7 @@ body {
 .paren-pair:has(.mix-container) > .paren-inner,
 .paren-pair:has(.root) > .paren-inner,
 .paren-pair:has(.int-container) > .paren-inner,
-.paren-pair:has(.sum-container) > .paren-inner {
+.paren-pair:has(.calc-template) > .paren-inner {
     display: inline-flex;
     align-items: center;
 }
@@ -315,54 +318,122 @@ body {
 .int-container {
     display: inline-flex;
     align-items: center;
-    font-size: 1em;
-    margin: 0 2px;
-    position: relative;
-    vertical-align: -0.28em;
+    vertical-align: middle;
+    line-height: 1;
+    margin: 0 0.08em;
+}
+/* Limits column is tied to the glyph, not a tall integrand (R64). */
+.int-op {
+    display: inline-flex;
+    align-items: stretch;
+    line-height: 1;
 }
 .int-symbol {
-    position: relative;
-    display: inline-block;
-    font-size: 1.85em;
-    line-height: 0.92;
+    display: flex;
+    align-items: center;
     font-family: "Times New Roman", "Cambria Math", serif;
-    padding: 0.48em 0.95em 0.42em 0.04em;
+    font-size: 2.05em;
+    line-height: 1;
 }
-/* Position in the symbol's em so limits sit on the hooks, not in a left stack. */
+/* Both slots share one column to the right of ∫. Upper top = glyph top;
+   lower bottom = glyph bottom (space-between on the stretched column). */
 .int-bounds {
-    position: absolute;
-    inset: 0;
-    font-size: 1em;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: stretch;
+    margin-left: 0.06em;
+    min-width: 0.55em;
+    font-size: 0.78em;
     line-height: 1;
-    pointer-events: none;
 }
-.int-upper {
-    position: absolute;
-    top: 0;
-    left: 0.72em;
-    font-size: 0.36em;
-    line-height: 1;
-    min-width: 0.85em;
-    min-height: 1em;
-    text-align: center;
-}
+.int-upper,
 .int-lower {
-    position: absolute;
-    bottom: 0;
-    left: 0.42em;
-    font-size: 0.36em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     line-height: 1;
-    min-width: 0.85em;
-    min-height: 1em;
-    text-align: center;
 }
-.int-body { display: inline-flex; align-items: center; gap: 1px; }
+.int-body {
+    display: inline-flex;
+    align-items: baseline;
+    align-self: center;
+    margin-left: 0.1em;
+    gap: 1px;
+}
+/* Inline run: .sup vertical-align still lifts x². Flex would center the 2. */
+.int-integrand {
+    line-height: 1.2;
+}
 .int-dx { margin-left: 0.12em; }
 
-.diff-container { display: inline-flex; align-items: center; font-size: 0.9em; }
-.diff-frac { display: flex; flex-direction: column; align-items: center; font-size: 0.7em; margin-right: 2px; }
-.diff-top { border-bottom: 1px solid currentColor; padding: 0 1px; }
-.diff-at { border-left: 1px solid currentColor; padding-left: 4px; margin-left: 2px; }
+/* Shared tall calculus row (R67 / R68). Unit scale — not a 0.9em squeeze.
+   Σ: upper bound above the glyph, x= below, parenthesized body to the right.
+   d/dx: the same row; the fraction is full weight, not a flat 0.7em stack. */
+.calc-template {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+    font-size: 1em;
+    line-height: 1;
+    margin: 0 0.08em;
+}
+.calc-stack {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+.calc-bound {
+    font-size: 0.62em;
+    line-height: 1.05;
+    text-align: center;
+    white-space: nowrap;
+}
+.calc-glyph {
+    font-family: "Times New Roman", "Cambria Math", serif;
+    font-size: 1.7em;
+    line-height: 1;
+}
+.calc-body {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 0.12em;
+}
+.calc-template .paren-pair {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+}
+.calc-template .paren-glyph {
+    font-size: 1.55em;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+}
+.diff-frac {
+    font-size: 1em;
+    font-weight: 700;
+    margin-right: 0.04em;
+}
+.diff-top {
+    border-bottom: 1.5px solid currentColor;
+    padding: 0 0.2em 0.05em;
+    line-height: 1;
+}
+.diff-bot {
+    padding: 0.05em 0.1em 0;
+    line-height: 1;
+}
+.diff-at {
+    display: inline-flex;
+    align-items: center;
+    border-left: 1.5px solid currentColor;
+    padding-left: 0.22em;
+    margin-left: 0.16em;
+    line-height: 1;
+}
 
 .mode-menu { 
     display: grid; 
@@ -460,7 +531,7 @@ body {
 .abs-pair:has(.mix-container),
 .abs-pair:has(.root),
 .abs-pair:has(.int-container),
-.abs-pair:has(.sum-container) {
+.abs-pair:has(.calc-template) {
     align-items: stretch;
     line-height: 1;
 }
@@ -471,7 +542,7 @@ body {
 .abs-pair:has(.mix-container) > .abs-bar,
 .abs-pair:has(.root) > .abs-bar,
 .abs-pair:has(.int-container) > .abs-bar,
-.abs-pair:has(.sum-container) > .abs-bar {
+.abs-pair:has(.calc-template) > .abs-bar {
     align-self: stretch;
     position: relative;
     justify-content: center;
@@ -483,7 +554,7 @@ body {
 .abs-pair:has(.mix-container) > .abs-bar::before,
 .abs-pair:has(.root) > .abs-bar::before,
 .abs-pair:has(.int-container) > .abs-bar::before,
-.abs-pair:has(.sum-container) > .abs-bar::before {
+.abs-pair:has(.calc-template) > .abs-bar::before {
     content: "";
     position: absolute;
     top: 0;
@@ -560,8 +631,10 @@ body {
 }
 .key:active,
 .key.key-flash {
-    background: rgba(255, 255, 255, 0.28);
-    box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.55);
+    background: rgba(255, 196, 32, 0.72);
+    box-shadow:
+        inset 0 0 0 3px rgba(255, 236, 140, 1),
+        0 0 12px rgba(255, 170, 0, 0.9);
 }
 
 .debug-visible {
@@ -983,7 +1056,3 @@ body {
     border: 0.5px solid currentColor;
 }
 
-.sum-container { display: inline-flex; align-items: center; font-size: 0.9em; margin: 0 4px; position: relative; }
-.sum-symbol { font-size: 1.8em; line-height: 1; }
-.sum-bounds { display: flex; flex-direction: column; justify-content: space-between; height: 3em; font-size: 0.55em; margin-right: 0.2em; text-align: center; }
-.sum-body { margin-left: 2px; }

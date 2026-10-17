@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useRef, type RefObject } from 'react';
 
+/** Overlay press flash. Long enough to read on a quick tap (R65). */
+export const KEY_FLASH_MS = 240;
+
 export function useKeyFlash(keysRootRef: RefObject<HTMLElement | null>) {
   const flashTimers = useRef<Map<string, number>>(new Map());
 
@@ -16,7 +19,7 @@ export function useKeyFlash(keysRootRef: RefObject<HTMLElement | null>) {
     const t = window.setTimeout(() => {
       el.classList.remove('key-flash');
       flashTimers.current.delete(id);
-    }, 140);
+    }, KEY_FLASH_MS);
     flashTimers.current.set(id, t);
   }, [keysRootRef]);
 
